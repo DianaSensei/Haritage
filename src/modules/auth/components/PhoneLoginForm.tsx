@@ -33,7 +33,7 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({ onOTPSent }) => 
 
     clearError();
     const sendOTPResult = await sendOTP(phoneNumber);
-    if (sendOTPResult.isSuccess && sendOTPResult.sessionId) {
+    if (sendOTPResult && sendOTPResult.isSuccess && sendOTPResult.sessionId) {
       onOTPSent(phoneNumber, sendOTPResult.sessionId);
     }
   };
