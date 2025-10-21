@@ -4,12 +4,6 @@ export const CONFIG = {
     APP_NAME: 'Haritage',
     VERSION: '1.0.0',
 
-    // Network
-    NETWORK: {
-        TIMEOUT_MS: 15000,
-        RETRY_COUNT: 0,
-    },
-
     // Authentication
     AUTH: {
         OTP_EXPIRY_MINUTES: 5,
@@ -44,6 +38,15 @@ export const CONFIG = {
         BIOMETRIC_ENABLED: '@haritage/biometric_enabled',
         THEME_PREFERENCE: '@haritage/theme_preference',
     },
+
+    // Network
+    NETWORK: {
+        TIMEOUT_MS: 15000,
+        RETRY_COUNT: 0,
+    },
 } as const;
 
 export type Config = typeof CONFIG;
+
+// Re-export theme configuration
+export { Colors, Fonts } from './theme';

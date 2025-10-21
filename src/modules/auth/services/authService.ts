@@ -1,5 +1,6 @@
 import { CONFIG } from '@/core/config';
-import { http } from '@/shared/services/api/client';
+import { ApiError, http } from '@/shared/services/api/client';
+import { ApiErrorHandler } from '@/shared/services/api/errorHandler';
 import { ApiResponse, User } from '@/shared/types';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -25,10 +26,13 @@ export class AuthService {
       );
       return data;
     } catch (error) {
+      const apiError = error as ApiError;
+      const errorInfo = ApiErrorHandler.handleError(apiError);
+
       return {
         data: { sessionId: '' },
         success: false,
-        error: (error as Error).message || 'Unknown error',
+        error: errorInfo.message,
       };
     }
   }
@@ -43,10 +47,13 @@ export class AuthService {
       await this.storeToken(data.data.token);
       return data;
     } catch (error) {
+      const apiError = error as ApiError;
+      const errorInfo = ApiErrorHandler.handleError(apiError);
+
       return {
         data: { user: {} as User, token: '' },
         success: false,
-        error: (error as Error).message || 'Unknown error',
+        error: errorInfo.message,
       };
     }
   }
