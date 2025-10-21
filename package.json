@@ -1,6 +1,6 @@
 {
   "name": "haritage",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -16,7 +16,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
-    "expo": "~54.0.13",
+    "expo": "^54.0.16",
     "expo-auth-session": "^7.0.8",
     "expo-av": "^16.0.7",
     "expo-camera": "^17.0.8",
@@ -58,5 +58,6 @@
     "tsx": "^4.20.6",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@4.10.3"
 }
