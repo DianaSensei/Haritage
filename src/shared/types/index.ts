@@ -1,6 +1,6 @@
 // Global types for the application
 export interface User {
-    id: string;
+    id: number;
     phoneNumber: string;
     name?: string;
     avatar?: string;

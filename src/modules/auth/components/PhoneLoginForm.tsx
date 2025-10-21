@@ -32,12 +32,9 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({ onOTPSent }) => 
     }
 
     clearError();
-    const success = await sendOTP(phoneNumber);
-
-    if (success) {
-      // In a real app, you'd get the sessionId from the API response
-      const sessionId = 'mock-session-id';
-      onOTPSent(phoneNumber, sessionId);
+    const sendOTPResult = await sendOTP(phoneNumber);
+    if (sendOTPResult.isSuccess && sendOTPResult.sessionId) {
+      onOTPSent(phoneNumber, sendOTPResult.sessionId);
     }
   };
 

@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
+  View,
 } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 
@@ -58,7 +58,7 @@ export const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({
     }
   };
 
-  const handleKeyPress = (key: string, index: number) => {
+  const handleBackspaceKeyPress = (key: string, index: number) => {
     if (key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -120,7 +120,7 @@ export const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({
             style={[styles.otpInput, digit && styles.otpInputFilled]}
             value={digit}
             onChangeText={(value) => handleOTPChange(value, index)}
-            onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+            onKeyPress={({ nativeEvent }) => handleBackspaceKeyPress(nativeEvent.key, index)}
             keyboardType="numeric"
             maxLength={1}
             textAlign="center"

@@ -15,35 +15,59 @@ export class AuthService {
     return AuthService.instance;
   }
 
+  // TODO : Remove mock sessionId when backend is ready
   // Phone OTP Authentication
   async sendOTP(phoneNumber: string): Promise<ApiResponse<{ sessionId: string }>> {
-    try {
-      // In a real app, this would call your backend API
-      const data = await http.post<ApiResponse<{ sessionId: string }>>(
-        '/auth/send-otp',
-        { phoneNumber },
-        { timeoutMs: CONFIG.NETWORK.TIMEOUT_MS }
-      );
-      return data;
-    } catch (error) {
-      const apiError = error as ApiError;
-      const errorInfo = ApiErrorHandler.handleError(apiError);
+    // try {
+      // const data = await http.post<ApiResponse<{ sessionId: string }>>(
+      //   '/auth/send-otp',
+      //   { phoneNumber },
+      //   { timeoutMs: CONFIG.NETWORK.TIMEOUT_MS }
+      // );
+      return { data: { sessionId: 'mock-session-id' }, success: true };
+    // } catch (error) {
+    //   const apiError = error as ApiError;
+    //   const errorInfo = ApiErrorHandler.handleError(apiError);
 
-      return {
-        data: { sessionId: '' },
-        success: false,
-        error: errorInfo.message,
-      };
-    }
+    //   return {
+    //     data: { sessionId: '' },
+    //     success: false,
+    //     error: errorInfo.message,
+    //   };
+    // }
   }
 
+    // TODO : Remove mock otp when backend is ready
   async verifyOTP(phoneNumber: string, otp: string, sessionId: string): Promise<ApiResponse<{ user: User; token: string }>> {
     try {
-      const data = await http.post<ApiResponse<{ user: User; token: string }>>(
-        '/auth/verify-otp',
-        { phoneNumber, otp, sessionId },
-        { timeoutMs: CONFIG.NETWORK.TIMEOUT_MS }
-      );
+      // const data = await http.post<ApiResponse<{ user: User; token: string }>>(
+      //   '/auth/verify-otp',
+      //   { phoneNumber, otp, sessionId },
+      //   { timeoutMs: CONFIG.NETWORK.TIMEOUT_MS }
+      // );
+      if (otp !== '000000') {
+        return {
+          data: { user: {} as User, token: '' },
+          success: false,
+          error: 'Invalid OTP',
+        };
+      }
+
+      const data: ApiResponse<{ user: User; token: string }> = {
+        data: {
+          user: {
+            id: 1,
+            phoneNumber,
+            name: 'Nguyễn Đức Thông',
+            avatar: '',
+            isBiometricEnabled: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          token: 'mock-jwt-token',
+        },
+        success: true,
+      };
       await this.storeToken(data.data.token);
       return data;
     } catch (error) {

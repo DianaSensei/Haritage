@@ -1,7 +1,6 @@
-import { useCallback } from 'react';
 import { useAuthStore } from '@/core/store/slices/authSlice';
+import { useCallback } from 'react';
 import { authService } from '../services/authService';
-import { User } from '@/shared/types';
 
 export const useAuth = () => {
   const {
@@ -26,12 +25,17 @@ export const useAuth = () => {
       const result = await authService.sendOTP(phoneNumber);
       if (!result.success) {
         setError(result.error || 'Failed to send OTP');
-        return false;
+        return {
+          isSuccess: false,
+        };
       }
-      return true;
+      return {
+        isSuccess: true,
+        sessionId: result.data.sessionId,
+      };
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');
-      return false;
+      return { isSuccess: false };
     } finally {
       setLoading(false);
     }
@@ -45,6 +49,11 @@ export const useAuth = () => {
       const result = await authService.verifyOTP(phoneNumber, otp, sessionId);
       if (!result.success) {
         setError(result.error || 'Invalid OTP');
+        return false;
+      }
+
+      if (!result.data.user) {
+        setError('User data is missing');
         return false;
       }
       

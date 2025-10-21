@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { PhoneLoginForm } from '../components/PhoneLoginForm';
+import { StyleSheet, View } from 'react-native';
 import { OTPVerificationForm } from '../components/OTPVerificationForm';
+import { PhoneLoginForm } from '../components/PhoneLoginForm';
 
 type AuthStep = 'phone' | 'otp';
 
@@ -10,10 +10,11 @@ export const AuthScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [sessionId, setSessionId] = useState('');
 
-  const handleOTPSent = (phone: string, session: string) => {
+  const handleOTPSent = (phone: string, sessionId: string) => {
     setPhoneNumber(phone);
-    setSessionId(session);
+    setSessionId(sessionId);
     setCurrentStep('otp');
+    console.log(`OTP sent to ${phoneNumber}, sessionId: ${sessionId}, step: ${currentStep}`);
   };
 
   const handleVerificationSuccess = () => {
