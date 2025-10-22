@@ -68,9 +68,10 @@
         }
       ],
       [
-        "expo-av",
+        "expo-video",
         {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for video recording."
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
         }
       ]
     ],

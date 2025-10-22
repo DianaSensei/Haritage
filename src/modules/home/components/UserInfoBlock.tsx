@@ -1,13 +1,14 @@
+import { CONFIG } from '@/core/config';
+import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/modules/auth/hooks/useAuth';
 
 export const UserInfoBlock: React.FC = () => {
   const { user, logout } = useAuth();
@@ -15,6 +16,7 @@ export const UserInfoBlock: React.FC = () => {
   if (!user) return null;
 
   const handleLogout = () => {
+    console.log("logout");
     logout();
   };
 
@@ -27,9 +29,7 @@ export const UserInfoBlock: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.userInfo}>
         <Image
-          source={{ 
-            uri: user.avatar || 'https://via.placeholder.com/60x60/007AFF/FFFFFF?text=U'
-          }}
+          source={user.avatar ? { uri: user.avatar } : CONFIG.ASSETS.DEFAULT_AVATAR}
           style={styles.avatar}
         />
         <View style={styles.userDetails}>

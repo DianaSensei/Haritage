@@ -33,16 +33,20 @@ export const CONFIG = {
 
     // Storage keys
     STORAGE_KEYS: {
-        USER_TOKEN: '@haritage/user_token',
-        USER_DATA: '@haritage/user_data',
-        BIOMETRIC_ENABLED: '@haritage/biometric_enabled',
-        THEME_PREFERENCE: '@haritage/theme_preference',
+        USER_TOKEN: 'haritage.user_token',
+        USER_DATA: 'haritage.user_data',
+        BIOMETRIC_ENABLED: 'haritage.biometric_enabled',
+        THEME_PREFERENCE: 'haritage.theme_preference',
     },
 
     // Network
     NETWORK: {
         TIMEOUT_MS: 15000,
         RETRY_COUNT: 0,
+    },
+    // Asset references (local requires so bundler includes them)
+    ASSETS: {
+        DEFAULT_AVATAR: require('../../../assets/images/icon.png'),
     },
 } as const;
 

@@ -1,21 +1,18 @@
-import React, { useRef, useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-} from 'react-native';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
-import { Ionicons } from '@expo/vector-icons';
 import { CONFIG } from '@/core/config';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import React, { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 interface VideoPlayerProps {
   videoUrl: string;
   thumbnail?: string;
   isActive: boolean;
-  onPlaybackStatusUpdate?: (status: AVPlaybackStatus) => void;
+  onPlaybackStatusUpdate?: (status: any) => void;
   onError?: (error: string) => void;
 }
 
@@ -28,88 +25,76 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onPlaybackStatusUpdate,
   onError,
 }) => {
-  const videoRef = useRef<Video>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
+  // desiredPlay controls whether we instruct the player to play
+  const [desiredPlay, setDesiredPlay] = useState(false);
+  // key to force remount VideoView when native view gets into a bad state (e.g., after fullscreen exit)
+  const [videoKey, setVideoKey] = useState(0);
 
-  useEffect(() => {
-    if (isActive && CONFIG.VIDEO.AUTO_PLAY) {
-      playVideo();
-    } else {
-      pauseVideo();
+  // create player for this video source
+  const player: any = useVideoPlayer(videoUrl, (p: any) => {
+    try {
+      p.muted = CONFIG.VIDEO.MUTED_BY_DEFAULT;
+      p.loop = false;
+    } catch {
+      // ignore
     }
+  });
+
+  // Update desired play state when active changes. We use declarative
+  // `shouldPlay` prop on the <Video /> component instead of calling
+  // imperative playAsync/pauseAsync which can throw if the native view
+  // hasn't been registered yet.
+  useEffect(() => {
+    setDesiredPlay(isActive && CONFIG.VIDEO.AUTO_PLAY);
   }, [isActive]);
 
-  const playVideo = async () => {
-    try {
-      await videoRef.current?.playAsync();
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error playing video:', error);
-      onError?.('Failed to play video');
-    }
-  };
-
-  const pauseVideo = async () => {
-    try {
-      await videoRef.current?.pauseAsync();
-      setIsPlaying(false);
-    } catch (error) {
-      console.error('Error pausing video:', error);
-    }
-  };
-
-  const togglePlayPause = () => {
-    if (isPlaying) {
-      pauseVideo();
-    } else {
-      playVideo();
-    }
-  };
-
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setIsLoading(false);
-      setDuration(status.durationMillis || 0);
-      setPosition(status.positionMillis || 0);
-      
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        // Auto-replay if configured
-        if (CONFIG.VIDEO.AUTO_PLAY) {
-          videoRef.current?.replayAsync();
+  // When desiredPlay changes, control the native player.
+  useEffect(() => {
+    if (!player) return;
+    (async () => {
+      try {
+        if (desiredPlay) {
+          await player.play();
+        } else {
+          await player.pause();
         }
+      } catch (error) {
+        console.error('Player control error:', error);
+        onError?.('Failed to control playback');
       }
-    }
-    
-    onPlaybackStatusUpdate?.(status);
-  };
+    })();
+  }, [desiredPlay, player, onError]);
 
-  const handleLoadStart = () => {
-    setIsLoading(true);
-  };
+  // Poll player for status (duration/currentTime)
+  useEffect(() => {
+    if (!player) return;
+    const update = () => {
+      try {
+        const status = (player.status as any) || null;
+        onPlaybackStatusUpdate?.(status);
+        // try to pick up video track size to calculate aspect ratio
+        try {
+          const tracks = player.availableVideoTracks || [];
+          if (tracks.length > 0 && tracks[0].size) {
+            const s = tracks[0].size;
+            if (s.width && s.height) {
+              setVideoAspect(s.width / s.height);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      } catch {
+        // ignore
+      }
+    };
+    update();
+    const id = setInterval(update, 500);
+    return () => clearInterval(id);
+  }, [player, onPlaybackStatusUpdate]);
 
-  const handleLoad = () => {
-    setIsLoading(false);
-  };
-
-  const handleError = (error: any) => {
-    setIsLoading(false);
-    console.error('Video error:', error);
-    onError?.('Failed to load video');
-  };
-
-  const formatTime = (milliseconds: number) => {
-    const seconds = Math.floor(milliseconds / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const progress = duration > 0 ? position / duration : 0;
+  const [videoAspect, setVideoAspect] = useState<number | null>(null);
 
   return (
     <View style={styles.container}>
@@ -118,72 +103,24 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         activeOpacity={1}
         onPress={() => setShowControls(!showControls)}
       >
-        <Video
-          ref={videoRef}
-          style={styles.video}
-          source={{ uri: videoUrl }}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={isActive && CONFIG.VIDEO.AUTO_PLAY}
-          isLooping={false}
-          isMuted={CONFIG.VIDEO.MUTED_BY_DEFAULT}
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-          onLoadStart={handleLoadStart}
-          onLoad={handleLoad}
-          onError={handleError}
+        <VideoView
+          key={videoKey}
+          player={player}
+          style={[
+            styles.video,
+            videoAspect
+              ? { height: Math.min(screenWidth / videoAspect, screenHeight * 0.9) }
+              : {}
+          ]}
+          contentFit="cover"
+          fullscreenOptions={{ enable: true, orientation: 'landscapeRight' }}
+          onFullscreenEnter={() => setShowControls(false)}
+          onFullscreenExit={() => {
+            // force remount and try to restore playback after a short delay
+            setVideoKey((k) => k + 1);
+            setTimeout(() => setDesiredPlay(true), 50);
+          }}
         />
-
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-          </View>
-        )}
-
-        {showControls && (
-          <View style={styles.controlsOverlay}>
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={togglePlayPause}
-            >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={50}
-                color="#fff"
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {showControls && (
-          <View style={styles.bottomControls}>
-            <Text style={styles.timeText}>
-              {formatTime(position)}
-            </Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${progress * 100}%` }
-                  ]}
-                />
-              </View>
-            </View>
-            <Text style={styles.timeText}>
-              {formatTime(duration)}
-            </Text>
-          </View>
-        )}
-
-        {!isPlaying && !isLoading && (
-          <View style={styles.playOverlay}>
-            <TouchableOpacity
-              style={styles.centerPlayButton}
-              onPress={togglePlayPause}
-            >
-              <Ionicons name="play" size={60} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        )}
       </TouchableOpacity>
     </View>
   );

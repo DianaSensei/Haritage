@@ -187,10 +187,10 @@ export class AuthService {
     try {
       const token = await this.getToken();
       if (token) {
-        await http.post('/auth/logout', undefined, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          timeoutMs: CONFIG.NETWORK.TIMEOUT_MS,
-        });
+        // await http.post('/auth/logout', undefined, {
+        //   headers: { 'Authorization': `Bearer ${token}` },
+        //   timeoutMs: CONFIG.NETWORK.TIMEOUT_MS,
+        // });
       }
     } catch (error) {
       console.error('Logout error:', error);

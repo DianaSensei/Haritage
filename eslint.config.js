@@ -6,5 +6,9 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    rules: {
+      // allow unescaped entities in JSX across the project
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]);

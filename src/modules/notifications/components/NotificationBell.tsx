@@ -1,12 +1,13 @@
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { NotificationCenter } from './NotificationCenter';
 
 interface NotificationBellProps {
   onPress: () => void;
@@ -20,22 +21,33 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   color = '#666',
 }) => {
   const { unreadCount } = useNotificationStore();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handlePress = () => {
+    setIsOpen(true);
+    if (onPress) onPress();
+  };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-    >
-      <Ionicons name="notifications-outline" size={size} color={color} />
-      {unreadCount > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {unreadCount > 99 ? '99+' : unreadCount.toString()}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        style={styles.container}
+        onPress={handlePress}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons name="notifications-outline" size={size} color={color} />
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {unreadCount > 99 ? '99+' : unreadCount.toString()}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Internal modal for notification list */}
+      <NotificationCenter isVisible={isOpen} onClose={() => setIsOpen(false)} />
+    </>
   );
 };
 

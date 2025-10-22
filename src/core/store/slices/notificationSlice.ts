@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Notification } from '@/shared/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface NotificationState {
   notifications: Notification[];
@@ -41,7 +41,16 @@ export const useNotificationStore = create<NotificationStore>()(
       
       addNotification: (notification) => {
         const notifications = get().notifications;
-        const updatedNotifications = [notification, ...notifications];
+        // If a notification with the same id already exists, update it and move to front
+        const exists = notifications.find(n => n.id === notification.id);
+        let updatedNotifications;
+        if (exists) {
+          // replace existing with incoming (preserve order by moving to front)
+          const filtered = notifications.filter(n => n.id !== notification.id);
+          updatedNotifications = [ { ...exists, ...notification }, ...filtered ];
+        } else {
+          updatedNotifications = [notification, ...notifications];
+        }
         const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
         set({ notifications: updatedNotifications, unreadCount });
       },

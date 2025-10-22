@@ -4,9 +4,10 @@ import { AuthScreen } from "@/modules/auth/screens/AuthScreen";
 import { HomeScreen } from "@/modules/home/screens/HomeScreen";
 import React from "react";
 import { StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   // if (isLoading) {
   //   return (
@@ -18,7 +19,9 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <StoreProvider>
-      {isAuthenticated ? <HomeScreen /> : <AuthScreen />}
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        {isAuthenticated ? <HomeScreen /> : <AuthScreen />}
+      </SafeAreaView>
     </StoreProvider>
   );
 };
@@ -29,5 +32,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1
   },
 });

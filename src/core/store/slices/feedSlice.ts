@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import { FeedItem } from '@/shared/types';
+import { create } from 'zustand';
 
 interface FeedState {
   items: FeedItem[];
@@ -8,6 +8,11 @@ interface FeedState {
   hasMore: boolean;
   currentPage: number;
   refreshing: boolean;
+  filters: {
+    search: string;
+    tags: string[];
+    dateRange: 'all' | '24h' | '7d' | '30d';
+  };
 }
 
 interface FeedActions {
@@ -20,6 +25,7 @@ interface FeedActions {
   setHasMore: (hasMore: boolean) => void;
   setCurrentPage: (page: number) => void;
   setRefreshing: (refreshing: boolean) => void;
+  setFilters: (filters: { search?: string; tags?: string[]; dateRange?: 'all' | '24h' | '7d' | '30d' }) => void;
   refreshFeed: () => void;
   loadMore: () => void;
   clearFeed: () => void;
@@ -35,6 +41,11 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   hasMore: true,
   currentPage: 1,
   refreshing: false,
+  filters: {
+    search: '',
+    tags: [],
+    dateRange: 'all',
+  },
 
   // Actions
   setItems: (items) => set({ items }),
@@ -68,6 +79,10 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   setCurrentPage: (currentPage) => set({ currentPage }),
   
   setRefreshing: (refreshing) => set({ refreshing }),
+  setFilters: (newFilters) => {
+    const current = get().filters;
+    set({ filters: { ...current, ...newFilters } });
+  },
   
   refreshFeed: () => {
     set({ 

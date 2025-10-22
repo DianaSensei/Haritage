@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Modal,
-  Dimensions,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+/* eslint-disable react/no-unescaped-entities */
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { Notification } from '@/shared/types';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface NotificationCenterProps {
   isVisible: boolean;
