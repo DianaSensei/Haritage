@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.dianasensei.haritage",
       "supportsTablet": true,
       "infoPlist": {
         "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication.",

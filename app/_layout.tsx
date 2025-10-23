@@ -1,31 +1,53 @@
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { Slot } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+  setStatusBarBackgroundColor,
+  setStatusBarHidden,
+  setStatusBarStyle,
+} from "expo-status-bar";
+import React, { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
 import "react-native-reanimated";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { StoreProvider } from "@/core/store";
+import { useAuthStore } from "@/core/store/slices/authSlice";
+import { AuthScreen } from "@/modules/auth/screens/AuthScreen";
 import { useColorScheme } from "@/shared/hooks";
-
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
+import { Slot } from "expo-router";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const { isAuthenticated } = useAuthStore();
+
+  // Set status bar style and background to prevent flicker
+  useEffect(() => {
+    setStatusBarStyle(colorScheme === "dark" ? "dark" : "light");
+    setStatusBarBackgroundColor(colorScheme === "dark" ? "#000" : "#fff");
+    setStatusBarHidden(false);
+  }, [colorScheme]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <SafeAreaProvider>
-        <StoreProvider>
+    <StoreProvider>
+      {isAuthenticated ? (
+        <View style={styles.container}>
           <Slot />
-        </StoreProvider>
-        <StatusBar style={colorScheme === "dark" ? "dark" : "light"} />
-      </SafeAreaProvider>
-    </ThemeProvider>
+        </View>
+      ) : (
+        <View style={styles.container}>
+          <AuthScreen />
+        </View>
+      )}
+    </StoreProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+});

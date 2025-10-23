@@ -4,6 +4,7 @@ export interface User {
     phoneNumber: string;
     name?: string;
     avatar?: string;
+    email?: string;
     isBiometricEnabled: boolean;
     createdAt: Date;
     updatedAt: Date;

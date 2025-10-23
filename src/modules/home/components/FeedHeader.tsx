@@ -25,30 +25,97 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const [showFilters, setShowFilters] = useState(false);
-    const baseTopPadding = 8;
+  const [searchMode, setSearchMode] = useState<'keyword' | 'tag'>('keyword');
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
+  const [newTag, setNewTag] = useState('');
 
+  const handleSearchChange = (text: string) => {
+    if (searchMode === 'keyword') {
+      onSearchChange(text);
+      setSuggestionsVisible(text.toLowerCase() === 'tag');
+    }
+  };
+
+  const selectSearchMode = (mode: 'keyword' | 'tag') => {
+    setSearchMode(mode);
+    setSuggestionsVisible(false);
+    if (mode === 'tag') {
+      onSearchChange('');
+    }
+  };
+
+  const addTag = () => {
+    if (newTag.trim()) {
+      const currentTags = tagQuery ? tagQuery.split(',').map(t => t.trim()) : [];
+      const newTags = [...currentTags, newTag.trim()].join(', ');
+      onTagChange(newTags);
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    const currentTags = tagQuery.split(',').map(t => t.trim()).filter(t => t !== tagToRemove);
+    onTagChange(currentTags.join(', '));
+  };
     return (
-      <View style={[styles.container, { paddingTop: baseTopPadding + insets.top }]}> 
+      <View style={[styles.container, { paddingTop: insets.top }]}> 
         <View style={styles.compactRow}>
           <IconSymbol name="leaf.fill" size={28} color="#007AFF" />
 
           <View style={styles.searchWrapper}>
-            <IconSymbol name="magnifyingglass" size={16} color="#999" style={styles.searchIcon} />
-            <TextInput
-              placeholder="Search feeds"
-              value={searchQuery}
-              onChangeText={onSearchChange}
-              style={styles.searchInput}
-              returnKeyType="search"
-              onSubmitEditing={() => Keyboard.dismiss()}
-            />
-            <TouchableOpacity
-              style={styles.filterToggle}
-              onPress={() => setShowFilters((prev: boolean) => !prev)}
-              accessibilityLabel="Toggle filters"
-            >
-              <IconSymbol name="line.3.horizontal.decrease" size={18} color="#666" />
-            </TouchableOpacity>
+            <View style={styles.searchBar}>
+              {searchMode === 'keyword' ? (
+                <TextInput
+                  placeholder="Search feeds"
+                  value={searchQuery}
+                  onChangeText={handleSearchChange}
+                  style={styles.searchInput}
+                  returnKeyType="search"
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                />
+              ) : (
+                <View style={styles.tagSearchContainer}>
+                  {tagQuery.split(',').map((tag, index) => (
+                    tag.trim() && (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.tagChip}
+                        onPress={() => removeTag(tag.trim())}
+                      >
+                        <Text style={styles.tagChipText}>{tag.trim()}</Text>
+                        <Text style={styles.tagChipRemove}>×</Text>
+                      </TouchableOpacity>
+                    )
+                  ))}
+                  <TextInput
+                    placeholder="Add tag"
+                    value={newTag}
+                    onChangeText={setNewTag}
+                    style={styles.tagInputInline}
+                    returnKeyType="done"
+                    onSubmitEditing={addTag}
+                  />
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.filterToggleInside}
+                onPress={() => setShowFilters((prev: boolean) => !prev)}
+                accessibilityLabel="Toggle filters"
+              >
+                <IconSymbol name="line.3.horizontal.decrease" size={18} color="#666" />
+              </TouchableOpacity>
+              <IconSymbol name="magnifyingglass" size={16} color="#999" style={styles.searchIconInside} />
+            </View>
+            {suggestionsVisible && (
+              <View style={styles.suggestions}>
+                <TouchableOpacity style={styles.suggestionItem} onPress={() => selectSearchMode('keyword')}>
+                  <Text>Search by keyword</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.suggestionItem} onPress={() => selectSearchMode('tag')}>
+                  <Text>Search by tag</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <NotificationBell onPress={onBellPress} size={26} color="#007AFF" />
@@ -56,14 +123,6 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
 
         {showFilters && (
           <View style={styles.filtersInline}>
-            <TextInput
-              placeholder="Tags (comma separated)"
-              value={tagQuery}
-              onChangeText={onTagChange}
-              style={styles.tagInputCompact}
-              returnKeyType="done"
-              onSubmitEditing={() => Keyboard.dismiss()}
-            />
             <View style={styles.dateFiltersCompact}>
               {(['all', '24h', '7d', '30d'] as const).map((d) => (
                 <TouchableOpacity
@@ -113,12 +172,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F8FA',
     paddingVertical: 8,
     paddingHorizontal: 8,
-    paddingLeft: 30,
+    paddingRight: 60,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#DDD',
     flex: 1,
-    marginRight: 8,
     fontSize: 13,
   },
   tagInput: {
@@ -159,29 +217,84 @@ const styles = StyleSheet.create({
   searchWrapper: {
     flex: 1,
     marginHorizontal: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  searchBar: {
+    position: 'relative',
+  },
+  filterToggleInside: {
+    position: 'absolute',
+    right: 8,
+    top: '50%',
+    transform: [{ translateY: -9 }],
+  },
+  searchIconInside: {
+    position: 'absolute',
+    right: 40,
+    top: '50%',
+    transform: [{ translateY: -8 }],
   },
   searchIcon: {
     position: 'absolute',
     left: 8,
     zIndex: 1,
   },
+  searchIconRight: {
+    marginLeft: 8,
+  },
   filterToggle: {
     padding: 8,
-    marginLeft: 6,
     borderRadius: 8,
   },
   filtersInline: {
     marginTop: 8,
   },
-  tagInputCompact: {
-    backgroundColor: '#F6F8FA',
+  tagSearchContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingRight: 60,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 4,
+    marginBottom: 4,
+  },
+  tagChipText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  tagChipRemove: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
+  tagInputInline: {
+    flex: 1,
     fontSize: 13,
-    marginBottom: 8,
+    minWidth: 60,
+  },
+  suggestions: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  suggestionItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
   },
   dateFiltersCompact: {
     flexDirection: 'row',

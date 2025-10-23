@@ -1,10 +1,7 @@
 import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
-import { AdBanner } from '@/modules/ads/components/AdBanner';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { FeedItem } from '@/modules/feed/components/FeedItem';
-import { NotificationBell } from '@/modules/notifications/components/NotificationBell';
-import { NotificationCenter } from '@/modules/notifications/components/NotificationCenter';
 import { AdItem, FeedItem as FeedItemType } from '@/shared/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, StyleSheet } from 'react-native';
@@ -170,18 +167,6 @@ export const HomeScreen: React.FC = () => {
         onDateFilterChange={(d) => { setDateFilter(d); setFilters({ dateRange: d }); }}
         onBellPress={() => setShowNotificationCenter(true)}
       />
-
-      <AdBanner
-        ad={{
-          id: 'header-ad',
-          title: 'Welcome to Haritage',
-          description: 'Discover amazing content and connect with others',
-          imageUrl: 'https://via.placeholder.com/400x120/007AFF/FFFFFF?text=Welcome',
-          actionUrl: '/welcome',
-          type: 'banner',
-        }}
-        onPress={handleAdPress}
-      />
     </>
   );
 
@@ -215,7 +200,7 @@ export const HomeScreen: React.FC = () => {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: 'padding', android: undefined })}>
       <FlatList
         ref={flatListRef}
-  data={applyFilters(feedItems)}
+        data={applyFilters(feedItems)}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
@@ -234,19 +219,6 @@ export const HomeScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={styles.feedList}
-      />
-
-      {/* Notification Bell */}
-      <NotificationBell
-        onPress={() => setShowNotificationCenter(true)}
-        size={28}
-        color="#007AFF"
-      />
-
-      {/* Notification Center Modal */}
-      <NotificationCenter
-        isVisible={showNotificationCenter}
-        onClose={() => setShowNotificationCenter(false)}
       />
     </KeyboardAvoidingView>
   );
