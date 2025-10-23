@@ -1,5 +1,6 @@
 import { NotificationBell } from '@/modules/notifications/components/NotificationBell';
-import React from 'react';
+import { IconSymbol } from '@/shared/components';
+import React, { useState } from 'react';
 import { Keyboard, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,49 +24,61 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
   onBellPress,
 }) => {
   const insets = useSafeAreaInsets();
+  const [showFilters, setShowFilters] = useState(false);
+    const baseTopPadding = 8;
 
-  // baseTopPadding mirrors the visual padding we want inside the header
-  const baseTopPadding = 12;
+    return (
+      <View style={[styles.container, { paddingTop: baseTopPadding + insets.top }]}> 
+        <View style={styles.compactRow}>
+          <IconSymbol name="leaf.fill" size={28} color="#007AFF" />
 
-  return (
-    <View style={[styles.container, { paddingTop: baseTopPadding + insets.top }]}> 
-      <View style={styles.topRow}>
-        <Text style={styles.title}>Feed</Text>
-        <NotificationBell onPress={onBellPress} size={28} color="#007AFF" />
+          <View style={styles.searchWrapper}>
+            <IconSymbol name="magnifyingglass" size={16} color="#999" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search feeds"
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              style={styles.searchInput}
+              returnKeyType="search"
+              onSubmitEditing={() => Keyboard.dismiss()}
+            />
+            <TouchableOpacity
+              style={styles.filterToggle}
+              onPress={() => setShowFilters((prev: boolean) => !prev)}
+              accessibilityLabel="Toggle filters"
+            >
+              <IconSymbol name="line.3.horizontal.decrease" size={18} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <NotificationBell onPress={onBellPress} size={26} color="#007AFF" />
+        </View>
+
+        {showFilters && (
+          <View style={styles.filtersInline}>
+            <TextInput
+              placeholder="Tags (comma separated)"
+              value={tagQuery}
+              onChangeText={onTagChange}
+              style={styles.tagInputCompact}
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
+            />
+            <View style={styles.dateFiltersCompact}>
+              {(['all', '24h', '7d', '30d'] as const).map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  onPress={() => onDateFilterChange(d)}
+                  style={[styles.dateChip, dateFilter === d && styles.dateChipActive]}
+                >
+                  <Text style={[styles.dateChipText, dateFilter === d && styles.dateChipTextActive]}>{d}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
-
-      <View style={styles.searchRow}>
-        <TextInput
-          placeholder="Search feeds..."
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          style={styles.searchInput}
-          returnKeyType="search"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-        <TextInput
-          placeholder="Tags (comma separated)"
-          value={tagQuery}
-          onChangeText={onTagChange}
-          style={styles.tagInput}
-          returnKeyType="done"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-      </View>
-
-      <View style={styles.dateFilters}>
-        {(['all', '24h', '7d', '30d'] as const).map((d) => (
-          <TouchableOpacity
-            key={d}
-            onPress={() => onDateFilterChange(d)}
-            style={[styles.dateButton, dateFilter === d && styles.dateButtonActive]}
-          >
-            <Text style={[styles.dateButtonText, dateFilter === d && styles.dateButtonTextActive]}>{d}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
@@ -99,8 +112,11 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: '#F6F8FA',
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
+    paddingLeft: 30,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#DDD',
     flex: 1,
     marginRight: 8,
     fontSize: 13,
@@ -132,6 +148,61 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   dateButtonTextActive: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  compactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  searchWrapper: {
+    flex: 1,
+    marginHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 8,
+    zIndex: 1,
+  },
+  filterToggle: {
+    padding: 8,
+    marginLeft: 6,
+    borderRadius: 8,
+  },
+  filtersInline: {
+    marginTop: 8,
+  },
+  tagInputCompact: {
+    backgroundColor: '#F6F8FA',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  dateFiltersCompact: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  dateChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    marginRight: 8,
+  },
+  dateChipActive: {
+    backgroundColor: '#007AFF',
+  },
+  dateChipText: {
+    color: '#666',
+    fontSize: 12,
+  },
+  dateChipTextActive: {
     color: '#fff',
     fontSize: 12,
   },
