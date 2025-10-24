@@ -1,19 +1,22 @@
 import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { userService } from '@/modules/account/services/userService';
 import { IconSymbol, ThemedText, ThemedView } from '@/shared/components';
 import { useThemeColor } from '@/shared/hooks/use-theme-color';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const AccountScreen: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const router = useRouter();
   const tintColor = useThemeColor({}, 'tint');
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'icon'); // using icon as border color for subtle theme sync
   const accentColor = useThemeColor({}, 'tint');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -55,6 +58,50 @@ export const AccountScreen: React.FC = () => {
 
   const handleEditProfile = () => Alert.alert('Edit Profile', 'Update user info feature coming soon');
 
+  const handleChangeAvatar = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission Required', 'Please allow photo library access to change your avatar.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      const asset = result.assets[0];
+      if (!asset) return;
+
+      setIsUploadingAvatar(true);
+
+      // Upload avatar
+      const uploadResult = await userService.uploadAvatar({
+        uri: asset.uri,
+        name: asset.fileName || `avatar_${Date.now()}.jpg`,
+        type: asset.mimeType || 'image/jpeg',
+      });
+
+      if (uploadResult.success && uploadResult.data.avatarUrl) {
+        // Update user state with new avatar URL
+        updateUser({ avatar: uploadResult.data.avatarUrl });
+        Alert.alert('Success', 'Avatar updated successfully');
+      } else {
+        Alert.alert('Error', uploadResult.error || 'Failed to upload avatar');
+      }
+    } catch (error: any) {
+      console.error('Avatar change error:', error);
+      Alert.alert('Error', error?.message || 'Failed to change avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
@@ -64,11 +111,20 @@ export const AccountScreen: React.FC = () => {
             <IconSymbol name="settings" size={20} color={tintColor} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.avatarContainer} onPress={handleEditProfile} activeOpacity={0.8}>
-            {user?.avatar ? (
+          <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar} activeOpacity={0.8}>
+            {isUploadingAvatar ? (
+              <View style={styles.avatarLoading}>
+                <ActivityIndicator size="large" color={tintColor} />
+              </View>
+            ) : user?.avatar ? (
               <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
             ) : (
               <IconSymbol name="person.crop.circle" size={80} color={tintColor} />
+            )}
+            {!isUploadingAvatar && (
+              <View style={[styles.avatarBadge, { backgroundColor: tintColor }]}>
+                <IconSymbol name="camera" size={12} color="#fff" />
+              </View>
             )}
           </TouchableOpacity>
 
@@ -165,16 +221,24 @@ const styles = StyleSheet.create({
   },
   avatarBadge: {
     position: 'absolute',
-    bottom: 6,
-    right: 6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    bottom: 2,
+    right: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#4CAF50',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#fff',
+  },
+  avatarLoading: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centerRow: {
     flexDirection: 'row',

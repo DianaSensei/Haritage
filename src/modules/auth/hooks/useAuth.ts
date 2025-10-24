@@ -171,6 +171,7 @@ export const useAuth = () => {
     logout,
     checkBiometricAvailability,
     checkBiometricEnabled,
+    updateUser,
     clearError,
   };
 };
