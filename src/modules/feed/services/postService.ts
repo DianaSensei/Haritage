@@ -5,7 +5,7 @@ export interface CreatePostRequest {
   title?: string;
   content?: string;
   tags?: string[];
-  media?: any[]; // media upload results
+  media?: any[]; // FileUpload[] or MediaUploadResult[]
 }
 
 export class PostService {
@@ -16,19 +16,32 @@ export class PostService {
     const hasFileUploads = Array.isArray(data.media) && data.media.length > 0 && (data.media[0].uri !== undefined);
 
     if (hasFileUploads) {
-      // Upload files
+      // Upload files first
       const files = data.media as unknown as FileUpload[];
       mediaResults = await mediaService.uploadMultipleMedia(files);
     }
 
-    // Use mediaService.createPostWithMedia which expects files and fields, but many backends support a single endpoint
-    const result = await mediaService.createPostWithMedia(data.content || '', [] ,{
+    // Now create the post with the uploaded media results
+    // This assumes the backend has a post creation endpoint that accepts media IDs/URLs
+    const postData = {
+      title: data.title,
+      content: data.content,
       tags: data.tags,
-      visibility: 'public',
-    } as any);
+      media: mediaResults, // Pass the uploaded media results
+    };
 
-    // The implementation depends on backend; assume it returns { postId, media }
+    // For now, simulate post creation - replace with actual API call
+    const result = await this.createPostViaApi(postData);
     return result;
+  }
+
+  private async createPostViaApi(data: any) {
+    // Replace with actual API call to your backend
+    // This should send title, content, tags, and media array with IDs/URLs
+    return {
+      postId: `post_${Date.now()}`,
+      media: data.media,
+    };
   }
 }
 

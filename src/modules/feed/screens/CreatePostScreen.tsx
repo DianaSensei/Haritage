@@ -6,8 +6,9 @@ import { FileUpload } from '@/shared/services/api/client';
 import { FeedItem } from '@/shared/types';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const CreatePostScreen: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -20,15 +21,7 @@ export const CreatePostScreen: React.FC = () => {
   const [media, setMedia] = useState<FileUpload[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.info}>You must be logged in to create a post.</Text>
-      </View>
-    );
-  }
-
-  const pickMedia = async (mediaTypes: ImagePicker.MediaTypeOptions, insertToEditor: boolean = false) => {
+  const pickMedia = async (mediaTypes: 'images' | 'videos' | 'livePhotos', insertToEditor: boolean = false) => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
@@ -38,9 +31,9 @@ export const CreatePostScreen: React.FC = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes,
-        allowsMultipleSelection: true as any,
+        allowsMultipleSelection: true,
         quality: 0.8,
-      } as any);
+      });
 
       if (result.canceled) return;
 
@@ -73,9 +66,13 @@ export const CreatePostScreen: React.FC = () => {
     }
   };
 
-  const removeMediaAt = (index: number) => {
-    setMedia((m) => m.filter((_, i) => i !== index));
-  };
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.info}>You must be logged in to create a post.</Text>
+      </View>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!title.trim() && !content.trim() && media.length === 0) {
@@ -91,7 +88,7 @@ export const CreatePostScreen: React.FC = () => {
         ? await mediaService.uploadMultipleMedia(media)
         : [];
 
-      // Create post via postService (server will link media)
+      // Create post via postService
       const tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
       const created = await postService.createPost({
         title: title.trim(),
@@ -137,70 +134,72 @@ export const CreatePostScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.label}>Title</Text>
-      <TextInput value={title} onChangeText={setTitle} placeholder="Enter a short title" style={styles.input} />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: 'padding', android: undefined })}>
+        <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+        <Text style={styles.label}>Title</Text>
+        <TextInput value={title} onChangeText={setTitle} placeholder="Enter a short title" style={styles.input} />
 
-      <Text style={styles.label}>Content</Text>
-      <View style={styles.richEditorContainer}>
-        <RichEditor
-          ref={richTextRef}
-          initialContentHTML={content}
-          onChange={setContent}
-          placeholder="Write something beautiful..."
-          style={styles.richInput}
-          editorStyle={{ backgroundColor: '#fff', color: '#000' }}
-        />
+        <Text style={styles.label}>Content</Text>
+        <View style={styles.richEditorContainer}>
+          <RichEditor
+            ref={richTextRef}
+            initialContentHTML={content}
+            onChange={setContent}
+            placeholder="Write something beautiful..."
+            style={styles.richInput}
+            editorStyle={{ backgroundColor: '#fff', color: '#000' }}
+            scrollEnabled={false}
+          />
 
-        <RichToolbar
-          editor={richTextRef}
-          actions={[
-            actions.insertImage,
-            actions.setBold,
-            actions.setItalic,
-            actions.insertBulletsList,
-            actions.insertOrderedList,
-            actions.insertLink,
-          ]}
-          iconMap={{}}
-        />
-
-        {/* Custom insert image button to ensure consistent selection behavior */}
-        <View style={styles.editorButtonsRow}>
-          <TouchableOpacity style={styles.mediaButton} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Images, true)}>
-            <Text style={styles.mediaButtonText}>Insert Image</Text>
-          </TouchableOpacity>
+          <RichToolbar
+            editor={richTextRef}
+            actions={[
+              actions.setBold,
+              actions.setItalic,
+              actions.insertBulletsList,
+              actions.insertOrderedList,
+              actions.insertLink,
+              actions.insertImage,
+              actions.insertVideo,
+            ]}
+            onPressAddImage={() => pickMedia('images', true)}
+            onPressAddVideo={() => pickMedia('videos', false)}
+            iconMap={{}}
+            style={styles.richToolbar}
+          />
         </View>
-      </View>
 
-      <Text style={styles.label}>Tags (comma separated)</Text>
-      <TextInput value={tags} onChangeText={setTags} placeholder="tag1, tag2" style={styles.input} />
+        <Text style={styles.label}>Tags (comma separated)</Text>
+        <TextInput value={tags} onChangeText={setTags} placeholder="tag1, tag2" style={styles.input} />
 
-      <Text style={styles.label}>Media</Text>
-      <View style={styles.mediaButtonsRow}>
-        <TouchableOpacity style={styles.mediaButton} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Images)}>
-          <Text style={styles.mediaButtonText}>Add Images</Text>
+        {media.length > 0 && (
+          <>
+            <Text style={styles.label}>Selected Media</Text>
+            <View style={styles.previewRow}>
+              {media.map((m, i) => (
+                <View key={`${m.uri}-${i}`} style={styles.previewItem}>
+                  <Image source={{ uri: m.uri }} style={styles.previewImage} />
+                  {m.type.startsWith('video/') && (
+                    <View style={styles.videoOverlay}>
+                      <Text style={styles.videoIcon}>▶️</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity style={styles.removeButton} onPress={() => setMedia(media.filter((_, idx) => idx !== i))}>
+                    <Text style={styles.removeText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Create Post</Text>}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.mediaButton} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Videos)}>
-          <Text style={styles.mediaButtonText}>Add Videos</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.previewRow}>
-        {media.map((m, i) => (
-          <View key={`${m.uri}-${i}`} style={styles.previewItem}>
-            <Image source={{ uri: m.uri }} style={styles.previewImage} />
-            <TouchableOpacity style={styles.removeButton} onPress={() => removeMediaAt(i)}>
-              <Text style={styles.removeText}>×</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
-        {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Create Post</Text>}
-      </TouchableOpacity>
-    </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -209,8 +208,9 @@ const styles = StyleSheet.create({
   contentContainer: { padding: 16 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#e6e6e6', borderRadius: 8, padding: 12, marginBottom: 12 },
-  richInput: { minHeight: 120, textAlignVertical: 'top' },
-  richEditorContainer: { marginBottom: 12 },
+  richInput: { minHeight: 60 },
+  richEditorContainer: { marginBottom: 25, borderWidth: 1, borderColor: '#e6e6e6', borderRadius: 8 },
+  richToolbar: { marginTop: 8 },
   editorButtonsRow: { flexDirection: 'row', marginTop: 8 },
   toolbar: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   toolButton: { padding: 8, borderRadius: 6, backgroundColor: '#f5f5f5' },
@@ -221,12 +221,15 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   previewItem: { width: 100, height: 100, marginRight: 8, marginBottom: 8 },
   previewImage: { width: '100%', height: '100%', borderRadius: 8 },
-  removeButton: { position: 'absolute', top: -6, right: -6, backgroundColor: '#FF3B30', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  videoOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', borderRadius: 8 },
+  videoIcon: { fontSize: 24 },
+  removeButton: { position: 'absolute', top: 4, right: 4, backgroundColor: '#FF3B30', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   removeText: { color: '#fff', fontSize: 16, lineHeight: 16 },
   submitButton: { backgroundColor: '#007AFF', paddingVertical: 14, borderRadius: 10, marginTop: 18, alignItems: 'center' },
   submitText: { color: '#fff', fontWeight: '700' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   info: { color: '#333' },
+  safeArea: { flex: 1, backgroundColor: '#fff' },
 });
 
 export default CreatePostScreen;
