@@ -5,23 +5,51 @@ import { postService } from '@/modules/feed/services/postService';
 import { FileUpload } from '@/shared/services/api/client';
 import { FeedItem } from '@/shared/types';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+interface Block {
+  id: string;
+  type: 'text' | 'image' | 'video';
+  content: string;
+  metadata?: { uri: string; duration?: number; size?: number };
+}
 
 export const CreatePostScreen: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const { addItems } = useFeedStore();
 
   const [title, setTitle] = useState('');
-  const richTextRef = useRef<RichEditor>(null);
-  const [content, setContent] = useState(''); // HTML rich text
-  const [tags, setTags] = useState(''); // comma separated
-  const [media, setMedia] = useState<FileUpload[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([{ id: '0', type: 'text', content: '' }]);
+  const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const pickMedia = async (mediaTypes: 'images' | 'videos' | 'livePhotos', insertToEditor: boolean = false) => {
+  const addBlock = (type: 'text' | 'image' | 'video', afterId: string) => {
+    const newBlock: Block = {
+      id: `${Date.now()}`,
+      type,
+      content: '',
+    };
+    const index = blocks.findIndex(b => b.id === afterId);
+    const newBlocks = [...blocks];
+    newBlocks.splice(index + 1, 0, newBlock);
+    setBlocks(newBlocks);
+  };
+
+  const updateBlockContent = (id: string, content: string) => {
+    setBlocks(blocks.map(b => b.id === id ? { ...b, content } : b));
+  };
+
+  const removeBlock = (id: string) => {
+    if (blocks.length === 1) {
+      Alert.alert('Validation', 'At least one block is required.');
+      return;
+    }
+    setBlocks(blocks.filter(b => b.id !== id));
+  };
+
+  const pickMedia = async (type: 'images' | 'videos', afterId: string) => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
@@ -30,80 +58,86 @@ export const CreatePostScreen: React.FC = () => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes,
-        allowsMultipleSelection: true,
+        mediaTypes: type,
+        allowsMultipleSelection: false,
         quality: 0.8,
       });
 
       if (result.canceled) return;
 
-      // result can be single asset or an array depending on platform
-      const assets: any[] = (result as any).selected ?? (result as any).assets ?? [result as any];
+      const asset = result.assets[0];
+      const mediaBlock: Block = {
+        id: `${Date.now()}`,
+        type: type === 'images' ? 'image' : 'video',
+        content: asset.uri,
+        metadata: {
+          uri: asset.uri,
+          size: asset.fileSize || undefined,
+          duration: asset.duration || undefined,
+        },
+      };
 
-      const picked: FileUpload[] = assets.map((a, idx) => ({
-        uri: a.uri,
-        name: a.fileName || `media_${Date.now()}_${idx}`,
-        type: a.type === 'video' ? (a.mimeType || 'video/mp4') : (a.mimeType || 'image/jpeg'),
-      }));
-
-      setMedia((m) => [...m, ...picked]);
-
-      if (insertToEditor && assets.length > 0) {
-        // Insert each image into the rich editor (videos are skipped for in-editor insertion)
-        for (const a of assets) {
-          if (a.type === 'image' && richTextRef.current) {
-            try {
-              richTextRef.current.insertImage(a.uri);
-            } catch (e) {
-              console.warn('insertImage failed', e);
-            }
-          }
-        }
-      }
+      const index = blocks.findIndex(b => b.id === afterId);
+      const newBlocks = [...blocks];
+      newBlocks.splice(index + 1, 0, mediaBlock);
+      setBlocks(newBlocks);
     } catch (e) {
-      console.warn('pickMedia', e);
+      console.warn('pickMedia error', e);
       Alert.alert('Error', 'Unable to pick media.');
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.info}>You must be logged in to create a post.</Text>
-      </View>
-    );
-  }
-
   const handleSubmit = async () => {
-    if (!title.trim() && !content.trim() && media.length === 0) {
-      Alert.alert('Validation', 'Please add some text or media to create a post.');
+    const hasContent = title.trim() || blocks.some(b => b.content.trim());
+    
+    if (!hasContent) {
+      Alert.alert('Validation', 'Please add a title and at least one content block.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Optionally compress images here via mediaService.compressImage
-      const uploaded = media.length > 0
-        ? await mediaService.uploadMultipleMedia(media)
+      // Collect media files to upload
+      const mediaFiles: FileUpload[] = blocks
+        .filter(b => (b.type === 'image' || b.type === 'video') && b.metadata?.uri)
+        .map((b, idx) => ({
+          uri: b.metadata!.uri,
+          name: `media_${Date.now()}_${idx}`,
+          type: b.type === 'image' ? 'image/jpeg' : 'video/mp4',
+        }));
+
+      // Upload media if any
+      const uploaded = mediaFiles.length > 0
+        ? await mediaService.uploadMultipleMedia(mediaFiles)
         : [];
+
+      // Get text content from all text blocks
+      const textContent = blocks
+        .filter(b => b.type === 'text')
+        .map(b => b.content.trim())
+        .filter(Boolean)
+        .join('\n\n');
 
       // Create post via postService
       const tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
       const created = await postService.createPost({
         title: title.trim(),
-        content: content.trim(),
+        content: textContent,
         tags: tagsArr,
         media: uploaded,
       });
 
       // Optimistically add to feed store
+      const firstMedia = uploaded[0];
       const newItem: FeedItem = {
         id: created.postId || `local-${Date.now()}`,
-        type: uploaded.length > 0 && uploaded[0].type === 'video' ? 'video' : (uploaded.length > 0 ? 'image' : 'text'),
-        content: content || (uploaded[0]?.url ?? ''),
-        thumbnail: uploaded[0]?.thumbnail,
-        videoUrl: uploaded.find(m => m.type === 'video')?.url,
+        type: firstMedia 
+          ? (firstMedia.type === 'video' ? 'video' : 'image')
+          : 'text',
+        content: textContent || title,
+        thumbnail: firstMedia?.thumbnail,
+        videoUrl: firstMedia?.type === 'video' ? firstMedia.url : undefined,
         author: {
           id: String(user?.id ?? '0'),
           name: user?.name ?? 'You',
@@ -120,9 +154,8 @@ export const CreatePostScreen: React.FC = () => {
 
       // Reset form
       setTitle('');
-      setContent('');
+      setBlocks([{ id: '0', type: 'text', content: '' }]);
       setTags('');
-      setMedia([]);
 
       Alert.alert('Success', 'Post created successfully.');
     } catch (err: any) {
@@ -133,70 +166,111 @@ export const CreatePostScreen: React.FC = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.info}>You must be logged in to create a post.</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: 'padding', android: undefined })}>
         <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
-        <Text style={styles.label}>Title</Text>
-        <TextInput value={title} onChangeText={setTitle} placeholder="Enter a short title" style={styles.input} />
-
-        <Text style={styles.label}>Content</Text>
-        <View style={styles.richEditorContainer}>
-          <RichEditor
-            ref={richTextRef}
-            initialContentHTML={content}
-            onChange={setContent}
-            placeholder="Write something beautiful..."
-            style={styles.richInput}
-            editorStyle={{ backgroundColor: '#fff', color: '#000' }}
-            scrollEnabled={false}
+          <Text style={styles.label}>Title</Text>
+          <TextInput 
+            value={title} 
+            onChangeText={setTitle} 
+            placeholder="Enter a title for your post" 
+            style={styles.input}
+            maxLength={100}
           />
 
-          <RichToolbar
-            editor={richTextRef}
-            actions={[
-              actions.setBold,
-              actions.setItalic,
-              actions.insertBulletsList,
-              actions.insertOrderedList,
-              actions.insertLink,
-              actions.insertImage,
-              actions.insertVideo,
-            ]}
-            onPressAddImage={() => pickMedia('images', true)}
-            onPressAddVideo={() => pickMedia('videos', false)}
-            iconMap={{}}
-            style={styles.richToolbar}
-          />
-        </View>
+          <Text style={styles.sectionLabel}>Content Blocks</Text>
+          
+          {blocks.map((block, index) => (
+            <View key={block.id} style={styles.blockWrapper}>
+              {block.type === 'text' && (
+                <>
+                  <TextInput
+                    value={block.content}
+                    onChangeText={(text) => updateBlockContent(block.id, text)}
+                    placeholder={`Paragraph ${blocks.filter(b => b.type === 'text').indexOf(block) + 1}`}
+                    style={styles.textBlock}
+                    multiline
+                    numberOfLines={4}
+                  />
+                </>
+              )}
 
-        <Text style={styles.label}>Tags (comma separated)</Text>
-        <TextInput value={tags} onChangeText={setTags} placeholder="tag1, tag2" style={styles.input} />
-
-        {media.length > 0 && (
-          <>
-            <Text style={styles.label}>Selected Media</Text>
-            <View style={styles.previewRow}>
-              {media.map((m, i) => (
-                <View key={`${m.uri}-${i}`} style={styles.previewItem}>
-                  <Image source={{ uri: m.uri }} style={styles.previewImage} />
-                  {m.type.startsWith('video/') && (
-                    <View style={styles.videoOverlay}>
-                      <Text style={styles.videoIcon}>▶️</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity style={styles.removeButton} onPress={() => setMedia(media.filter((_, idx) => idx !== i))}>
-                    <Text style={styles.removeText}>×</Text>
-                  </TouchableOpacity>
+              {block.type === 'image' && (
+                <View style={styles.mediaContainer}>
+                  <Image source={{ uri: block.content }} style={styles.mediaPreview} />
+                  <Text style={styles.mediaLabel}>Image</Text>
                 </View>
-              ))}
-            </View>
-          </>
-        )}
+              )}
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Create Post</Text>}
-        </TouchableOpacity>
+              {block.type === 'video' && (
+                <View style={styles.mediaContainer}>
+                  <View style={styles.videoPreview}>
+                    <Text style={styles.videoPlayIcon}>▶️</Text>
+                    <Text style={styles.mediaLabel}>Video</Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.blockControls}>
+                <TouchableOpacity 
+                  style={styles.addBlockButton} 
+                  onPress={() => addBlock('text', block.id)}
+                >
+                  <Text style={styles.addButtonText}>+ Text</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.addBlockButton} 
+                  onPress={() => pickMedia('images', block.id)}
+                >
+                  <Text style={styles.addButtonText}>+ Image</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.addBlockButton} 
+                  onPress={() => pickMedia('videos', block.id)}
+                >
+                  <Text style={styles.addButtonText}>+ Video</Text>
+                </TouchableOpacity>
+                {blocks.length > 1 && (
+                  <TouchableOpacity 
+                    style={[styles.addBlockButton, styles.deleteButton]} 
+                    onPress={() => removeBlock(block.id)}
+                  >
+                    <Text style={styles.deleteButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ))}
+
+          <Text style={styles.label}>Tags (comma separated)</Text>
+          <TextInput 
+            value={tags} 
+            onChangeText={setTags} 
+            placeholder="e.g., travel, food, tech" 
+            style={styles.input}
+            maxLength={100}
+          />
+
+          <TouchableOpacity 
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
+            onPress={handleSubmit} 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Publish Post</Text>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -204,32 +278,41 @@ export const CreatePostScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  contentContainer: { padding: 16 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#e6e6e6', borderRadius: 8, padding: 12, marginBottom: 12 },
-  richInput: { minHeight: 60 },
-  richEditorContainer: { marginBottom: 25, borderWidth: 1, borderColor: '#e6e6e6', borderRadius: 8 },
-  richToolbar: { marginTop: 8 },
-  editorButtonsRow: { flexDirection: 'row', marginTop: 8 },
-  toolbar: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  toolButton: { padding: 8, borderRadius: 6, backgroundColor: '#f5f5f5' },
-  toolText: { fontWeight: '700' },
-  mediaButtonsRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  mediaButton: { backgroundColor: '#007AFF', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, marginRight: 8 },
-  mediaButtonText: { color: '#fff', fontWeight: '600' },
-  previewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  previewItem: { width: 100, height: 100, marginRight: 8, marginBottom: 8 },
-  previewImage: { width: '100%', height: '100%', borderRadius: 8 },
-  videoOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', borderRadius: 8 },
-  videoIcon: { fontSize: 24 },
-  removeButton: { position: 'absolute', top: 4, right: 4, backgroundColor: '#FF3B30', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  removeText: { color: '#fff', fontSize: 16, lineHeight: 16 },
-  submitButton: { backgroundColor: '#007AFF', paddingVertical: 14, borderRadius: 10, marginTop: 18, alignItems: 'center' },
-  submitText: { color: '#fff', fontWeight: '700' },
+  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  contentContainer: { padding: 16, paddingBottom: 32 },
+  safeArea: { flex: 1, backgroundColor: '#f8f9fa' },
+  
+  // Labels & inputs
+  label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8, color: '#333' },
+  sectionLabel: { fontSize: 16, fontWeight: '700', marginTop: 20, marginBottom: 12, color: '#000' },
+  input: { borderWidth: 1, borderColor: '#e6e6e6', borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: '#fff', fontSize: 14 },
+  
+  // Block styles
+  blockWrapper: { marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#e6e6e6', overflow: 'hidden' },
+  textBlock: { padding: 12, fontSize: 14, lineHeight: 20, minHeight: 100, textAlignVertical: 'top', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  
+  // Media styles
+  mediaContainer: { justifyContent: 'center', alignItems: 'center', paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  mediaPreview: { width: '100%', height: 200, borderRadius: 4 },
+  mediaLabel: { marginTop: 8, fontSize: 12, color: '#666', fontWeight: '500' },
+  videoPreview: { width: 150, height: 150, backgroundColor: '#000', borderRadius: 4, justifyContent: 'center', alignItems: 'center' },
+  videoPlayIcon: { fontSize: 40, marginBottom: 8 },
+  
+  // Block controls
+  blockControls: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12 },
+  addBlockButton: { flex: 1, minWidth: '45%', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#007AFF', borderRadius: 6, alignItems: 'center' },
+  addButtonText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  deleteButton: { backgroundColor: '#FF3B30' },
+  deleteButtonText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  
+  // Submit button
+  submitButton: { backgroundColor: '#007AFF', paddingVertical: 14, borderRadius: 10, marginTop: 24, alignItems: 'center', marginBottom: 16 },
+  submitButtonDisabled: { opacity: 0.6 },
+  submitText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  
+  // Misc
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  info: { color: '#333' },
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  info: { color: '#333', fontSize: 16 },
 });
 
 export default CreatePostScreen;
