@@ -9,6 +9,8 @@ export const CONFIG = {
         OTP_EXPIRY_MINUTES: 5,
         MAX_LOGIN_ATTEMPTS: 3,
         BIOMETRIC_TIMEOUT: 30000, // 30 seconds
+        PIN_LENGTH: 6,
+        LOCK_TIMEOUT_MS: 0, // 0 = lock immediately on background, set to > 0 for timeout
     },
 
     // Video settings
@@ -37,6 +39,9 @@ export const CONFIG = {
         USER_DATA: 'haritage.user_data',
         BIOMETRIC_ENABLED: 'haritage.biometric_enabled',
         THEME_PREFERENCE: 'haritage.theme_preference',
+        USER_PIN: 'haritage.user_pin',
+        PIN_ENABLED: 'haritage.pin_enabled',
+        LAST_AUTHENTICATED: 'haritage.last_authenticated',
     },
 
     // Network
