@@ -58,6 +58,16 @@ export const useAuth = () => {
       }
       
       login(result.data.user);
+      
+      // Check if PIN setup is needed after successful login
+      const { pinService } = await import('../services/pinService');
+      const isPinSet = await pinService.isPinSet();
+      if (!isPinSet) {
+        // Import and trigger PIN setup
+        const { useLockStore } = await import('@/core/store/slices/lockSlice');
+        useLockStore.getState().setNeedsPinSetup(true);
+      }
+      
       return true;
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');

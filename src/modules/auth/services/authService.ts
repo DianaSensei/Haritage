@@ -196,6 +196,10 @@ export class AuthService {
       console.error('Logout error:', error);
     } finally {
       await this.removeToken();
+      // Clean up PIN and biometric settings on logout
+      const { pinService } = await import('./pinService');
+      await pinService.removePin();
+      await this.disableBiometric();
     }
   }
 }
