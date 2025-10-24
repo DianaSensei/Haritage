@@ -28,7 +28,7 @@ export class UserService {
     } catch (error) {
       console.error('Failed to update profile:', error);
       return {
-        data: {} as User,
+        data: null as unknown as User,
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update profile',
       };
@@ -48,7 +48,7 @@ export class UserService {
     } catch (error) {
       console.error('Failed to get profile:', error);
       return {
-        data: {} as User,
+        data: null as unknown as User,
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get profile',
       };
