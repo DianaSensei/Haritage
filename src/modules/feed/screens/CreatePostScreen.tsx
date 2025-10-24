@@ -49,13 +49,17 @@ export const CreatePostScreen: React.FC = () => {
       setMedia((m) => [...m, ...picked]);
 
       if (insertToEditor && assets.length > 0) {
-        // Insert each image into the rich editor (videos are skipped for in-editor insertion)
+        // Insert each image or video into the rich editor
         for (const a of assets) {
-          if (a.type === 'image' && richTextRef.current) {
+          if (richTextRef.current) {
             try {
-              richTextRef.current.insertImage(a.uri);
+              if (a.type === 'image') {
+                richTextRef.current.insertImage(a.uri);
+              } else if (a.type === 'video') {
+                richTextRef.current.insertVideo(a.uri);
+              }
             } catch (e) {
-              console.warn('insertImage failed', e);
+              console.warn('insertMedia failed', e);
             }
           }
         }
@@ -164,7 +168,7 @@ export const CreatePostScreen: React.FC = () => {
               actions.insertVideo,
             ]}
             onPressAddImage={() => pickMedia('images', true)}
-            onPressAddVideo={() => pickMedia('videos', false)}
+            onPressAddVideo={() => pickMedia('videos', true)}
             iconMap={{}}
             style={styles.richToolbar}
           />
