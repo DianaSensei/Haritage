@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unescaped-entities */
+ 
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { Notification } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';

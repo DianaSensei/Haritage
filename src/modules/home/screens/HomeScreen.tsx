@@ -2,14 +2,17 @@ import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { FeedItem } from '@/modules/feed/components/FeedItem';
+import { IconSymbol } from '@/shared/components';
 import { AdItem, FeedItem as FeedItemType } from '@/shared/types';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, StyleSheet } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, StyleSheet, TouchableOpacity } from 'react-native';
 import { FeedHeader } from '../components/FeedHeader';
 
 // const { height: screenHeight } = Dimensions.get('window');
 
 export const HomeScreen: React.FC = () => {
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const {
     items: feedItems,
@@ -197,7 +200,7 @@ export const HomeScreen: React.FC = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: 'padding', android: undefined })}>
+    <KeyboardAvoidingView pointerEvents="box-none" style={styles.container} behavior={Platform.select({ ios: 'padding', android: undefined })}>
       <FlatList
         ref={flatListRef}
         data={applyFilters(feedItems)}
@@ -215,11 +218,22 @@ export const HomeScreen: React.FC = () => {
         onEndReachedThreshold={0.5}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        showsVerticalScrollIndicator={false}
+  showsVerticalScrollIndicator={false}
+  removeClippedSubviews={false}
+  contentContainerStyle={{ paddingBottom: 180 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={styles.feedList}
       />
+      {/* Floating create post button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/create-post')}
+        accessibilityLabel="Create post"
+        accessibilityRole="button"
+      >
+        <IconSymbol name="plus" size={20} color="#fff" />
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 };
@@ -271,5 +285,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 6,
     backgroundColor: '#F0F0F0',
+  }
+  ,
+  fab: {
+    position: 'absolute',
+    right: 18,
+    bottom: 100,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 24,
+    zIndex: 9999,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   }
 });

@@ -31,6 +31,11 @@ const MAPPING = {
     'mail': 'email',
     'check.circle': 'check-circle',
     'clock': 'schedule',
+    'plus': 'add',
+    'photo.on.rectangle': 'photo-library',
+    'video.fill': 'videocam',
+    'doc.text.fill': 'description',
+    'xmark': 'close',
 } as IconMapping;
 
 /**

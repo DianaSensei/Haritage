@@ -106,7 +106,7 @@ export const OTPVerificationForm: React.FC<OTPVerificationFormProps> = ({
     <View style={styles.container}>
       <Text style={styles.title}>Verify Phone Number</Text>
       <Text style={styles.subtitle}>
-        We've sent a 6-digit code to{'\n'}
+        We've sent a 6-digit code (000000) to{'\n'}
         <Text style={styles.phoneNumber}>{phoneNumber}</Text>
       </Text>
       
