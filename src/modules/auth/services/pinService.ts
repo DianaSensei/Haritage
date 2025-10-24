@@ -27,6 +27,11 @@ export class PinService {
         throw new Error(`PIN must be exactly ${CONFIG.AUTH.PIN_LENGTH} digits`);
       }
 
+      // Validate that PIN contains only numeric digits
+      if (!/^\d+$/.test(pin)) {
+        throw new Error('PIN must contain only numeric digits');
+      }
+
       const hashedPin = await this.hashPin(pin);
       await SecureStore.setItemAsync(CONFIG.STORAGE_KEYS.USER_PIN, hashedPin);
       await SecureStore.setItemAsync(CONFIG.STORAGE_KEYS.PIN_ENABLED, 'true');

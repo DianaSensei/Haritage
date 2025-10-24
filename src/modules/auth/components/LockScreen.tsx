@@ -3,7 +3,7 @@ import { IconSymbol } from '@/shared/components';
 import { useThemeColor } from '@/shared/hooks/use-theme-color';
 import * as LocalAuthentication from 'expo-local-authentication';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View, Vibration } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Vibration } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services/authService';
 import { pinService } from '../services/pinService';
@@ -55,6 +55,9 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, allowBiometric
   const handleNumberPress = (num: string) => {
     if (pin.length >= CONFIG.AUTH.PIN_LENGTH) return;
     
+    // Disable input during cooldown
+    if (attempts >= CONFIG.AUTH.MAX_LOGIN_ATTEMPTS) return;
+    
     const newPin = pin + num;
     setPin(newPin);
     setError('');
@@ -85,11 +88,12 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, allowBiometric
       setAttempts(newAttempts);
 
       if (newAttempts >= CONFIG.AUTH.MAX_LOGIN_ATTEMPTS) {
-        Alert.alert(
-          'Too Many Attempts',
-          'You have exceeded the maximum number of attempts. Please try again later or contact support.',
-          [{ text: 'OK' }]
-        );
+        setError(`Too many attempts. Try again later.`);
+        // Disable the screen for a period
+        setTimeout(() => {
+          setAttempts(0);
+          setError('');
+        }, 30000); // 30 seconds cooldown
       }
     }
   };

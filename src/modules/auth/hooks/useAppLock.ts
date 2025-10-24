@@ -41,7 +41,7 @@ export const useAppLock = () => {
     }
 
     // App coming back to foreground from background
-    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+    if ((appState.current === 'inactive' || appState.current === 'background') && nextAppState === 'active') {
       const shouldLock = await pinService.shouldLock();
       if (shouldLock) {
         setLocked(true);
@@ -49,7 +49,7 @@ export const useAppLock = () => {
     }
 
     // App going to background
-    if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
+    if (appState.current === 'active' && (nextAppState === 'inactive' || nextAppState === 'background')) {
       // We could add additional logic here if needed
     }
 

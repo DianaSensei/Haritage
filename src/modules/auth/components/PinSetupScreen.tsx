@@ -74,12 +74,7 @@ export const PinSetupScreen: React.FC<PinSetupScreenProps> = ({
     const success = await pinService.setPin(pinToConfirm);
     if (success) {
       await pinService.updateLastAuthenticated();
-      Alert.alert('Success', 'PIN has been set up successfully', [
-        {
-          text: 'OK',
-          onPress: onComplete,
-        },
-      ]);
+      onComplete();
     } else {
       setError('Failed to set PIN');
       setConfirmPin('');
