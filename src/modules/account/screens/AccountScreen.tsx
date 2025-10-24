@@ -73,6 +73,7 @@ export const AccountScreen: React.FC = () => {
           </TouchableOpacity>
 
           <AvatarUploader
+            userId={user?.id}
             currentAvatarUrl={user?.avatar}
             onUploadSuccess={handleAvatarUploadSuccess}
             size={82}

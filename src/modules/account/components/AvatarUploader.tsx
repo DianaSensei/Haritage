@@ -1,3 +1,4 @@
+import { userService } from '@/modules/account/services/userService';
 import { mediaService } from '@/modules/feed/services/mediaService';
 import { IconSymbol } from '@/shared/components';
 import { useThemeColor } from '@/shared/hooks/use-theme-color';
@@ -6,12 +7,14 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface AvatarUploaderProps {
+  userId?: number;
   currentAvatarUrl?: string;
   onUploadSuccess: (avatarUrl: string) => void;
   size?: number;
 }
 
 export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
+  userId,
   currentAvatarUrl,
   onUploadSuccess,
   size = 82,
@@ -52,6 +55,14 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
       // Upload image using mediaService
       const uploadResult = await mediaService.uploadImage(fileUpload, 'avatar');
+
+      // Update user profile on backend if userId is provided
+      if (userId) {
+        const updateResult = await userService.updateAvatar(userId, uploadResult.url);
+        if (!updateResult.success) {
+          throw new Error(updateResult.error || 'Failed to update profile');
+        }
+      }
 
       // Call success callback with the uploaded URL
       onUploadSuccess(uploadResult.url);
