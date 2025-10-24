@@ -1,19 +1,27 @@
+import { useAuthStore } from '@/core/store/slices/authSlice';
+import { AvatarUploader } from '@/modules/account/components';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { IconSymbol, ThemedText, ThemedView } from '@/shared/components';
 import { useThemeColor } from '@/shared/hooks/use-theme-color';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const AccountScreen: React.FC = () => {
   const { user, logout } = useAuth();
+  const { updateUser } = useAuthStore();
   const router = useRouter();
   const tintColor = useThemeColor({}, 'tint');
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'icon'); // using icon as border color for subtle theme sync
   const accentColor = useThemeColor({}, 'tint');
+
+  const handleAvatarUploadSuccess = (avatarUrl: string) => {
+    // Update user state with new avatar
+    updateUser({ avatar: avatarUrl });
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -64,13 +72,11 @@ export const AccountScreen: React.FC = () => {
             <IconSymbol name="settings" size={20} color={tintColor} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.avatarContainer} onPress={handleEditProfile} activeOpacity={0.8}>
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-            ) : (
-              <IconSymbol name="person.crop.circle" size={80} color={tintColor} />
-            )}
-          </TouchableOpacity>
+          <AvatarUploader
+            currentAvatarUrl={user?.avatar}
+            onUploadSuccess={handleAvatarUploadSuccess}
+            size={82}
+          />
 
           <ThemedText type="title" style={[styles.name, { color: textColor }]}>{user?.name ?? 'Guest'}</ThemedText>
 
