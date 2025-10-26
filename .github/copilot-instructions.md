@@ -7,6 +7,7 @@ Keep this short and actionable. Reference key files and conventions so the agent
 
 Quick orientation
 
+- Minimalist oriented when possible include layout design, iconic, text box, input text, button, anything must focus on minimalist; beside that prioritize clarity and maintainability.
 - Platform: Expo + React Native (TypeScript). Entry point: `index.js` and app routes under `app/` (Expo Router).
 - Project layout: see `src/` — feature modules under `src/modules/`, shared utilities under `src/shared/`, core app wiring under `src/core/`.
 
@@ -36,6 +37,7 @@ Keep the code simple (project style)
 - Prefer clear, linear code flow over deep indirection. Small, single-purpose functions and components are easier to read and review.
 - Concrete rules:
   - Keep components focused on UI and delegate business logic to `services/` or `store` hooks.
+  - Keep component design, style consistent with existing minimalist dark/light theme.
   - Put async/fetching logic in `src/modules/*/services/*` (e.g., `src/modules/feed/services/mediaService.ts`) and return plain data objects or Promises.
   - Update UI state via store hooks (e.g., `useFeedStore()`) instead of passing callbacks deeply through props.
   - Avoid premature abstraction: extract helpers only when the logic is used in 2+ places.

@@ -20,9 +20,22 @@ export interface AuthState {
 export interface FeedItem {
     id: string;
     type: 'video' | 'image' | 'text';
+    title?: string;
     content: string;
     thumbnail?: string;
     videoUrl?: string;
+    mediaUris?: string[];
+    url?: string;
+    urlPreview?: {
+        title?: string;
+        description?: string;
+        url: string;
+    };
+    poll?: {
+        question: string;
+        options: string[];
+        closeHours?: number;
+    };
     author: {
         id: string;
         name: string;
@@ -32,6 +45,9 @@ export interface FeedItem {
     comments: number;
     shares: number;
     isLiked: boolean;
+    downvotes?: number;
+    isDownvoted?: boolean;
+    isSaved?: boolean;
     createdAt: Date;
 }
 
