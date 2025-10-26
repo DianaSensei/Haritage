@@ -65,10 +65,12 @@ export const MyFeedsScreen: React.FC = () => {
 
   const handleEdit = useCallback(
     (id: string) => {
-      // Navigate to edit screen (to be implemented)
-      Alert.alert('Edit Post', `Edit post ${id}`);
+      router.push({
+        pathname: '/edit-feed',
+        params: { id },
+      });
     },
-    [],
+    [router],
   );
 
   const handleHide = useCallback(
