@@ -174,14 +174,14 @@
 ## Typography Scale
 
 ```
-20px/700 - Header Large (Screen titles)
-18px/700 - Header (Section titles)
-16px/600 - Title (Card titles)
-15px/500 - Body Bold (Emphasized text)
-15px/400 - Body (Regular text)
-14px/600 - Label (Input labels)
-13px/500 - Small (Secondary info)
-12px/500 - Caption (Stats, counters)
+Size: 20px, Weight: 700 - Header Large (Screen titles)
+Size: 18px, Weight: 700 - Header (Section titles)
+Size: 16px, Weight: 600 - Title (Card titles)
+Size: 15px, Weight: 500 - Body Bold (Emphasized text)
+Size: 15px, Weight: 400 - Body (Regular text)
+Size: 14px, Weight: 600 - Label (Input labels)
+Size: 13px, Weight: 500 - Small (Secondary info)
+Size: 12px, Weight: 500 - Caption (Stats, counters)
 ```
 
 ## Spacing System
