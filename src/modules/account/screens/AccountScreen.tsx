@@ -1,9 +1,21 @@
+import { useAuthStore } from '@/core/store/slices/authSlice';
+import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { userService } from '@/modules/account/services/userService';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { ThemedText } from '@/shared/components';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface MenuItemProps {
@@ -35,7 +47,67 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, isDanger }) =
 
 export const AccountScreen: React.FC = () => {
   const { user, logout } = useAuth();
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const syncAuthorAvatar = useFeedStore((state) => state.updateAuthorAvatar);
   const router = useRouter();
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarPress = useCallback(async () => {
+    if (isUploadingAvatar) {
+      return;
+    }
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission required',
+          'Allow access to your photos so you can choose a new avatar.'
+        );
+        return;
+      }
+
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+        exif: false,
+      });
+
+      if (pickerResult.canceled || !pickerResult.assets?.length) {
+        return;
+      }
+
+      const [asset] = pickerResult.assets;
+      if (!asset?.uri) {
+        Alert.alert('Selection failed', 'We could not read this image. Please try another one.');
+        return;
+      }
+
+      setIsUploadingAvatar(true);
+
+      const uploadResult = await userService.uploadAvatar(asset.uri);
+
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload avatar.');
+      }
+
+      const nextAvatar = uploadResult.data.avatarUrl;
+      updateUser({ avatar: nextAvatar, updatedAt: new Date() });
+
+      if (user?.id) {
+        syncAuthorAvatar(String(user.id), nextAvatar);
+      }
+
+      Alert.alert('Avatar updated', 'Your profile photo has been refreshed.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected error occurred.';
+      Alert.alert('Upload failed', message);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }, [isUploadingAvatar, updateUser, user?.id, syncAuthorAvatar]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -91,17 +163,30 @@ export const AccountScreen: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.avatarContainer}
-            onPress={handleEditProfile}
-            activeOpacity={0.8}
+            style={[styles.avatarContainer, isUploadingAvatar && styles.avatarLoading]}
+            onPress={handleAvatarPress}
+            activeOpacity={0.85}
+            disabled={isUploadingAvatar}
           >
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={40} color="#0a66c2" />
+            <View style={styles.avatarWrapper}>
+              {user?.avatar ? (
+                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={40} color="#0a66c2" />
+                </View>
+              )}
+
+              {isUploadingAvatar && (
+                <View style={styles.avatarOverlay}>
+                  <ActivityIndicator color="#ffffff" size="small" />
+                </View>
+              )}
+
+              <View style={[styles.cameraBadge, isUploadingAvatar && styles.cameraBadgeDisabled]}>
+                <Ionicons name="camera" size={14} color="#ffffff" />
               </View>
-            )}
+            </View>
           </TouchableOpacity>
 
           <ThemedText style={styles.userName}>{user?.name ?? 'Guest User'}</ThemedText>
@@ -249,6 +334,12 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 16,
+    position: 'relative',
+  },
+  avatarWrapper: {
+    position: 'relative',
+    width: 88,
+    height: 88,
   },
   avatarImage: {
     width: 88,
@@ -266,6 +357,42 @@ const styles = StyleSheet.create({
     borderColor: '#0a66c2',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderRadius: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarLoading: {
+    opacity: 0.85,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#0a66c2',
+    borderWidth: 2,
+    borderColor: '#1a1a1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0a66c2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  cameraBadgeDisabled: {
+    backgroundColor: '#3a3b3c',
+    shadowOpacity: 0,
   },
   userName: {
     fontSize: 22,

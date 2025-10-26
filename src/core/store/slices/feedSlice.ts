@@ -1,3 +1,4 @@
+import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem } from '@/shared/types';
 import { create } from 'zustand';
 
@@ -20,6 +21,7 @@ interface FeedActions {
   addItems: (items: FeedItem[]) => void;
   prependItem: (item: FeedItem) => void;
   updateItem: (id: string, updates: Partial<FeedItem>) => void;
+  updateAuthorAvatar: (authorId: string, avatarUrl: string) => void;
   removeItem: (id: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -70,6 +72,35 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
       item.id === id ? { ...item, ...updates } : item
     );
     set({ items: updatedItems });
+  },
+
+  updateAuthorAvatar: (authorId, avatarUrl) => {
+    const items = get().items;
+    let didChange = false;
+
+    const updatedItems = items.map((item) => {
+      if (item.author.id === authorId) {
+        didChange = true;
+        return {
+          ...item,
+          author: {
+            ...item.author,
+            avatar: avatarUrl,
+          },
+        };
+      }
+      return item;
+    });
+
+    if (!didChange) {
+      return;
+    }
+
+    set({ items: updatedItems });
+
+    feedStorageService.saveFeedItems(updatedItems).catch((error) => {
+      console.warn('Failed to persist avatar update in feed storage', error);
+    });
   },
   
   removeItem: (id) => {

@@ -17,6 +17,7 @@ Big-picture architecture (what to know)
 - State: small, module-sliced stores implemented with Zustand in `src/core/store/slices/*`. `src/core/store/index.tsx` exports hooks like `useAuthStore`, `useFeedStore`, and `useNotificationStore` and provides `StoreProvider` to initialize them.
 - Config: runtime constants live in `src/core/config/index.ts` (CONFIG). Prefer using these keys for timeouts, feature flags, and storage keys rather than hardcoding values.
 - Modules: each feature (auth, feed, home, notifications, ads) lives in `src/modules/<feature>` with their own `components`, `screens`, `services`, and `hooks`.
+- Mockable: UI components call hooks exported from src/core/store or src/shared/data. Hooks talk to repositories (mock today, API-ready) via the data service factory. Repositories load or mutate data through mockDataStore (+ AsyncStorage persistence) or future API clients. Zustand stores broadcast state changes back to the UI.
 
 Developer workflows & commands
 
