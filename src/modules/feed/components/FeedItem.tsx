@@ -1,7 +1,7 @@
 import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -53,7 +53,7 @@ const getHostname = (value: string) => {
   }
 };
 
-export const FeedItem: React.FC<FeedItemProps> = ({
+const FeedItemComponent: React.FC<FeedItemProps> = ({
   item,
   isActive,
   onLike,
@@ -71,7 +71,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
   const [downvotesCount, setDownvotesCount] = useState(item.downvotes ?? 0);
   const [selectedPollOption, setSelectedPollOption] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(item.isSaved ?? false);
-  const { updateItem } = useFeedStore();
+  const updateItem = useFeedStore((state) => state.updateItem);
 
   useEffect(() => {
     setVoteState(item.isDownvoted ? 'downvote' : item.isLiked ? 'upvote' : 'none');
@@ -478,6 +478,42 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     </View>
   );
 };
+
+const areEqual = (prev: FeedItemProps, next: FeedItemProps) => {
+  if (prev.isActive !== next.isActive) {
+    return false;
+  }
+
+  if (prev.item === next.item) {
+    return true;
+  }
+
+  const prevItem = prev.item;
+  const nextItem = next.item;
+
+  if (prevItem.id !== nextItem.id) {
+    return false;
+  }
+
+  return (
+    prevItem.likes === nextItem.likes &&
+    (prevItem.downvotes ?? 0) === (nextItem.downvotes ?? 0) &&
+    prevItem.isLiked === nextItem.isLiked &&
+    prevItem.isDownvoted === nextItem.isDownvoted &&
+    prevItem.isSaved === nextItem.isSaved &&
+    prevItem.comments === nextItem.comments &&
+    prevItem.shares === nextItem.shares &&
+    prevItem.title === nextItem.title &&
+    prevItem.content === nextItem.content &&
+    prevItem.thumbnail === nextItem.thumbnail &&
+    prevItem.videoUrl === nextItem.videoUrl &&
+    prevItem.mediaUris === nextItem.mediaUris &&
+    prevItem.urlPreview === nextItem.urlPreview &&
+    prevItem.poll === nextItem.poll
+  );
+};
+
+export const FeedItem = memo(FeedItemComponent, areEqual);
 
 const styles = StyleSheet.create({
   container: {

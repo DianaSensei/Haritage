@@ -357,30 +357,30 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
-  const handleLike = (id: string) => {
+  const handleLike = useCallback((id: string) => {
     console.log('Liked item:', id);
-  };
+  }, []);
 
-  const handleComment = (id: string) => {
+  const handleComment = useCallback((id: string) => {
     console.log('Comment on item:', id);
     Alert.alert('Comment', 'Opening comment thread...');
-  };
+  }, []);
 
-  const handleShare = (id: string) => {
+  const handleShare = useCallback((id: string) => {
     console.log('Share item:', id);
     Alert.alert('Share', 'Opening share dialog...');
-  };
+  }, []);
 
-  const handleComposePress = () => {
+  const handleComposePress = useCallback(() => {
     router.push('/create-post');
-  };
+  }, [router]);
 
-  const handleMediaPress = (postId: string, mediaIndex: number) => {
+  const handleMediaPress = useCallback((postId: string, mediaIndex: number) => {
     router.push({
       pathname: '/media-detail',
       params: { postId, mediaIndex: String(mediaIndex) },
     });
-  };
+  }, [router]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
@@ -412,7 +412,7 @@ export const HomeScreen: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const renderItem = ({ item, index }: { item: FeedItemType; index: number }) => {
+  const renderItem = useCallback(({ item, index }: { item: FeedItemType; index: number }) => {
     const isVideoActive = item.type === 'video' && index === currentVideoIndex;
 
     return (
@@ -425,7 +425,7 @@ export const HomeScreen: React.FC = () => {
         onMediaPress={handleMediaPress}
       />
     );
-  };
+  }, [currentVideoIndex, handleLike, handleComment, handleShare, handleMediaPress]);
 
   const renderHeader = () => (
     <View style={styles.header}>

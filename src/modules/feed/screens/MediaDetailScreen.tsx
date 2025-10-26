@@ -1,4 +1,6 @@
 import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { feedStorageService } from '@/shared/services/storage/feedStorageService';
+import { FeedItem } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -26,12 +28,14 @@ interface MediaItem {
 export const MediaDetailScreen: React.FC = () => {
   const router = useRouter();
   const { postId, mediaIndex = '0' } = useLocalSearchParams<{ postId: string; mediaIndex?: string }>();
-  const { items: feedItems } = useFeedStore();
+  const feedItems = useFeedStore((state) => state.items);
+  const updateFeedItem = useFeedStore((state) => state.updateItem);
 
   const currentPost = feedItems.find((item) => item.id === postId);
   const initialIndex = parseInt(mediaIndex as string, 10) || 0;
 
   const [currentMediaIndex, setCurrentMediaIndex] = useState(initialIndex);
+  const [pendingAction, setPendingAction] = useState<null | 'like' | 'downvote' | 'save'>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -118,6 +122,92 @@ export const MediaDetailScreen: React.FC = () => {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
+  const downvoteCount = currentPost.downvotes ?? 0;
+  const isSaved = currentPost.isSaved ?? false;
+
+  const snapshotPost = (item: FeedItem): FeedItem => ({
+    ...item,
+    author: { ...item.author },
+    mediaUris: item.mediaUris ? [...item.mediaUris] : undefined,
+    poll: item.poll ? { ...item.poll, options: [...item.poll.options] } : undefined,
+    urlPreview: item.urlPreview ? { ...item.urlPreview } : undefined,
+  });
+
+  const applyPostUpdate = async (updates: Partial<FeedItem>) => {
+    if (!currentPost) return false;
+    const snapshot = snapshotPost(currentPost);
+    updateFeedItem(currentPost.id, updates);
+    try {
+      await feedStorageService.updateFeedItem(currentPost.id, updates);
+      return true;
+    } catch (error) {
+      console.warn('Failed to persist feed item updates', error);
+      updateFeedItem(currentPost.id, snapshot);
+      Alert.alert('Update failed', 'We could not update this post. Please try again.');
+      return false;
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!currentPost || pendingAction) return;
+    setPendingAction('like');
+    const nextIsLiked = !currentPost.isLiked;
+    const baseLikes = currentPost.likes ?? 0;
+    let nextLikes = baseLikes + (nextIsLiked ? 1 : -1);
+    if (nextLikes < 0) nextLikes = 0;
+
+    const updates: Partial<typeof currentPost> = {
+      isLiked: nextIsLiked,
+      likes: nextLikes,
+    };
+
+    if (nextIsLiked && currentPost.isDownvoted) {
+      updates.isDownvoted = false;
+      const baseDownvotes = currentPost.downvotes ?? 0;
+      updates.downvotes = Math.max(0, baseDownvotes - 1);
+    }
+
+    await applyPostUpdate(updates);
+    setPendingAction(null);
+  };
+
+  const handleToggleDownvote = async () => {
+    if (!currentPost || pendingAction) return;
+    setPendingAction('downvote');
+    const nextIsDownvoted = !currentPost.isDownvoted;
+    const baseDownvotes = currentPost.downvotes ?? 0;
+    let nextDownvotes = baseDownvotes + (nextIsDownvoted ? 1 : -1);
+    if (nextDownvotes < 0) nextDownvotes = 0;
+
+    const updates: Partial<typeof currentPost> = {
+      isDownvoted: nextIsDownvoted,
+      downvotes: nextDownvotes,
+    };
+
+    if (nextIsDownvoted && currentPost.isLiked) {
+      updates.isLiked = false;
+      updates.likes = Math.max(0, (currentPost.likes ?? 0) - 1);
+    }
+
+    await applyPostUpdate(updates);
+    setPendingAction(null);
+  };
+
+  const handleToggleSave = async () => {
+    if (!currentPost || pendingAction) return;
+    setPendingAction('save');
+    await applyPostUpdate({ isSaved: !isSaved });
+    setPendingAction(null);
+  };
+
+  const handleCommentPress = () => {
+    Alert.alert('Comments', 'Commenting is coming soon.');
+  };
+
+  const handleSharePress = () => {
+    Alert.alert('Share', 'Sharing is coming soon.');
   };
 
   return (
@@ -222,46 +312,67 @@ export const MediaDetailScreen: React.FC = () => {
           {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Ionicons name="arrow-up" size={16} color="#0a66c2" />
-              <Text style={styles.statText}>{currentPost.likes} Likes</Text>
+          <View style={styles.reactionBar}>
+            <View style={styles.reactionGroup}>
+              <TouchableOpacity
+                onPress={handleToggleLike}
+                style={[styles.reactionButton, currentPost.isLiked && styles.reactionButtonActive]}
+                disabled={pendingAction !== null}
+              >
+                <Ionicons
+                  name={currentPost.isLiked ? 'arrow-up' : 'arrow-up-outline'}
+                  size={18}
+                  color={currentPost.isLiked ? '#f4f5f7' : '#8c919d'}
+                />
+                <Text style={[styles.reactionCount, currentPost.isLiked && styles.reactionCountActive]}>
+                  {currentPost.likes}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleToggleDownvote}
+                style={[styles.reactionButton, currentPost.isDownvoted && styles.reactionButtonDangerActive]}
+                disabled={pendingAction !== null}
+              >
+                <Ionicons
+                  name={currentPost.isDownvoted ? 'arrow-down' : 'arrow-down-outline'}
+                  size={18}
+                  color={currentPost.isDownvoted ? '#ff4d4f' : '#8c919d'}
+                />
+                <Text style={[styles.reactionCount, currentPost.isDownvoted && styles.reactionCountDanger]}>
+                  {downvoteCount}
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="arrow-down" size={16} color="#FF3B30" />
-              <Text style={styles.statText}>{currentPost.downvotes ?? 0} Dislikes</Text>
+
+            <View style={styles.reactionGroup}>
+              <TouchableOpacity
+                onPress={handleCommentPress}
+                style={[styles.reactionButton, styles.reactionButtonCompact]}
+              >
+                <Ionicons name="chatbubble-outline" size={18} color="#8c919d" />
+                <Text style={styles.reactionCount}>{currentPost.comments}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSharePress}
+                style={[styles.reactionButton, styles.reactionButtonCompact]}
+              >
+                <Ionicons name="share-outline" size={18} color="#8c919d" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleToggleSave}
+                style={[styles.reactionButton, styles.reactionButtonCompact, isSaved && styles.reactionButtonActive]}
+                disabled={pendingAction !== null}
+              >
+                <Ionicons
+                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                  size={18}
+                  color={isSaved ? '#f4f5f7' : '#8c919d'}
+                />
+              </TouchableOpacity>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="chatbubble-ellipses-outline" size={16} color="#818384" />
-              <Text style={styles.statText}>{currentPost.comments} Comments</Text>
-            </View>
-          </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="arrow-up-outline" size={20} color="#0a66c2" />
-              <Text style={styles.actionText}>Upvote</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="chatbubble-outline" size={20} color="#818384" />
-              <Text style={styles.actionText}>Comment</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="share-outline" size={20} color="#818384" />
-              <Text style={styles.actionText}>Share</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="bookmark-outline" size={20} color="#818384" />
-              <Text style={styles.actionText}>Save</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
@@ -401,34 +512,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#343536',
     marginVertical: 12,
   },
-  statsRow: {
+  reactionBar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    backgroundColor: '#111216',
+    marginTop: 8,
+    marginBottom: 16,
   },
-  statItem: {
+  reactionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reactionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  statText: {
-    fontSize: 12,
-    color: '#818384',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-  },
-  actionButton: {
-    alignItems: 'center',
-    gap: 6,
+    backgroundColor: '#16181f',
+    borderRadius: 12,
     paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  actionText: {
-    fontSize: 12,
-    color: '#818384',
+  reactionButtonCompact: {
+    paddingHorizontal: 10,
+  },
+  reactionButtonActive: {
+    backgroundColor: '#2536b8',
+  },
+  reactionButtonDangerActive: {
+    backgroundColor: '#30171a',
+  },
+  reactionCount: {
+    color: '#8c919d',
+    fontSize: 13,
     fontWeight: '500',
+  },
+  reactionCountActive: {
+    color: '#f4f5f7',
+  },
+  reactionCountDanger: {
+    color: '#ff4d4f',
   },
   errorText: {
     fontSize: 16,
