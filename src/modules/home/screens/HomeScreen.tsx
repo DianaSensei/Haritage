@@ -26,7 +26,7 @@ export const HomeScreen: React.FC = () => {
   } = useFeedStore();
   const { addNotification } = useNotificationStore();
 
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const [activeFilter, setActiveFilter] = useState<string>('For you');
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -383,11 +383,19 @@ export const HomeScreen: React.FC = () => {
   }, [router]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) {
-      const videoItems = viewableItems.filter((item: any) => item.item.type === 'video');
-      if (videoItems.length > 0) {
-        setCurrentVideoIndex(videoItems[0].index);
-      }
+    if (!viewableItems?.length) {
+      setCurrentVideoIndex(null);
+      return;
+    }
+
+    const videoItem = viewableItems.find(
+      (entry: any) => entry.isViewable && entry.item?.type === 'video'
+    );
+
+    if (videoItem) {
+      setCurrentVideoIndex(videoItem.index);
+    } else {
+      setCurrentVideoIndex(null);
     }
   }).current;
 
@@ -412,8 +420,12 @@ export const HomeScreen: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
+  const handleVideoEnd = useCallback(() => {
+    setCurrentVideoIndex(null);
+  }, []);
+
   const renderItem = useCallback(({ item, index }: { item: FeedItemType; index: number }) => {
-    const isVideoActive = item.type === 'video' && index === currentVideoIndex;
+    const isVideoActive = item.type === 'video' && currentVideoIndex === index;
 
     return (
       <FeedItem
@@ -423,9 +435,10 @@ export const HomeScreen: React.FC = () => {
         onComment={handleComment}
         onShare={handleShare}
         onMediaPress={handleMediaPress}
+        onVideoEnd={handleVideoEnd}
       />
     );
-  }, [currentVideoIndex, handleLike, handleComment, handleShare, handleMediaPress]);
+  }, [currentVideoIndex, handleLike, handleComment, handleShare, handleMediaPress, handleVideoEnd]);
 
   const renderHeader = () => (
     <View style={styles.header}>

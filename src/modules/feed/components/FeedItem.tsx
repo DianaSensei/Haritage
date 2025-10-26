@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ReactionBar } from './ReactionBar';
 import { VideoPlayer } from './VideoPlayer';
 
 interface FeedItemProps {
@@ -22,6 +23,7 @@ interface FeedItemProps {
   onComment: (id: string) => void;
   onShare: (id: string) => void;
   onMediaPress?: (postId: string, mediaIndex: number) => void;
+  onVideoEnd?: (id: string) => void;
 }
 
 type MediaDescriptor = {
@@ -60,6 +62,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
   onComment,
   onShare,
   onMediaPress,
+  onVideoEnd,
 }) => {
   const [showFullText, setShowFullText] = useState(false);
   const [voteState, setVoteState] = useState<'upvote' | 'downvote' | 'none'>(() => {
@@ -169,8 +172,13 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
     onLike(item.id);
   };
 
-  const handleVoteToggle = () => {
-    const nextState = voteState === 'none' ? 'upvote' : voteState === 'upvote' ? 'downvote' : 'none';
+  const handleToggleUpvote = () => {
+    const nextState = voteState === 'upvote' ? 'none' : 'upvote';
+    applyVote(nextState);
+  };
+
+  const handleToggleDownvote = () => {
+    const nextState = voteState === 'downvote' ? 'none' : 'downvote';
     applyVote(nextState);
   };
 
@@ -229,6 +237,11 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
                     thumbnail={item.thumbnail}
                     isActive={false}
                     onError={(error) => Alert.alert('Video Error', error)}
+                    onPlaybackStatusUpdate={(status) => {
+                      if (status?.didJustFinish) {
+                        onVideoEnd?.(item.id);
+                      }
+                    }}
                   />
                 </View>
               ) : (
@@ -260,6 +273,11 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
             thumbnail={item.thumbnail}
             isActive={isActive}
             onError={(error) => Alert.alert('Video Error', error)}
+            onPlaybackStatusUpdate={(status) => {
+              if (status?.didJustFinish) {
+                onVideoEnd?.(item.id);
+              }
+            }}
           />
         </TouchableOpacity>
       );
@@ -410,77 +428,31 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
         {renderPoll()}
       </View>
 
-      <View style={styles.actionsBar}>
-        <TouchableOpacity
-          style={[styles.voteToggle, voteState !== 'none' && styles.voteToggleActive]}
-          onPress={handleVoteToggle}
-          accessibilityRole="button"
-          accessibilityLabel="Toggle vote"
-        >
-          <Ionicons
-            name={
-              voteState === 'upvote'
-                ? 'arrow-up'
-                : voteState === 'downvote'
-                ? 'arrow-down'
-                : 'remove-outline'
-            }
-            size={20}
-            color={
-              voteState === 'upvote'
-                ? '#0a66c2'
-                : voteState === 'downvote'
-                ? '#FF3B30'
-                : '#e4e6eb'
-            }
-          />
-          <View style={styles.voteMetrics}>
-            <Text style={styles.voteMetricText}>↑ {likesCount}</Text>
-            <Text style={styles.voteMetricText}>↓ {downvotesCount}</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.commentButton}
-          onPress={handleComment}
-          accessibilityRole="button"
-          accessibilityLabel="Open comments"
-        >
-          <Ionicons name="chatbubble-outline" size={18} color="#e4e6eb" />
-          <Text style={styles.commentText}>{item.comments}</Text>
-        </TouchableOpacity>
-
-        <View style={styles.rightActions}>
-          <TouchableOpacity
-            style={styles.actionIconButton}
-            onPress={handleShare}
-            accessibilityRole="button"
-            accessibilityLabel="Share post"
-          >
-            <Ionicons name="share-outline" size={18} color="#e4e6eb" />
-            <Text style={styles.actionCount}>{item.shares}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionIconButton}
-            onPress={handleSaveToCollection}
-            accessibilityRole="button"
-            accessibilityLabel={isSaved ? 'Remove bookmark' : 'Save post'}
-          >
-            <Ionicons
-              name={isSaved ? 'bookmark' : 'bookmark-outline'}
-              size={18}
-              color={isSaved ? '#0a66c2' : '#e4e6eb'}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ReactionBar
+        likes={likesCount}
+        downvotes={downvotesCount}
+        comments={item.comments ?? 0}
+        shares={item.shares ?? 0}
+        isLiked={voteState === 'upvote'}
+        isDownvoted={voteState === 'downvote'}
+        isSaved={isSaved}
+        onToggleLike={handleToggleUpvote}
+        onToggleDownvote={handleToggleDownvote}
+        onComment={handleComment}
+        onShare={handleShare}
+        onToggleSave={handleSaveToCollection}
+        style={styles.reactionBar}
+      />
     </View>
   );
 };
 
 const areEqual = (prev: FeedItemProps, next: FeedItemProps) => {
   if (prev.isActive !== next.isActive) {
+    return false;
+  }
+
+  if (prev.onVideoEnd !== next.onVideoEnd) {
     return false;
   }
 
@@ -711,75 +683,10 @@ const styles = StyleSheet.create({
     color: '#0a66c2',
     fontWeight: '600',
   },
-  actionsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  reactionBar: {
+    marginBottom: 12,
     borderTopWidth: 1,
     borderTopColor: '#343536',
-    backgroundColor: '#1f1f20',
-    gap: 16,
-  },
-  voteToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#272729',
-  },
-  voteToggleActive: {
-    borderColor: '#0a66c2',
-  },
-  voteMetrics: {
-    flexDirection: 'column',
-    gap: 2,
-  },
-  voteMetricText: {
-    fontSize: 12,
-    color: '#e4e6eb',
-    fontWeight: '600',
-  },
-  commentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#272729',
-  },
-  commentText: {
-    fontSize: 13,
-    color: '#e4e6eb',
-    fontWeight: '500',
-  },
-  rightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  actionIconButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#272729',
-  },
-  actionCount: {
-    fontSize: 12,
-    color: '#e4e6eb',
-    fontWeight: '500',
+    borderRadius: 0,
   },
 });

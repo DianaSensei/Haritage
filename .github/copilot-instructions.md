@@ -24,8 +24,8 @@ Developer workflows & commands
 - Reset project: `yarn reset-project` runs `scripts/reset-project.js` (useful before CI or when switching branches).
 - Linting: `yarn lint` (uses Expo lint config). There is no test runner configured in package.json by default — check `README.md` if you need tests added.
 - Avoid to use cat commands to modify files due to the vscode terminal will disconnect shell.
-
-Code conventions & patterns to follow
+- Avoid to use some deprecated libraries such as 'expo-av' due to it is no longer maintained and have a drop in replacement 'expo-video', 'expo-audio' which is actively maintained by expo team.
+  Code conventions & patterns to follow
 
 - TypeScript-first: prefer adding types and export them from `src/shared/types` or the module's `types/` folder.
 - State hooks: use the exported hooks from `src/core/store` (e.g., `useAuthStore()`). Avoid introducing new global singletons — add stores under `src/core/store/slices/` following existing patterns.

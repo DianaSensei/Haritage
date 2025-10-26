@@ -16,6 +16,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ReactionBar } from '../components/ReactionBar';
 import { VideoPlayer } from '../components/VideoPlayer';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -312,68 +313,22 @@ export const MediaDetailScreen: React.FC = () => {
           {/* Divider */}
           <View style={styles.divider} />
 
-          <View style={styles.reactionBar}>
-            <View style={styles.reactionGroup}>
-              <TouchableOpacity
-                onPress={handleToggleLike}
-                style={[styles.reactionButton, currentPost.isLiked && styles.reactionButtonActive]}
-                disabled={pendingAction !== null}
-              >
-                <Ionicons
-                  name={currentPost.isLiked ? 'arrow-up' : 'arrow-up-outline'}
-                  size={18}
-                  color={currentPost.isLiked ? '#f4f5f7' : '#8c919d'}
-                />
-                <Text style={[styles.reactionCount, currentPost.isLiked && styles.reactionCountActive]}>
-                  {currentPost.likes}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleToggleDownvote}
-                style={[styles.reactionButton, currentPost.isDownvoted && styles.reactionButtonDangerActive]}
-                disabled={pendingAction !== null}
-              >
-                <Ionicons
-                  name={currentPost.isDownvoted ? 'arrow-down' : 'arrow-down-outline'}
-                  size={18}
-                  color={currentPost.isDownvoted ? '#ff4d4f' : '#8c919d'}
-                />
-                <Text style={[styles.reactionCount, currentPost.isDownvoted && styles.reactionCountDanger]}>
-                  {downvoteCount}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.reactionGroup}>
-              <TouchableOpacity
-                onPress={handleCommentPress}
-                style={[styles.reactionButton, styles.reactionButtonCompact]}
-              >
-                <Ionicons name="chatbubble-outline" size={18} color="#8c919d" />
-                <Text style={styles.reactionCount}>{currentPost.comments}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleSharePress}
-                style={[styles.reactionButton, styles.reactionButtonCompact]}
-              >
-                <Ionicons name="share-outline" size={18} color="#8c919d" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleToggleSave}
-                style={[styles.reactionButton, styles.reactionButtonCompact, isSaved && styles.reactionButtonActive]}
-                disabled={pendingAction !== null}
-              >
-                <Ionicons
-                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                  size={18}
-                  color={isSaved ? '#f4f5f7' : '#8c919d'}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <ReactionBar
+            likes={currentPost.likes ?? 0}
+            downvotes={downvoteCount}
+            comments={currentPost.comments ?? 0}
+            shares={currentPost.shares ?? 0}
+            isLiked={currentPost.isLiked ?? false}
+            isDownvoted={currentPost.isDownvoted ?? false}
+            isSaved={isSaved}
+            onToggleLike={handleToggleLike}
+            onToggleDownvote={handleToggleDownvote}
+            onComment={handleCommentPress}
+            onShare={handleSharePress}
+            onToggleSave={handleToggleSave}
+            disabled={pendingAction !== null}
+            style={styles.reactionBarSpacing}
+          />
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -512,50 +467,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#343536',
     marginVertical: 12,
   },
-  reactionBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 18,
-    backgroundColor: '#111216',
-    marginTop: 8,
+  reactionBarSpacing: {
     marginBottom: 16,
-  },
-  reactionGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  reactionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#16181f',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  reactionButtonCompact: {
-    paddingHorizontal: 10,
-  },
-  reactionButtonActive: {
-    backgroundColor: '#2536b8',
-  },
-  reactionButtonDangerActive: {
-    backgroundColor: '#30171a',
-  },
-  reactionCount: {
-    color: '#8c919d',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  reactionCountActive: {
-    color: '#f4f5f7',
-  },
-  reactionCountDanger: {
-    color: '#ff4d4f',
   },
   errorText: {
     fontSize: 16,
