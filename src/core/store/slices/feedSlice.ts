@@ -18,6 +18,7 @@ interface FeedState {
 interface FeedActions {
   setItems: (items: FeedItem[]) => void;
   addItems: (items: FeedItem[]) => void;
+  prependItem: (item: FeedItem) => void;
   updateItem: (id: string, updates: Partial<FeedItem>) => void;
   removeItem: (id: string) => void;
   setLoading: (loading: boolean) => void;
@@ -55,6 +56,12 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
     const existingIds = new Set(currentItems.map(item => item.id));
     const uniqueNewItems = newItems.filter(item => !existingIds.has(item.id));
     set({ items: [...currentItems, ...uniqueNewItems] });
+  },
+
+  prependItem: (item) => {
+    const currentItems = get().items;
+    const filtered = currentItems.filter(existing => existing.id !== item.id);
+    set({ items: [item, ...filtered] });
   },
   
   updateItem: (id, updates) => {
