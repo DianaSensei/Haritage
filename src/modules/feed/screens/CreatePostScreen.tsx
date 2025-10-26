@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/core/store/slices/authSlice';
 import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem } from '@/shared/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -26,7 +26,7 @@ interface LinkPreview {
 
 export const CreatePostScreen: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
-  const { addItems } = useFeedStore();
+  const { prependItem } = useFeedStore();
   const router = useRouter();
 
   const [title, setTitle] = useState('');
@@ -50,9 +50,9 @@ export const CreatePostScreen: React.FC = () => {
     const lastWord = words[words.length - 1] || '';
     if (!lastWord || lastWord.length < 1) return [];
     return usedTags.filter(
-      t =>
-        t.toLowerCase().startsWith(lastWord.toLowerCase()) &&
-        !selectedTags.map(st => st.toLowerCase()).includes(t.toLowerCase())
+      (tag) =>
+        tag.toLowerCase().startsWith(lastWord.toLowerCase()) &&
+        !selectedTags.map((selectedTag) => selectedTag.toLowerCase()).includes(tag.toLowerCase())
     );
   }, [tagInput, usedTags, selectedTags]);
 
@@ -72,9 +72,9 @@ export const CreatePostScreen: React.FC = () => {
       const words = text.split(/[^a-zA-Z0-9]+/).filter(Boolean);
       if (words.length > 0) {
         const lastWord = words[words.length - 1];
-        if (lastWord && !selectedTags.map(t => t.toLowerCase()).includes(lastWord.toLowerCase())) {
+        if (lastWord && !selectedTags.map((tag) => tag.toLowerCase()).includes(lastWord.toLowerCase())) {
           addTagToSelected(lastWord);
-          setTagInput(''); // Clear input after tag is added
+          setTagInput('');
         }
       }
     }
@@ -82,9 +82,9 @@ export const CreatePostScreen: React.FC = () => {
 
   const addTagToSelected = (tag: string) => {
     const cleanTag = tag.trim().toLowerCase();
-    if (!cleanTag || selectedTags.map(t => t.toLowerCase()).includes(cleanTag)) return;
+    if (!cleanTag || selectedTags.map((item) => item.toLowerCase()).includes(cleanTag)) return;
     setSelectedTags([...selectedTags, cleanTag]);
-    if (!usedTags.map(t => t.toLowerCase()).includes(cleanTag)) {
+    if (!usedTags.map((item) => item.toLowerCase()).includes(cleanTag)) {
       setUsedTags([...usedTags, cleanTag]);
     }
   };
@@ -95,7 +95,7 @@ export const CreatePostScreen: React.FC = () => {
   };
 
   const removeTag = (tag: string) => {
-    setSelectedTags(selectedTags.filter(t => t !== tag));
+    setSelectedTags(selectedTags.filter((item) => item !== tag));
   };
 
   const pickMedia = async () => {
@@ -111,10 +111,13 @@ export const CreatePostScreen: React.FC = () => {
         quality: 0.8,
       } as any);
       if (result.canceled || !result.assets) return;
-      const added = result.assets.map(a => ({ uri: a.uri, type: (a.type === 'video' ? 'video' : 'image') as 'image' | 'video' }));
-      setSelectedMedia(prev => [...prev, ...added]);
-    } catch (e) {
-      console.warn('pickMedia error', e);
+      const added = result.assets.map((asset) => ({
+        uri: asset.uri,
+        type: (asset.type === 'video' ? 'video' : 'image') as 'image' | 'video',
+      }));
+      setSelectedMedia((prev) => [...prev, ...added]);
+    } catch (error) {
+      console.warn('pickMedia error', error);
       Alert.alert('Error', 'Unable to pick media.');
     }
   };
@@ -128,12 +131,12 @@ export const CreatePostScreen: React.FC = () => {
 
   const removePollOption = (id: string) => {
     if (!poll || poll.options.length <= 2) return;
-    setPoll({ ...poll, options: poll.options.filter(o => o.id !== id) });
+    setPoll({ ...poll, options: poll.options.filter((option) => option.id !== id) });
   };
 
   const updatePollOption = (id: string, text: string) => {
     if (!poll) return;
-    setPoll({ ...poll, options: poll.options.map(o => (o.id === id ? { ...o, text } : o)) });
+    setPoll({ ...poll, options: poll.options.map((option) => (option.id === id ? { ...option, text } : option)) });
   };
 
   const handleSubmit = async () => {
@@ -148,46 +151,39 @@ export const CreatePostScreen: React.FC = () => {
     }
     setIsSubmitting(true);
     try {
-      // Create local post object
       const localPostId = `local-${Date.now()}`;
-      const contentObj: any = {
-        body: body.trim(),
-        url: linkUrl.trim(),
-        urlPreview: linkPreview,
-        poll: poll ? { question: poll.question, options: poll.options.map(o => o.text), closeHours: parseInt(pollCloseHours) || 24 } : null,
-      };
+      const trimmedTitle = title.trim();
+      const trimmedBody = body.trim();
+      const trimmedLink = linkUrl.trim();
+      const primaryMedia = selectedMedia[0];
+      const pollOptions = poll
+        ? poll.options.map((option) => option.text.trim()).filter(Boolean)
+        : [];
+      const pollData =
+        poll && poll.question.trim() && pollOptions.length >= 2
+          ? {
+              question: poll.question.trim(),
+              options: pollOptions,
+              closeHours: parseInt(pollCloseHours, 10) || 24,
+            }
+          : undefined;
 
-      // Save media locally if present
-      const localMediaUris: string[] = [];
-      if (selectedMedia.length > 0) {
-        localMediaUris.push(...selectedMedia.map(m => m.uri));
-      }
-
-      // Create post data for local storage
-      const postData = {
-        id: localPostId,
-        title: title.trim(),
-        content: contentObj,
-        tags: selectedTags,
-        mediaUris: localMediaUris,
-        author: { id: String(user?.id ?? '0'), name: user?.name ?? 'You', avatar: user?.avatar ?? '' },
-        createdAt: new Date().toISOString(),
-      };
-
-      // Save to AsyncStorage
-      const existingPosts = await AsyncStorage.getItem('drafts_posts');
-      const posts = existingPosts ? JSON.parse(existingPosts) : [];
-      posts.push(postData);
-      await AsyncStorage.setItem('drafts_posts', JSON.stringify(posts));
-
-      // Create feed item for optimistic update
       const newItem: FeedItem = {
         id: localPostId,
-        type: selectedMedia[0] ? (selectedMedia[0].type === 'video' ? 'video' : 'image') : 'text',
-        content: body.trim() || linkUrl.trim() || title,
-        thumbnail: selectedMedia[0]?.uri,
-        videoUrl: selectedMedia[0]?.type === 'video' ? selectedMedia[0].uri : undefined,
-        author: { id: String(user?.id ?? '0'), name: user?.name ?? 'You', avatar: user?.avatar ?? '' },
+        type: primaryMedia ? (primaryMedia.type === 'video' ? 'video' : 'image') : 'text',
+        title: trimmedTitle || undefined,
+        content: trimmedBody || trimmedLink || trimmedTitle || 'Shared an update',
+        thumbnail: primaryMedia?.uri,
+        videoUrl: primaryMedia?.type === 'video' ? primaryMedia.uri : undefined,
+        mediaUris: selectedMedia.length ? selectedMedia.map((media) => media.uri) : undefined,
+        url: trimmedLink || undefined,
+        urlPreview: trimmedLink && linkPreview ? { ...linkPreview, url: trimmedLink } : undefined,
+        poll: pollData,
+        author: {
+          id: String(user?.id ?? '0'),
+          name: user?.name ?? 'You',
+          avatar: user?.avatar ?? '',
+        },
         likes: 0,
         comments: 0,
         shares: 0,
@@ -195,9 +191,9 @@ export const CreatePostScreen: React.FC = () => {
         createdAt: new Date(),
       };
 
-      addItems([newItem]);
+      await feedStorageService.addFeedItem(newItem);
+      prependItem(newItem);
 
-      // Reset form
       setTitle('');
       setBody('');
       setSelectedMedia([]);
@@ -211,11 +207,11 @@ export const CreatePostScreen: React.FC = () => {
       setPollCloseHours('24');
       setShowPollCreator(false);
 
-      Alert.alert('Success', 'Post saved locally.');
+      Alert.alert('Success', 'Post saved to your feed.');
       router.back();
-    } catch (err: any) {
-      console.warn('create post error', err);
-      Alert.alert('Error', err?.message || 'Failed to create post');
+    } catch (error) {
+      console.warn('create post error', error);
+      Alert.alert('Error', 'Failed to save your post locally.');
     } finally {
       setIsSubmitting(false);
     }
@@ -289,10 +285,10 @@ export const CreatePostScreen: React.FC = () => {
             )}
             {selectedMedia.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaGallery}>
-                {selectedMedia.map((m, i) => (
-                  <View key={`${m.uri}-${i}`} style={styles.mediaBox}>
-                    <Image source={{ uri: m.uri }} style={styles.mediaThumbnail} />
-                    <TouchableOpacity style={styles.mediaBadge} onPress={() => setSelectedMedia(prev => prev.filter((_, idx) => idx !== i))}>
+                {selectedMedia.map((media, index) => (
+                  <View key={`${media.uri}-${index}`} style={styles.mediaBox}>
+                    <Image source={{ uri: media.uri }} style={styles.mediaThumbnail} />
+                    <TouchableOpacity style={styles.mediaBadge} onPress={() => setSelectedMedia((prev) => prev.filter((_, idx) => idx !== index))}>
                       <Text style={styles.mediaBadgeText}>✕</Text>
                     </TouchableOpacity>
                   </View>
@@ -341,17 +337,17 @@ export const CreatePostScreen: React.FC = () => {
                 {poll && (
                   <>
                     <View style={styles.pollOptionsList}>
-                      {poll.options.map((opt, idx) => (
-                        <View key={opt.id} style={styles.pollOptionRow}>
+                      {poll.options.map((option, idx) => (
+                        <View key={option.id} style={styles.pollOptionRow}>
                           <TextInput
-                            value={opt.text}
-                            onChangeText={(text) => updatePollOption(opt.id, text)}
+                            value={option.text}
+                            onChangeText={(text) => updatePollOption(option.id, text)}
                             placeholder={`Option ${idx + 1}`}
                             placeholderTextColor="#999"
                             style={styles.pollOptionText}
                           />
                           {poll.options.length > 2 && (
-                            <TouchableOpacity style={styles.pollRemove} onPress={() => removePollOption(opt.id)}>
+                            <TouchableOpacity style={styles.pollRemove} onPress={() => removePollOption(option.id)}>
                               <Text style={styles.pollRemoveText}>✕</Text>
                             </TouchableOpacity>
                           )}
