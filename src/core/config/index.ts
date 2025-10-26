@@ -37,9 +37,18 @@ export const CONFIG = {
         USER_DATA: 'haritage.user_data',
         BIOMETRIC_ENABLED: 'haritage.biometric_enabled',
         THEME_PREFERENCE: 'haritage.theme_preference',
+        PIN_HASH: 'haritage.pin_hash',
+        PIN_SETUP_REQUIRED: 'haritage.pin_setup_required',
+        APP_LOCK_ENABLED: 'haritage.app_lock_enabled',
     },
 
-    // Network
+    // App Lock settings
+    APP_LOCK: {
+        PIN_LENGTH: 6,
+        MAX_ATTEMPTS: 3,
+        COOLDOWN_SECONDS: 30,
+        LOCK_TIMEOUT_MS: 0, // Immediate lock
+    },
     NETWORK: {
         TIMEOUT_MS: 15000,
         RETRY_COUNT: 0,
