@@ -48,7 +48,9 @@ export interface FeedItem {
     downvotes?: number;
     isDownvoted?: boolean;
     isSaved?: boolean;
+    isHidden?: boolean;
     createdAt: Date;
+    updatedAt?: Date;
 }
 
 export interface Notification {
