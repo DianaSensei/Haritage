@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { View } from 'react-native';
 
 import { useAppTheme } from '@/shared/hooks';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -13,29 +13,43 @@ import {
 export default function TabLayout() {
   const { colors } = useAppTheme();
 
+  const containerStyle = useMemo(
+    () => ({ flex: 1, backgroundColor: colors.background }),
+    [colors.background],
+  );
+
+  const labelStyle = useMemo(
+    () => ({
+      default: {
+        color: colors.tabIconDefault,
+        fontSize: 12,
+        fontWeight: '600' as const,
+      },
+      selected: {
+        color: colors.tabIconSelected,
+        fontSize: 12,
+        fontWeight: '700' as const,
+      },
+    }),
+    [colors.tabIconDefault, colors.tabIconSelected],
+  );
+
+  const iconColor = useMemo(
+    () => ({
+      default: colors.tabIconDefault,
+      selected: colors.tabIconSelected,
+    }),
+    [colors.tabIconDefault, colors.tabIconSelected],
+  );
+
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.surfaceSecondary,
-        borderTopColor: colors.border,
-        borderTopWidth: StyleSheet.hairlineWidth,
-      }}
-    >
+    <View style={containerStyle}>
       <NativeTabs
-        labelStyle={{
-          default: {
-            color: colors.tabIconDefault,
-            fontSize: 12,
-            fontWeight: '600' as const,
-          },
-          selected: {
-            color: colors.tabIconSelected,
-            fontSize: 12,
-            fontWeight: '600' as const,
-          },
-        }}
+        labelStyle={labelStyle}
         tintColor={colors.tabIconSelected}
+        backgroundColor={colors.surfaceSecondary}
+        indicatorColor={colors.accent}
+        iconColor={iconColor}
       >
         <NativeTabs.Trigger name="index">
           <Label>Home</Label>
