@@ -225,6 +225,8 @@ const colors = {
 ```typescript
 const MAX_DEPTH = 3;
 const canReply = depth < MAX_DEPTH;
+// Note: depth is 0-indexed, so MAX_DEPTH=3 allows depths 0, 1, 2
+// This gives 3 visual levels: top comment, first reply, second reply
 ```
 
 ### 2. Memo Equality Check

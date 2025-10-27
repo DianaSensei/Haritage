@@ -30,7 +30,7 @@ This PR implements a complete commenting and reactions system for feed posts in 
 - **Added**: Comprehensive mock comment data
 - **Scenarios Covered**:
   - Standard comments with upvotes/downvotes
-  - Nested replies (2-3 levels deep)
+  - Nested replies (up to 3 visual levels)
   - Deleted comments with preserved structure
   - Comments with varying ages (timestamps)
   - Mixed vote states (upvoted, downvoted, neutral)
@@ -44,7 +44,7 @@ This PR implements a complete commenting and reactions system for feed posts in 
 - Expandable/collapsible nested replies
 - Visual nesting with indentation and border
 - Memoized for performance
-- Max nesting depth: 3 levels
+- Max nesting depth: 3 visual levels (depths 0, 1, 2)
 
 #### CommentInput (`src/modules/feed/components/CommentInput.tsx`)
 - Multi-line text input

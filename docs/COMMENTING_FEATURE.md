@@ -54,7 +54,7 @@ Displays a single comment with:
 - Comment content
 - Upvote/Downvote buttons with counts
 - Reply button
-- Nested replies (up to 3 levels deep)
+- Nested replies (up to 3 visual levels: top comment → reply → nested reply)
 - Toggle to show/hide replies
 
 **Props:**
@@ -62,7 +62,7 @@ Displays a single comment with:
 interface CommentItemProps {
   comment: Comment;
   onReply?: (commentId: string) => void;
-  depth?: number; // Current nesting level
+  depth?: number; // Current nesting level (0, 1, or 2)
 }
 ```
 
