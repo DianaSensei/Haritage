@@ -3,10 +3,11 @@ import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { userService } from '@/modules/account/services/userService';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { ThemedText } from '@/shared/components';
+import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -25,32 +26,39 @@ interface MenuItemProps {
   isDanger?: boolean;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, isDanger }) => (
-  <TouchableOpacity
-    style={styles.menuItem}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={styles.menuItemLeft}>
-      <Ionicons
-        name={icon as any}
-        size={20}
-        color={isDanger ? '#FF3B30' : '#0a66c2'}
-      />
-      <ThemedText style={[styles.menuLabel, isDanger && styles.menuLabelDanger]}>
-        {label}
-      </ThemedText>
-    </View>
-    <Ionicons name="chevron-forward" size={20} color="#818384" />
-  </TouchableOpacity>
-);
-
 export const AccountScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const updateUser = useAuthStore((state) => state.updateUser);
   const syncAuthorAvatar = useFeedStore((state) => state.updateAuthorAvatar);
   const router = useRouter();
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, isDanger }) => (
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={onPress}
+      activeOpacity={0.72}
+    >
+      <View style={styles.menuItemLeft}>
+        <Ionicons
+          name={icon as any}
+          size={20}
+          color={isDanger ? colors.danger : colors.accent}
+        />
+        <ThemedText
+          style={[
+            styles.menuLabel,
+            isDanger ? styles.menuLabelDanger : undefined,
+          ]}
+        >
+          {label}
+        </ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
+    </TouchableOpacity>
+  );
 
   const handleAvatarPress = useCallback(async () => {
     if (isUploadingAvatar) {
@@ -144,7 +152,9 @@ export const AccountScreen: React.FC = () => {
   const handleSecurity = useCallback(() => {
     router.push('/security-privacy');
   }, [router]);
-  const handleSettings = () => Alert.alert('Settings', 'App settings placeholder');
+  const handleSettings = useCallback(() => {
+    router.push('/app-settings');
+  }, [router]);
   const handleHelp = () => Alert.alert('Help', 'Help & support placeholder');
   const handleDebug = useCallback(() => {
     router.push('/debug-tools');
@@ -164,7 +174,7 @@ export const AccountScreen: React.FC = () => {
             style={styles.editButton}
             onPress={handleEditProfile}
           >
-            <Ionicons name="pencil" size={16} color="#fff" />
+            <Ionicons name="pencil" size={16} color="#ffffff" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -178,7 +188,7 @@ export const AccountScreen: React.FC = () => {
                 <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={40} color="#0a66c2" />
+                  <Ionicons name="person" size={40} color={colors.accent} />
                 </View>
               )}
 
@@ -200,25 +210,25 @@ export const AccountScreen: React.FC = () => {
           <View style={styles.infoSection}>
             {user?.phoneNumber && (
               <View style={styles.infoRow}>
-                <Ionicons name="phone-portrait" size={16} color="#0a66c2" />
+                <Ionicons name="phone-portrait" size={16} color={colors.accent} />
                 <ThemedText style={styles.infoLabel}>Phone</ThemedText>
                 <ThemedText style={styles.infoValue}>{user.phoneNumber}</ThemedText>
-                <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               </View>
             )}
 
             {user?.email && (
               <View style={styles.infoRow}>
-                <Ionicons name="mail" size={16} color="#0a66c2" />
+                <Ionicons name="mail" size={16} color={colors.accent} />
                 <ThemedText style={styles.infoLabel}>Email</ThemedText>
                 <ThemedText style={styles.infoValue}>{user.email}</ThemedText>
-                <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               </View>
             )}
 
             {user?.createdAt && (
               <View style={styles.infoRow}>
-                <Ionicons name="calendar" size={16} color="#0a66c2" />
+                <Ionicons name="calendar" size={16} color={colors.accent} />
                 <ThemedText style={styles.infoLabel}>Joined</ThemedText>
                 <ThemedText style={styles.infoValue}>
                   {new Date(user.createdAt).toLocaleDateString('en-US', {
@@ -297,239 +307,241 @@ export const AccountScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  profileCard: {
-    marginHorizontal: 16,
-    marginVertical: 16,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: '#272729',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#404142',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  editButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0a66c2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0a66c2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  avatarContainer: {
-    marginBottom: 16,
-    position: 'relative',
-  },
-  avatarWrapper: {
-    position: 'relative',
-    width: 88,
-    height: 88,
-  },
-  avatarImage: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 3,
-    borderColor: '#0a66c2',
-  },
-  avatarPlaceholder: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#1a1a1b',
-    borderWidth: 2,
-    borderColor: '#0a66c2',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarOverlay: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    borderRadius: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarLoading: {
-    opacity: 0.85,
-  },
-  cameraBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#0a66c2',
-    borderWidth: 2,
-    borderColor: '#1a1a1b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0a66c2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  cameraBadgeDisabled: {
-    backgroundColor: '#3a3b3c',
-    shadowOpacity: 0,
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#e4e6eb',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  infoSection: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-    backgroundColor: '#1a1a1b',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#343536',
-  },
-  infoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#818384',
-    marginLeft: 8,
-    width: 50,
-  },
-  infoValue: {
-    fontSize: 13,
-    color: '#e4e6eb',
-    flex: 1,
-    marginLeft: 4,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#1a1a1b',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#34C759',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#34C759',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#34C759',
-    marginLeft: 6,
-  },
-  section: {
-    marginHorizontal: 16,
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#818384',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  menuContainer: {
-    backgroundColor: '#272729',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#404142',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  menuLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#e4e6eb',
-    marginLeft: 12,
-  },
-  menuLabelDanger: {
-    color: '#FF3B30',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#343536',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-  },
-  footerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#818384',
-    marginBottom: 4,
-  },
-  footerSubtext: {
-    fontSize: 12,
-    color: '#666',
-  },
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.divider,
+      backgroundColor: colors.surface,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    profileCard: {
+      marginHorizontal: 16,
+      marginVertical: 16,
+      paddingVertical: 24,
+      paddingHorizontal: 16,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    editButton: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    avatarContainer: {
+      marginBottom: 16,
+      position: 'relative',
+    },
+    avatarWrapper: {
+      position: 'relative',
+      width: 88,
+      height: 88,
+    },
+    avatarImage: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      borderWidth: 3,
+      borderColor: colors.accent,
+    },
+    avatarPlaceholder: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      backgroundColor: colors.backgroundMuted,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatarOverlay: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      backgroundColor: colors.overlay,
+      borderRadius: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatarLoading: {
+      opacity: 0.85,
+    },
+    cameraBadge: {
+      position: 'absolute',
+      bottom: -2,
+      right: -2,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.accent,
+      borderWidth: 2,
+      borderColor: colors.surfaceSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.35,
+      shadowRadius: 3,
+      elevation: 4,
+    },
+    cameraBadgeDisabled: {
+      backgroundColor: colors.surfaceTertiary,
+      shadowOpacity: 0,
+    },
+    userName: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    infoSection: {
+      width: '100%',
+      marginBottom: 16,
+      gap: 8,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      gap: 8,
+    },
+    infoLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textMuted,
+      width: 60,
+    },
+    infoValue: {
+      fontSize: 13,
+      color: colors.text,
+      flex: 1,
+    },
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      backgroundColor: colors.successSoft,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.success,
+      gap: 6,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.success,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.success,
+    },
+    section: {
+      marginHorizontal: 16,
+      marginVertical: 16,
+      gap: 12,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    menuContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      backgroundColor: colors.surface,
+    },
+    menuItemLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 12,
+    },
+    menuLabel: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    menuLabelDanger: {
+      color: colors.danger,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.divider,
+    },
+    footer: {
+      alignItems: 'center',
+      paddingVertical: 24,
+      paddingHorizontal: 16,
+      gap: 4,
+    },
+    footerText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textMuted,
+    },
+    footerSubtext: {
+      fontSize: 12,
+      color: colors.iconMuted,
+    },
+  });

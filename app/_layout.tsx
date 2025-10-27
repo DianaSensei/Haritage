@@ -3,7 +3,7 @@ import {
   setStatusBarHidden,
   setStatusBarStyle,
 } from 'expo-status-bar';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
@@ -15,17 +15,19 @@ import { useAppLockManager } from '@/modules/auth/hooks/useAppLockManager';
 import { AuthScreen } from '@/modules/auth/screens/AuthScreen';
 import { LockScreen } from '@/modules/auth/screens/LockScreen';
 import { PINSetupScreen } from '@/modules/auth/screens/PINSetupScreen';
-import { useColorScheme } from '@/shared/hooks';
+import { useAppTheme } from '@/shared/hooks';
 import { Slot } from 'expo-router';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { colors, theme } = useAppTheme();
   const { isAuthenticated } = useAuthStore();
   const pinSetupRequired = useAppLockStore((state) => state.pinSetupRequired);
   const isLocked = useAppLockStore((state) => state.isLocked);
   const setLastAuthTimestamp = useAppLockStore((state) => state.setLastAuthTimestamp);
   const { isInitializing } = useAppLockManager();
   useAppLock();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleAuthEvent = useCallback(() => {
     setLastAuthTimestamp(Date.now());
@@ -36,10 +38,10 @@ export default function RootLayout() {
 
   // Set status bar style and background to prevent flicker
   useEffect(() => {
-    setStatusBarStyle(colorScheme === "dark" ? "light" : "dark");
-    setStatusBarBackgroundColor(colorScheme === "dark" ? "#000" : "#fff");
+    setStatusBarStyle(theme === 'dark' ? 'light' : 'dark');
+    setStatusBarBackgroundColor(colors.background);
     setStatusBarHidden(false);
-  }, [colorScheme]);
+  }, [colors.background, theme]);
 
   return (
     <StoreProvider>
@@ -68,20 +70,21 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1a1a1b',
-    zIndex: 100,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.overlay,
+      zIndex: 100,
+    },
+  });

@@ -17,6 +17,8 @@ export interface AuthState {
     error: string | null;
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 export interface FeedItem {
     id: string;
     type: 'video' | 'image' | 'text';

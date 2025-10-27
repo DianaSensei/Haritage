@@ -6,12 +6,14 @@ import { useAuthStore } from './slices/authSlice';
 import { useCommentStore } from './slices/commentSlice';
 import { useFeedStore } from './slices/feedSlice';
 import { useNotificationStore } from './slices/notificationSlice';
+import { useThemeStore } from './slices/themeSlice';
 
 export { useAppLockStore } from './slices/appLockSlice';
 export { useAuthStore } from './slices/authSlice';
 export { useCommentStore } from './slices/commentSlice';
 export { useFeedStore } from './slices/feedSlice';
 export { useNotificationStore } from './slices/notificationSlice';
+export { useThemeStore } from './slices/themeSlice';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize stores
@@ -20,6 +22,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useFeedStore();
   useNotificationStore();
   useCommentStore();
+  useThemeStore();
   
   return <>{children}</>;
 };

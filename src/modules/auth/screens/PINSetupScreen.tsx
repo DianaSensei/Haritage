@@ -37,7 +37,6 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
-  const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState('Biometric');
   const [isLoading, setIsLoading] = useState(false);
   const pinInputRef = useRef<TextInput>(null);
@@ -51,8 +50,6 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
   const initializeBiometric = async () => {
     try {
       const available = await biometricService.isBiometricAvailable();
-      setIsBiometricAvailable(available);
-
       if (available) {
         const type = await biometricService.getBiometricTypeName();
         setBiometricType(type);
@@ -102,8 +99,11 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
       const hash = await pinService.hashPin(pin);
       await pinService.storePinHash(hash);
       setPinHash(hash);
+      const available = await biometricService.isBiometricAvailable();
 
-      if (isBiometricAvailable) {
+      if (available) {
+        const type = await biometricService.getBiometricTypeName();
+        setBiometricType(type);
         setStep('biometric');
       } else {
         completeSetup(false);

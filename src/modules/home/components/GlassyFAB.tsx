@@ -1,8 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Animated, Platform, StyleSheet, TouchableOpacity } from 'react-native';
+
+import { useAppTheme } from '@/shared/hooks';
 
 interface GlassyFABProps {
   isVisible: boolean;
@@ -27,6 +29,8 @@ export const GlassyFAB: React.FC<GlassyFABProps> = ({
   onPress,
 }) => {
   const router = useRouter();
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handlePress = () => {
     onPress?.() || router.push('/create-post');
@@ -82,48 +86,48 @@ export const GlassyFAB: React.FC<GlassyFABProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    right: 16,
-    bottom: 20,
-    zIndex: 999,
-  },
-  // iOS 18+ Liquid Glass Styling
-  liquidGlassContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  liquidGlassFab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(10, 102, 194, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Fallback Solid Button
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#0a66c2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // Native platform shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      right: 16,
+      bottom: 20,
+      zIndex: 999,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});
+    // iOS 18+ Liquid Glass Styling
+    liquidGlassContainer: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      overflow: 'hidden',
+      borderWidth: 0.5,
+      borderColor: colors.border,
+    },
+    liquidGlassFab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.accentSoft,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // Fallback Solid Button
+    fab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+  });
 
 export default GlassyFAB;

@@ -1,4 +1,6 @@
+import { Colors } from '@/core/config/theme';
 import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { useAppTheme } from '@/shared/hooks';
 import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useEffect, useMemo, useState } from 'react';
@@ -74,6 +76,8 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
   const [downvotesCount, setDownvotesCount] = useState(item.downvotes ?? 0);
   const [selectedPollOption, setSelectedPollOption] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(item.isSaved ?? false);
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const updateItem = useFeedStore((state) => state.updateItem);
 
   useEffect(() => {
@@ -315,7 +319,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
         onPress={handleOpenLink}
         activeOpacity={0.85}
       >
-        <Ionicons name="link" size={16} color="#0a66c2" />
+        <Ionicons name="link" size={16} color={colors.accent} />
         <View style={styles.urlPreviewContent}>
           <Text style={styles.urlPreviewTitle} numberOfLines={1}>
             {title}
@@ -329,7 +333,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
             {getHostname(previewUrl)}
           </Text>
         </View>
-        <Ionicons name="open-outline" size={16} color="#818384" />
+        <Ionicons name="open-outline" size={16} color={colors.iconMuted} />
       </TouchableOpacity>
     );
   };
@@ -358,7 +362,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
                 <Ionicons
                   name={isSelected ? 'radio-button-on' : 'radio-button-off'}
                   size={18}
-                  color={pollClosed ? '#4a4a4a' : isSelected ? '#0a66c2' : '#818384'}
+                  color={pollClosed ? colors.iconMuted : isSelected ? colors.accent : colors.icon}
                 />
                 <Text
                   style={[
@@ -397,7 +401,7 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
           </View>
         </View>
         <TouchableOpacity style={styles.moreButton}>
-          <Ionicons name="ellipsis-horizontal" size={20} color="#818384" />
+          <Ionicons name="ellipsis-horizontal" size={20} color={colors.iconMuted} />
         </TouchableOpacity>
       </View>
 
@@ -487,206 +491,207 @@ const areEqual = (prev: FeedItemProps, next: FeedItemProps) => {
 
 export const FeedItem = memo(FeedItemComponent, areEqual);
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#272729',
-    marginVertical: 12,
-    marginHorizontal: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#3a3b3c',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-    backgroundColor: '#1f1f20',
-  },
-  authorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#0a66c2',
-  },
-  authorDetails: {
-    flex: 1,
-  },
-  authorName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#818384',
-    marginTop: 2,
-  },
-  moreButton: {
-    padding: 6,
-  },
-  body: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f0f0f3',
-    lineHeight: 24,
-  },
-  primaryImage: {
-    width: screenWidth - 48,
-    height: (screenWidth - 48) * 0.6,
-    borderRadius: 12,
-  },
-  primaryVideoWrapper: {
-    width: screenWidth - 48,
-    height: (screenWidth - 48) * 0.6,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  mediaGallery: {
-    marginTop: 8,
-  },
-  mediaItem: {
-    marginRight: 10,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#343536',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  mediaImage: {
-    width: 130,
-    height: 130,
-  },
-  mediaVideo: {
-    width: 160,
-    height: 120,
-  },
-  contentSection: {
-    gap: 6,
-  },
-  contentText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#e4e6eb',
-  },
-  readMoreText: {
-    fontSize: 13,
-    color: '#0a66c2',
-    fontWeight: '600',
-  },
-  urlPreviewBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#1f1f20',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#343536',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  urlPreviewContent: {
-    flex: 1,
-    gap: 4,
-  },
-  urlPreviewTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  urlPreviewDescription: {
-    fontSize: 12,
-    color: '#b1b2b6',
-  },
-  urlPreviewUrl: {
-    fontSize: 12,
-    color: '#818384',
-  },
-  pollBox: {
-    backgroundColor: '#1f1f20',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#343536',
-    padding: 14,
-    gap: 12,
-  },
-  pollQuestion: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  pollOptions: {
-    gap: 10,
-  },
-  pollOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#272729',
-  },
-  pollOptionSelected: {
-    borderColor: '#0a66c2',
-    backgroundColor: '#21242d',
-  },
-  pollOptionDisabled: {
-    opacity: 0.6,
-  },
-  pollOptionText: {
-    fontSize: 13,
-    color: '#e4e6eb',
-    flex: 1,
-  },
-  pollOptionTextDisabled: {
-    color: '#7d7f83',
-  },
-  pollFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pollMeta: {
-    fontSize: 12,
-    color: '#818384',
-  },
-  pollSelection: {
-    fontSize: 12,
-    color: '#0a66c2',
-    fontWeight: '600',
-  },
-  reactionBar: {
-    marginBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#343536',
-    borderRadius: 0,
-  },
-});
+const createStyles = (colors: typeof Colors.light) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      marginVertical: 12,
+      marginHorizontal: 12,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    authorInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 12,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    authorDetails: {
+      flex: 1,
+    },
+    authorName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    timestamp: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    moreButton: {
+      padding: 6,
+    },
+    body: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 16,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      lineHeight: 24,
+    },
+    primaryImage: {
+      width: screenWidth - 48,
+      height: (screenWidth - 48) * 0.6,
+      borderRadius: 12,
+    },
+    primaryVideoWrapper: {
+      width: screenWidth - 48,
+      height: (screenWidth - 48) * 0.6,
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    mediaGallery: {
+      marginTop: 8,
+    },
+    mediaItem: {
+      marginRight: 10,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    mediaImage: {
+      width: 130,
+      height: 130,
+    },
+    mediaVideo: {
+      width: 160,
+      height: 120,
+    },
+    contentSection: {
+      gap: 6,
+    },
+    contentText: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.text,
+    },
+    readMoreText: {
+      fontSize: 13,
+      color: colors.textLink,
+      fontWeight: '600',
+    },
+    urlPreviewBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    urlPreviewContent: {
+      flex: 1,
+      gap: 4,
+    },
+    urlPreviewTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    urlPreviewDescription: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    urlPreviewUrl: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    pollBox: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      gap: 12,
+    },
+    pollQuestion: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    pollOptions: {
+      gap: 10,
+    },
+    pollOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    pollOptionSelected: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accentSoft,
+    },
+    pollOptionDisabled: {
+      opacity: 0.6,
+    },
+    pollOptionText: {
+      fontSize: 13,
+      color: colors.text,
+      flex: 1,
+    },
+    pollOptionTextDisabled: {
+      color: colors.textMuted,
+    },
+    pollFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    pollMeta: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    pollSelection: {
+      fontSize: 12,
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    reactionBar: {
+      marginBottom: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      borderRadius: 0,
+    },
+  });

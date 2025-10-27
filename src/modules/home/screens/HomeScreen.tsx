@@ -3,6 +3,7 @@ import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { FeedItem } from '@/modules/feed/components/FeedItem';
 import { CommentsScreen } from '@/modules/feed/screens/CommentsScreen';
+import { useAppTheme } from '@/shared/hooks';
 import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +36,8 @@ export const HomeScreen: React.FC = () => {
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const lastScrollY = useRef(0);
   const fabOpacity = useRef(new Animated.Value(1)).current;
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const feedStats = useMemo(() => {
     const postCount = feedItems.length;
@@ -190,21 +193,21 @@ export const HomeScreen: React.FC = () => {
 
       <View style={styles.statRow}>
         <View style={styles.statCard}>
-          <Ionicons name="albums-outline" size={18} color="#0a66c2" />
+          <Ionicons name="albums-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
             <RNText style={styles.statValue}>{feedStats.postCount.toLocaleString()}</RNText>
             <RNText style={styles.statLabel}>Posts</RNText>
           </View>
         </View>
         <View style={styles.statCard}>
-          <Ionicons name="thumbs-up-outline" size={18} color="#0a66c2" />
+          <Ionicons name="thumbs-up-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
             <RNText style={styles.statValue}>{feedStats.totalLikes.toLocaleString()}</RNText>
             <RNText style={styles.statLabel}>Appreciations</RNText>
           </View>
         </View>
         <View style={styles.statCard}>
-          <Ionicons name="chatbubble-ellipses-outline" size={18} color="#0a66c2" />
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
             <RNText style={styles.statValue}>{feedStats.totalComments.toLocaleString()}</RNText>
             <RNText style={styles.statLabel}>Conversations</RNText>
@@ -266,9 +269,9 @@ export const HomeScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#0a66c2"
-            colors={['#0a66c2']}
-            progressBackgroundColor="#1a1a1b"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+            progressBackgroundColor={colors.surface}
           />
         }
         onEndReached={handleLoadMore}
@@ -301,154 +304,155 @@ export const HomeScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  feedList: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  listContent: {
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    paddingBottom: 120,
-    backgroundColor: '#1a1a1b',
-  },
-  header: {
-    paddingTop: 12,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    gap: 16,
-    backgroundColor: '#1a1a1b',
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#818384',
-  },
-  composeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: '#0a66c2',
-    shadowColor: '#0a66c2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  composeLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#343536',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statContent: {
-    flex: 1,
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#818384',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  filterScroll: {
-    marginTop: 4,
-  },
-  filterContent: {
-    paddingRight: 12,
-    gap: 10,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#1f1f20',
-  },
-  filterChipActive: {
-    backgroundColor: '#0a66c2',
-    borderColor: '#0a66c2',
-  },
-  filterChipText: {
-    fontSize: 13,
-    color: '#e4e6eb',
-    fontWeight: '500',
-  },
-  filterChipTextActive: {
-    color: '#ffffff',
-  },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 80,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
-  fabButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#0a66c2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#0a66c2',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  footerSpace: {
-    height: 48,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    feedList: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    listContent: {
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingBottom: 120,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingTop: 12,
+      paddingBottom: 20,
+      paddingHorizontal: 20,
+      gap: 16,
+      backgroundColor: colors.background,
+    },
+    headerTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    composeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 999,
+      backgroundColor: colors.accent,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 6,
+      elevation: 5,
+    },
+    composeLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#ffffff',
+    },
+    statRow: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      gap: 12,
+    },
+    statCard: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderRadius: 16,
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    statContent: {
+      flex: 1,
+      gap: 2,
+    },
+    statValue: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.6,
+    },
+    filterScroll: {
+      marginTop: 4,
+    },
+    filterContent: {
+      paddingRight: 12,
+      gap: 10,
+    },
+    filterChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    filterChipActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    filterChipText: {
+      fontSize: 13,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    filterChipTextActive: {
+      color: '#ffffff',
+    },
+    fab: {
+      position: 'absolute',
+      right: 16,
+      bottom: 80,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 999,
+    },
+    fabButton: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: colors.accent,
+      shadowOpacity: 0.4,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    footerSpace: {
+      height: 48,
+    },
+  });
 
 export default HomeScreen;

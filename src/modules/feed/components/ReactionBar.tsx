@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from 'react-native';
+
+import { useAppTheme } from '@/shared/hooks';
 
 interface ReactionBarProps {
   likes: number;
@@ -41,6 +43,12 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
   onShare,
   onToggleSave,
 }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const neutralColor = colors.textMuted;
+  const activeTextColor = '#ffffff';
+  const dangerColor = colors.danger;
+
   const pointerEvents = disabled ? 'none' : 'auto';
   const opacity = disabled ? 0.6 : 1;
 
@@ -54,9 +62,9 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
           <Ionicons
             name={isLiked ? 'arrow-up' : 'arrow-up-outline'}
             size={18}
-            color={isLiked ? '#f4f5f7' : '#8c919d'}
+            color={isLiked ? activeTextColor : neutralColor}
           />
-          <Text style={[styles.count, isLiked && styles.countActive]}>{likes}</Text>
+          <Text style={[styles.count, { color: isLiked ? activeTextColor : neutralColor }]}>{likes}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -66,21 +74,21 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
           <Ionicons
             name={isDownvoted ? 'arrow-down' : 'arrow-down-outline'}
             size={18}
-            color={isDownvoted ? '#ff4d4f' : '#8c919d'}
+            color={isDownvoted ? dangerColor : neutralColor}
           />
-          <Text style={[styles.count, isDownvoted && styles.countDanger]}>{downvotes}</Text>
+          <Text style={[styles.count, { color: isDownvoted ? dangerColor : neutralColor }]}>{downvotes}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.group}>
         <TouchableOpacity onPress={onComment} style={[styles.button, styles.buttonCompact]}>
-          <Ionicons name="chatbubble-outline" size={18} color="#8c919d" />
-          <Text style={styles.count}>{comments}</Text>
+          <Ionicons name="chatbubble-outline" size={18} color={neutralColor} />
+          <Text style={[styles.count, { color: neutralColor }]}>{comments}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={onShare} style={[styles.button, styles.buttonCompact]}>
-          <Ionicons name="share-outline" size={18} color="#8c919d" />
-          <Text style={styles.count}>{shares}</Text>
+          <Ionicons name="share-outline" size={18} color={neutralColor} />
+          <Text style={[styles.count, { color: neutralColor }]}>{shares}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -90,7 +98,7 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
           <Ionicons
             name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={18}
-            color={isSaved ? '#f4f5f7' : '#8c919d'}
+            color={isSaved ? activeTextColor : neutralColor}
           />
         </TouchableOpacity>
       </View>
@@ -98,51 +106,49 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 18,
-    backgroundColor: '#111216',
-    marginTop: 8,
-  },
-  group: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#16181f',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  buttonCompact: {
-    paddingHorizontal: 10,
-  },
-  buttonActive: {
-    backgroundColor: '#2536b8',
-  },
-  buttonDangerActive: {
-    backgroundColor: '#30171a',
-  },
-  count: {
-    color: '#8c919d',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  countActive: {
-    color: '#f4f5f7',
-  },
-  countDanger: {
-    color: '#ff4d4f',
-  },
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 18,
+      backgroundColor: colors.surfaceSecondary,
+      marginTop: 8,
+    },
+    group: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    buttonCompact: {
+      paddingHorizontal: 10,
+    },
+    buttonActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    buttonDangerActive: {
+      backgroundColor: colors.dangerSoft,
+      borderColor: colors.danger,
+    },
+    count: {
+      fontSize: 13,
+      fontWeight: '500',
+    },
+  });
 
 export default ReactionBar;

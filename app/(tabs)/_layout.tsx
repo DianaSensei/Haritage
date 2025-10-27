@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useColorScheme } from "@/shared/hooks";
+import { useAppTheme } from "@/shared/hooks";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   Icon,
@@ -9,11 +9,10 @@ import {
   VectorIcon,
 } from "expo-router/unstable-native-tabs";
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors } = useAppTheme();
 
-  // Use appropriate colors based on platform and color scheme
-  const textColor = colorScheme === "dark" ? "#ffffff" : "#000000";
-  const iconColor = colorScheme === "dark" ? "#ffffff" : "#000000";
+  const textColor = colors.tabIconDefault;
+  const iconColor = colors.tabIconSelected;
 
   return (
     <NativeTabs
