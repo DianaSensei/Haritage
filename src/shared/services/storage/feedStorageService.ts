@@ -1,3 +1,4 @@
+import { buildDefaultFeedItems } from '@/shared/data/feed/defaultFeedItems';
 import { FeedItem } from '@/shared/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -163,6 +164,26 @@ export const feedStorageService = {
       console.error('Error getting storage info:', error);
       return { itemCount: 0, lastUpdated: null };
     }
+  },
+
+  /**
+   * Ensure feed items exist in storage by seeding defaults when empty.
+   */
+  async ensureFeedItems(): Promise<FeedItem[]> {
+    const existing = await this.getFeedItems();
+    if (existing && existing.length > 0) {
+      return existing;
+    }
+
+    const defaults = buildDefaultFeedItems();
+    await this.saveFeedItems(defaults);
+
+    const seeded = await this.getFeedItems();
+    if (seeded && seeded.length > 0) {
+      return seeded;
+    }
+
+    return sanitizeFeedItems(defaults);
   },
 };
 

@@ -146,6 +146,9 @@ export const AccountScreen: React.FC = () => {
   }, [router]);
   const handleSettings = () => Alert.alert('Settings', 'App settings placeholder');
   const handleHelp = () => Alert.alert('Help', 'Help & support placeholder');
+  const handleDebug = useCallback(() => {
+    router.push('/debug-tools');
+  }, [router]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -255,6 +258,18 @@ export const AccountScreen: React.FC = () => {
               icon="help-circle"
               label="Help & Support"
               onPress={handleHelp}
+            />
+          </View>
+        </View>
+
+        {/* Debug Section */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Debug</ThemedText>
+          <View style={styles.menuContainer}>
+            <MenuItem
+              icon="code-working"
+              label="Debug Tools"
+              onPress={handleDebug}
             />
           </View>
         </View>
