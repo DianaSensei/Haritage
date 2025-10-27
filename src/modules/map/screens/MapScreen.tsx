@@ -1,15 +1,16 @@
+import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Image,
-    Linking,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  Linking,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -68,6 +69,8 @@ const MOCK_STORES: Store[] = [
 
 export const MapScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const filteredStores = useMemo(() => {
     if (!searchQuery.trim()) return MOCK_STORES;
@@ -108,20 +111,20 @@ export const MapScreen: React.FC = () => {
         <Text style={styles.storeName} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.storeAddress} numberOfLines={1}>{item.address}</Text>
         <View style={styles.coordinatesRow}>
-          <Ionicons name="location" size={14} color="#0a66c2" />
+          <Ionicons name="location" size={14} color={colors.accent} />
           <Text style={styles.coordinates}>
             {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
           </Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#ccc" />
+      <Ionicons name="chevron-forward" size={20} color={colors.iconMuted} />
     </TouchableOpacity>
   );
 
   const renderMapPreview = () => (
     <View style={styles.mapContainer}>
       <View style={styles.mapPlaceholder}>
-        <Ionicons name="map" size={48} color="#0a66c2" />
+        <Ionicons name="map" size={48} color={colors.accent} />
         <Text style={styles.mapPlaceholderText}>Map View</Text>
         <Text style={styles.mapPlaceholderSubtext}>
           {filteredStores.length} store{filteredStores.length !== 1 ? 's' : ''} found
@@ -158,17 +161,17 @@ export const MapScreen: React.FC = () => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search stores..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#999" />
+              <Ionicons name="close-circle" size={20} color={colors.iconMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -192,7 +195,7 @@ export const MapScreen: React.FC = () => {
           contentContainerStyle={styles.storesListContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={48} color="#ccc" />
+              <Ionicons name="search-outline" size={48} color={colors.iconMuted} />
               <Text style={styles.emptyStateText}>No stores found</Text>
             </View>
           }
@@ -202,183 +205,191 @@ export const MapScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#272729',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#404142',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#e4e6eb',
-    fontSize: 16,
-    paddingVertical: 10,
-  },
-  mapContainer: {
-    marginHorizontal: 16,
-    marginVertical: 12,
-    backgroundColor: '#272729',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#404142',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  mapPlaceholder: {
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    backgroundColor: '#1a1a1b',
-  },
-  mapPlaceholderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#e4e6eb',
-    marginTop: 8,
-  },
-  mapPlaceholderSubtext: {
-    fontSize: 12,
-    color: '#818384',
-    marginTop: 4,
-  },
-  mapGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    borderTopWidth: 1,
-    borderTopColor: '#343536',
-  },
-  mapGridItem: {
-    width: '50%',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#343536',
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  mapGridItemRight: {
-    borderRightWidth: 0,
-  },
-  gridItemThumbnail: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginBottom: 6,
-  },
-  gridItemName: {
-    fontSize: 11,
-    color: '#818384',
-    fontWeight: '500',
-  },
-  listHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  listTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#818384',
-  },
-  storesList: {
-    flex: 1,
-  },
-  storesListContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  storeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#272729',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#404142',
-    marginBottom: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  storeThumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  storeInfo: {
-    flex: 1,
-  },
-  storeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-    marginBottom: 4,
-  },
-  storeAddress: {
-    fontSize: 12,
-    color: '#818384',
-    marginBottom: 6,
-  },
-  coordinatesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  coordinates: {
-    fontSize: 11,
-    color: '#0a66c2',
-    marginLeft: 4,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: '#818384',
-    marginTop: 8,
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: 16,
+      marginVertical: 12,
+      paddingHorizontal: 12,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.45 : 0.15,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+      paddingVertical: 10,
+    },
+    mapContainer: {
+      marginHorizontal: 16,
+      marginVertical: 12,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.45 : 0.15,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    mapPlaceholder: {
+      paddingVertical: 16,
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+    },
+    mapPlaceholderText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginTop: 8,
+    },
+    mapPlaceholderSubtext: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+    mapGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    mapGridItem: {
+      width: '50%',
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      alignItems: 'center',
+      borderRightWidth: 1,
+      borderRightColor: colors.border,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+    },
+    mapGridItemRight: {
+      borderRightWidth: 0,
+    },
+    gridItemThumbnail: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      marginBottom: 6,
+    },
+    gridItemName: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    listHeader: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    listTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textMuted,
+    },
+    storesList: {
+      flex: 1,
+    },
+    storesListContent: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    storeCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+  marginBottom: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.45 : 0.15,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    storeThumbnail: {
+      width: 80,
+      height: 80,
+      borderRadius: 8,
+      marginRight: 12,
+    },
+    storeInfo: {
+      flex: 1,
+    },
+    storeName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    storeAddress: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginBottom: 6,
+    },
+    coordinatesRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    coordinates: {
+      fontSize: 11,
+      color: colors.accent,
+      marginLeft: 4,
+      fontWeight: '600',
+    },
+    emptyState: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 40,
+    },
+    emptyStateText: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: 8,
+    },
+  });
