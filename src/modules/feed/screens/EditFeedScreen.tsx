@@ -8,17 +8,17 @@ import { MOCK_CURRENT_USER_ID } from '@/modules/feed/data/mockUserFeedData';
 import { userFeedService } from '@/modules/feed/services/userFeedService';
 import { FeedItem } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,11 +38,7 @@ export const EditFeedScreen: React.FC = () => {
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadPost();
-  }, [postId]);
-
-  const loadPost = async () => {
+  const loadPost = useCallback(async () => {
     try {
       const post = await userFeedService.getUserFeedItem(postId);
       if (!post) {
@@ -73,7 +69,11 @@ export const EditFeedScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to load post');
       router.back();
     }
-  };
+  }, [postId, router]);
+
+  useEffect(() => {
+    loadPost();
+  }, [loadPost]);
 
   const handleSave = async () => {
     if (!content.trim()) {

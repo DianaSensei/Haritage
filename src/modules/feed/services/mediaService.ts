@@ -173,7 +173,6 @@ export class MediaService {
 
     // Validate file before upload
     validateFile(file: FileUpload, type: 'image' | 'video'): { valid: boolean; error?: string } {
-        const maxSize = type === 'image' ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for images, 100MB for videos
         const allowedTypes = type === 'image'
             ? ['image/jpeg', 'image/png', 'image/webp']
             : ['video/mp4', 'video/mov', 'video/avi'];

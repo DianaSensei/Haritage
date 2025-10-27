@@ -1,22 +1,19 @@
+import { AdItem } from '@/shared/types';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { AdItem } from '@/shared/types';
 
 interface AdBannerProps {
   ad: AdItem;
   onPress: (ad: AdItem) => void;
   onDismiss?: (adId: string) => void;
 }
-
-const { width: screenWidth } = Dimensions.get('window');
 
 export const AdBanner: React.FC<AdBannerProps> = ({
   ad,

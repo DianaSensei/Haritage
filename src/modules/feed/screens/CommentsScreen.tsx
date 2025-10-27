@@ -2,16 +2,16 @@ import { useCommentStore } from '@/core/store';
 import { mockStore } from '@/shared/data/stores/mockDataStore';
 import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { CommentInput } from '../components/CommentInput';
 import { CommentItem } from '../components/CommentItem';
@@ -33,14 +33,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const commentStore = useCommentStore();
   const comments = commentStore.getCommentsForPost(postId);
 
-  // Load comments when modal opens
-  useEffect(() => {
-    if (visible && postId) {
-      loadComments();
-    }
-  }, [visible, postId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     setIsLoading(true);
     try {
       // Simulate API call delay
@@ -53,7 +46,14 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [commentStore, postId]);
+
+  // Load comments when modal opens
+  useEffect(() => {
+    if (visible && postId) {
+      loadComments();
+    }
+  }, [visible, postId, loadComments]);
 
   const handleAddComment = (text: string) => {
     const currentUser = mockStore.getCurrentUser();

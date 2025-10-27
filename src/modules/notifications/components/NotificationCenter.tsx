@@ -4,22 +4,19 @@ import { Notification } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Dimensions,
-  FlatList,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface NotificationCenterProps {
   isVisible: boolean;
   onClose: () => void;
 }
-
-const { height: screenHeight } = Dimensions.get('window');
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   isVisible,
