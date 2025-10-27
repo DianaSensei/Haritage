@@ -1,11 +1,12 @@
 import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
   Image,
   Linking,
+  ListRenderItemInfo,
   StyleSheet,
   Text,
   TextInput,
@@ -66,144 +67,6 @@ const MOCK_STORES: Store[] = [
     thumbnail: 'https://via.placeholder.com/80x80/B8860B/FFFFFF?text=Store5',
   },
 ];
-
-export const MapScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { colors, isDark } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
-
-  const filteredStores = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_STORES;
-    return MOCK_STORES.filter(store =>
-      store.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
-
-  const handleOpenMaps = (store: Store) => {
-    const mapsUrl = `geo:${store.latitude},${store.longitude}?q=${encodeURIComponent(store.name)}`;
-    Linking.openURL(mapsUrl).catch(() => {
-      Alert.alert('Error', 'Could not open maps application');
-    });
-  };
-
-  const handleStorePress = (store: Store) => {
-    Alert.alert(
-      store.name,
-      `📍 ${store.address}\n\nLat: ${store.latitude.toFixed(4)}\nLng: ${store.longitude.toFixed(4)}`,
-      [
-        { text: 'Close', style: 'cancel' },
-        { text: 'Open in Maps', onPress: () => handleOpenMaps(store) },
-      ]
-    );
-  };
-
-  const renderStoreItem = ({ item }: { item: Store }) => (
-    <TouchableOpacity
-      style={styles.storeCard}
-      onPress={() => handleStorePress(item)}
-      activeOpacity={0.7}
-    >
-      <Image
-        source={{ uri: item.thumbnail }}
-        style={styles.storeThumbnail}
-      />
-      <View style={styles.storeInfo}>
-        <Text style={styles.storeName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.storeAddress} numberOfLines={1}>{item.address}</Text>
-        <View style={styles.coordinatesRow}>
-          <Ionicons name="location" size={14} color={colors.accent} />
-          <Text style={styles.coordinates}>
-            {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
-          </Text>
-        </View>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.iconMuted} />
-    </TouchableOpacity>
-  );
-
-  const renderMapPreview = () => (
-    <View style={styles.mapContainer}>
-      <View style={styles.mapPlaceholder}>
-        <Ionicons name="map" size={48} color={colors.accent} />
-        <Text style={styles.mapPlaceholderText}>Map View</Text>
-        <Text style={styles.mapPlaceholderSubtext}>
-          {filteredStores.length} store{filteredStores.length !== 1 ? 's' : ''} found
-        </Text>
-      </View>
-      <View style={styles.mapGrid}>
-        {filteredStores.slice(0, 4).map((store, idx) => (
-          <TouchableOpacity
-            key={store.id}
-            style={[
-              styles.mapGridItem,
-              idx % 2 === 1 && styles.mapGridItemRight,
-            ]}
-            onPress={() => handleStorePress(store)}
-          >
-            <Image
-              source={{ uri: store.thumbnail }}
-              style={styles.gridItemThumbnail}
-            />
-            <Text style={styles.gridItemName} numberOfLines={1}>{store.name.split(' ')[0]}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Store Locator</Text>
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search stores..."
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={colors.iconMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Map Preview */}
-        {renderMapPreview()}
-
-        {/* Stores List */}
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>
-            {filteredStores.length} Store{filteredStores.length !== 1 ? 's' : ''}
-          </Text>
-        </View>
-
-        <FlatList
-          data={filteredStores}
-          keyExtractor={(item) => item.id}
-          renderItem={renderStoreItem}
-          scrollEnabled={true}
-          style={styles.storesList}
-          contentContainerStyle={styles.storesListContent}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={48} color={colors.iconMuted} />
-              <Text style={styles.emptyStateText}>No stores found</Text>
-            </View>
-          }
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
 
 const createStyles = (
   colors: ReturnType<typeof useAppTheme>['colors'],
@@ -343,7 +206,7 @@ const createStyles = (
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
-  marginBottom: 12,
+      marginBottom: 12,
       paddingVertical: 12,
       paddingHorizontal: 12,
       shadowColor: colors.shadow,
@@ -393,3 +256,180 @@ const createStyles = (
       marginTop: 8,
     },
   });
+
+type MapScreenStyles = ReturnType<typeof createStyles>;
+
+type StoreListItemProps = {
+  store: Store;
+  onPress: (store: Store) => void;
+  styles: MapScreenStyles;
+  accentColor: string;
+  chevronColor: string;
+};
+
+const StoreListItem = memo(
+  ({ store, onPress, styles, accentColor, chevronColor }: StoreListItemProps) => {
+    const handlePress = useCallback(() => onPress(store), [onPress, store]);
+
+    return (
+      <TouchableOpacity
+        style={styles.storeCard}
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Image source={{ uri: store.thumbnail }} style={styles.storeThumbnail} />
+        <View style={styles.storeInfo}>
+          <Text style={styles.storeName} numberOfLines={1}>
+            {store.name}
+          </Text>
+          <Text style={styles.storeAddress} numberOfLines={1}>
+            {store.address}
+          </Text>
+          <View style={styles.coordinatesRow}>
+            <Ionicons name="location" size={14} color={accentColor} />
+            <Text style={styles.coordinates}>
+              {store.latitude.toFixed(4)}, {store.longitude.toFixed(4)}
+            </Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={chevronColor} />
+      </TouchableOpacity>
+    );
+  },
+);
+
+StoreListItem.displayName = 'StoreListItem';
+
+export const MapScreen: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
+  const accentColor = colors.accent;
+  const chevronColor = colors.iconMuted;
+
+  const filteredStores = useMemo(() => {
+    if (!searchQuery.trim()) return MOCK_STORES;
+    const loweredQuery = searchQuery.toLowerCase();
+    return MOCK_STORES.filter((store) =>
+      store.name.toLowerCase().includes(loweredQuery),
+    );
+  }, [searchQuery]);
+
+  const handleOpenMaps = useCallback((store: Store) => {
+    const mapsUrl = `geo:${store.latitude},${store.longitude}?q=${encodeURIComponent(store.name)}`;
+    Linking.openURL(mapsUrl).catch(() => {
+      Alert.alert('Error', 'Could not open maps application');
+    });
+  }, []);
+
+  const handleStorePress = useCallback(
+    (store: Store) => {
+      Alert.alert(
+        store.name,
+        `📍 ${store.address}\n\nLat: ${store.latitude.toFixed(4)}\nLng: ${store.longitude.toFixed(4)}`,
+        [
+          { text: 'Close', style: 'cancel' },
+          { text: 'Open in Maps', onPress: () => handleOpenMaps(store) },
+        ],
+      );
+    },
+    [handleOpenMaps],
+  );
+
+  const renderStoreItem = useCallback(
+    ({ item }: ListRenderItemInfo<Store>) => (
+      <StoreListItem
+        store={item}
+        onPress={handleStorePress}
+        styles={styles}
+        accentColor={accentColor}
+        chevronColor={chevronColor}
+      />
+    ),
+    [handleStorePress, styles, accentColor, chevronColor],
+  );
+
+  const keyExtractor = useCallback((item: Store) => item.id, []);
+
+  const mapPreview = useMemo(() => (
+    <View style={styles.mapContainer}>
+      <View style={styles.mapPlaceholder}>
+        <Ionicons name="map" size={48} color={accentColor} />
+        <Text style={styles.mapPlaceholderText}>Map View</Text>
+        <Text style={styles.mapPlaceholderSubtext}>
+          {filteredStores.length} store{filteredStores.length !== 1 ? 's' : ''} found
+        </Text>
+      </View>
+      <View style={styles.mapGrid}>
+        {filteredStores.slice(0, 4).map((store, idx) => (
+          <TouchableOpacity
+            key={store.id}
+            style={[styles.mapGridItem, idx % 2 === 1 && styles.mapGridItemRight]}
+            onPress={() => handleStorePress(store)}
+            activeOpacity={0.75}
+          >
+            <Image source={{ uri: store.thumbnail }} style={styles.gridItemThumbnail} />
+            <Text style={styles.gridItemName} numberOfLines={1}>
+              {store.name.split(' ')[0]}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  ), [accentColor, filteredStores, handleStorePress, styles]);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Store Locator</Text>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search stores..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+              <Ionicons name="close-circle" size={20} color={chevronColor} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {mapPreview}
+
+        <View style={styles.listHeader}>
+          <Text style={styles.listTitle}>
+            {filteredStores.length} Store{filteredStores.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+
+        <FlatList
+          data={filteredStores}
+          keyExtractor={keyExtractor}
+          renderItem={renderStoreItem}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={7}
+          removeClippedSubviews
+          keyboardShouldPersistTaps="handled"
+          style={styles.storesList}
+          contentContainerStyle={styles.storesListContent}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="search-outline" size={48} color={chevronColor} />
+              <Text style={styles.emptyStateText}>No stores found</Text>
+            </View>
+          }
+        />
+      </View>
+    </SafeAreaView>
+  );
+};
