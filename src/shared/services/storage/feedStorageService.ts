@@ -10,6 +10,31 @@ interface StorageData {
   lastUpdated: string;
 }
 
+const sanitizeFeedItem = (item: FeedItem): FeedItem => {
+  const cleanedMediaUris = (item.mediaUris ?? [])
+    .map((uri) => (typeof uri === 'string' ? uri.trim() : ''))
+    .filter((uri): uri is string => uri.length > 0);
+
+  const cleanedVideoUrl = typeof item.videoUrl === 'string' ? item.videoUrl.trim() : undefined;
+  const cleanedThumbnail = typeof item.thumbnail === 'string' ? item.thumbnail.trim() : undefined;
+  const cleanedAuthorAvatar =
+    typeof item.author?.avatar === 'string' ? item.author.avatar.trim() : item.author?.avatar;
+
+  return {
+    ...item,
+    mediaUris: cleanedMediaUris,
+    videoUrl: cleanedVideoUrl && cleanedVideoUrl.length > 0 ? cleanedVideoUrl : undefined,
+    thumbnail: cleanedThumbnail && cleanedThumbnail.length > 0 ? cleanedThumbnail : undefined,
+    author: {
+      ...item.author,
+      avatar: cleanedAuthorAvatar && cleanedAuthorAvatar.length > 0 ? cleanedAuthorAvatar : '',
+    },
+  };
+};
+
+const sanitizeFeedItems = (items: FeedItem[]): FeedItem[] =>
+  items.map((item) => sanitizeFeedItem(item));
+
 /**
  * Feed Storage Service
  * Handles persistence of feed items to local device storage
@@ -23,7 +48,7 @@ export const feedStorageService = {
     try {
       const data: StorageData = {
         version: 1,
-        items,
+        items: sanitizeFeedItems(items),
         lastUpdated: new Date().toISOString(),
       };
       await AsyncStorage.setItem(FEED_STORAGE_KEY, JSON.stringify(data));
@@ -45,10 +70,10 @@ export const feedStorageService = {
 
       const parsedData: StorageData = JSON.parse(data);
 
-      // Convert ISO timestamp strings back to Date objects
-      const items = parsedData.items.map((item) => ({
+      const items = sanitizeFeedItems(parsedData.items).map((item) => ({
         ...item,
         createdAt: new Date(item.createdAt),
+        updatedAt: item.updatedAt ? new Date(item.updatedAt) : item.updatedAt,
       }));
 
       return items;
@@ -77,7 +102,7 @@ export const feedStorageService = {
   async addFeedItem(item: FeedItem): Promise<void> {
     try {
       const existingItems = await this.getFeedItems();
-      const items = existingItems ? [item, ...existingItems] : [item];
+  const items = existingItems ? [sanitizeFeedItem(item), ...existingItems] : [sanitizeFeedItem(item)];
       await this.saveFeedItems(items);
     } catch (error) {
       console.error('Error adding feed item:', error);
@@ -110,7 +135,7 @@ export const feedStorageService = {
       if (!items) return;
 
       const updated = items.map((item) =>
-        item.id === itemId ? { ...item, ...updates } : item
+        item.id === itemId ? sanitizeFeedItem({ ...item, ...updates }) : item
       );
       await this.saveFeedItems(updated);
     } catch (error) {

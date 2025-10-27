@@ -17,6 +17,7 @@ import { AppState, AppStateStatus } from 'react-native';
 
 export const useAppLock = () => {
   const appState = useRef(AppState.currentState);
+  const shouldLockOnForeground = useRef(false);
   const { isAuthenticated } = useAuthStore();
   const {
     isLocked,
@@ -33,22 +34,19 @@ export const useAppLock = () => {
       const prevState = appState.current;
       appState.current = nextAppState;
 
-      // Detect transition from background to foreground
-      if (prevState.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to foreground
-        if (isAuthenticated && !pinSetupRequired) {
-          // Check if PIN is set up
+      if (prevState === 'background' && nextAppState === 'active') {
+        if (isAuthenticated && !pinSetupRequired && shouldLockOnForeground.current) {
           const isPinSet = await pinService.isPinSetUp();
           if (isPinSet) {
             const now = Date.now();
-            if (suppressLockUntil) {
-              if (suppressLockUntil > now) {
-                clearSuppressLock();
-                return;
-              }
+            if (suppressLockUntil && suppressLockUntil > now) {
               clearSuppressLock();
+              shouldLockOnForeground.current = false;
+              return;
             }
-            // Lock the app immediately or after timeout
+            clearSuppressLock();
+            shouldLockOnForeground.current = false;
+
             const timeoutMs = CONFIG.APP_LOCK.LOCK_TIMEOUT_MS;
             if (timeoutMs > 0) {
               setTimeout(() => {
@@ -57,10 +55,26 @@ export const useAppLock = () => {
             } else {
               setLocked(true);
             }
+          } else {
+            shouldLockOnForeground.current = false;
+            clearSuppressLock();
           }
+        } else {
+          clearSuppressLock();
+          shouldLockOnForeground.current = false;
         }
-      } else if (nextAppState.match(/inactive|background/)) {
-        // App is going to background - record timestamp
+      } else if (nextAppState === 'background') {
+        setLastAuthTimestamp(Date.now());
+
+        if (isAuthenticated && !pinSetupRequired) {
+          const now = Date.now();
+          if (suppressLockUntil && suppressLockUntil > now) {
+            shouldLockOnForeground.current = false;
+            return;
+          }
+          shouldLockOnForeground.current = true;
+        }
+      } else if (nextAppState === 'inactive') {
         setLastAuthTimestamp(Date.now());
       }
     },

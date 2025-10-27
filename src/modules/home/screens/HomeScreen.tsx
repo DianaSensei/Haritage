@@ -323,7 +323,12 @@ export const HomeScreen: React.FC = () => {
 
       // Save mock data to storage for persistence
       await feedStorageService.saveFeedItems(mockFeedItems);
-      useFeedStore.getState().setItems(mockFeedItems);
+      const sanitized = await feedStorageService.getFeedItems();
+      if (sanitized && sanitized.length > 0) {
+        useFeedStore.getState().setItems(sanitized);
+      } else {
+        useFeedStore.getState().setItems(mockFeedItems);
+      }
       }
 
       addNotification({

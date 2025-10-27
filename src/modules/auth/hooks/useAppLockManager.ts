@@ -11,6 +11,7 @@ export const useAppLockManager = () => {
   const setLocked = useAppLockStore((state) => state.setLocked);
   const resetAppLock = useAppLockStore((state) => state.resetAppLock);
   const setLastAuthTimestamp = useAppLockStore((state) => state.setLastAuthTimestamp);
+  const suppressNextLock = useAppLockStore((state) => state.suppressNextLock);
 
   const [isInitializing, setIsInitializing] = useState(true);
   const hasInitializedRef = useRef(false);
@@ -61,9 +62,19 @@ export const useAppLockManager = () => {
         }
 
         setPinSetupRequired(nextPinSetupRequired);
-        setLocked(false);
+
+        const hasPinConfigured = Boolean(pinHash);
+        const shouldLockOnLaunch = hasPinConfigured && !nextPinSetupRequired;
+
+        if (shouldLockOnLaunch) {
+          setLocked(true);
+        } else {
+          setLocked(false);
+          suppressNextLock();
+        }
+
         setLastAuthTimestamp(Date.now());
-  hasInitializedRef.current = true;
+        hasInitializedRef.current = true;
       } catch (error) {
         console.warn('Failed to initialize app lock', error);
         if (isMounted) {
@@ -82,7 +93,16 @@ export const useAppLockManager = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, resetAppLock, setBiometricEnabled, setLocked, setPinHash, setPinSetupRequired, setLastAuthTimestamp]);
+  }, [
+    isAuthenticated,
+    resetAppLock,
+    setBiometricEnabled,
+    setLocked,
+    setPinHash,
+    setPinSetupRequired,
+    setLastAuthTimestamp,
+    suppressNextLock,
+  ]);
 
   return {
     isInitializing,
