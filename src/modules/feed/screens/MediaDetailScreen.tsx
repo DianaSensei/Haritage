@@ -1,9 +1,10 @@
 import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { useAppTheme } from '@/shared/hooks';
 import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
     Animated,
@@ -31,6 +32,8 @@ export const MediaDetailScreen: React.FC = () => {
   const { postId, mediaIndex = '0' } = useLocalSearchParams<{ postId: string; mediaIndex?: string }>();
   const feedItems = useFeedStore((state) => state.items);
   const updateFeedItem = useFeedStore((state) => state.updateItem);
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const currentPost = feedItems.find((item) => item.id === postId);
   const initialIndex = parseInt(mediaIndex as string, 10) || 0;
@@ -57,7 +60,7 @@ export const MediaDetailScreen: React.FC = () => {
             style={styles.closeButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="close" size={24} color="#fff" />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.errorText}>Post not found</Text>
         </View>
@@ -220,7 +223,7 @@ export const MediaDetailScreen: React.FC = () => {
             style={styles.closeButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="close" size={24} color="#fff" />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Media</Text>
           <View style={styles.headerSpace} />
@@ -265,7 +268,7 @@ export const MediaDetailScreen: React.FC = () => {
                   style={[styles.navButton, styles.navButtonLeft]}
                   onPress={handlePrevious}
                 >
-                  <Ionicons name="chevron-back" size={32} color="#fff" />
+                  <Ionicons name="chevron-back" size={32} color={colors.text} />
                 </TouchableOpacity>
               )}
 
@@ -274,7 +277,7 @@ export const MediaDetailScreen: React.FC = () => {
                   style={[styles.navButton, styles.navButtonRight]}
                   onPress={handleNext}
                 >
-                  <Ionicons name="chevron-forward" size={32} color="#fff" />
+                  <Ionicons name="chevron-forward" size={32} color={colors.text} />
                 </TouchableOpacity>
               )}
 
@@ -335,146 +338,153 @@ export const MediaDetailScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#0a0a0b',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0b',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  headerSpace: {
-    width: 40,
-  },
-  mediaContainer: {
-    position: 'relative',
-    width: screenWidth,
-    height: screenHeight * 0.5,
-    backgroundColor: '#000',
-  },
-  mediaPage: {
-    width: screenWidth,
-    height: screenHeight * 0.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mediaImage: {
-    width: '100%',
-    height: '100%',
-  },
-  navButton: {
-    position: 'absolute',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    top: '50%',
-    marginTop: -25,
-  },
-  navButtonLeft: {
-    left: 16,
-  },
-  navButtonRight: {
-    right: 16,
-  },
-  indicatorContainer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  indicatorText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  infoSection: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  authorAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#0a66c2',
-  },
-  authorInfo: {
-    flex: 1,
-  },
-  authorName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#818384',
-    marginTop: 2,
-  },
-  postTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f0f0f3',
-    marginBottom: 12,
-    lineHeight: 24,
-  },
-  postContent: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#e4e6eb',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#343536',
-    marginVertical: 12,
-  },
-  reactionBarSpacing: {
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#e4e6eb',
-    textAlign: 'center',
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    closeButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(17, 24, 28, 0.08)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    headerSpace: {
+      width: 40,
+    },
+    mediaContainer: {
+      position: 'relative',
+      width: screenWidth,
+      height: screenHeight * 0.5,
+      backgroundColor: isDark ? '#000' : colors.surface,
+    },
+    mediaPage: {
+      width: screenWidth,
+      height: screenHeight * 0.5,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mediaImage: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: colors.surface,
+    },
+    navButton: {
+      position: 'absolute',
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: isDark ? 'rgba(0, 0, 0, 0.55)' : 'rgba(15, 17, 19, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      top: '50%',
+      marginTop: -25,
+    },
+    navButtonLeft: {
+      left: 16,
+    },
+    navButtonRight: {
+      right: 16,
+    },
+    indicatorContainer: {
+      position: 'absolute',
+      bottom: 16,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    indicatorText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(236, 237, 238, 0.75)',
+    },
+    infoSection: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingVertical: 20,
+      backgroundColor: colors.background,
+    },
+    authorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 16,
+    },
+    authorAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    authorInfo: {
+      flex: 1,
+    },
+    authorName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    timestamp: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    postTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 12,
+      lineHeight: 24,
+    },
+    postContent: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.text,
+      marginBottom: 16,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.divider,
+      marginVertical: 12,
+    },
+    reactionBarSpacing: {
+      marginBottom: 16,
+    },
+    errorText: {
+      fontSize: 16,
+      color: colors.text,
+      textAlign: 'center',
+    },
+  });
 
 export default MediaDetailScreen;
