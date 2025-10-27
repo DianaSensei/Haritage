@@ -1,4 +1,5 @@
 import { ThemedText } from '@/shared/components';
+import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -34,6 +35,9 @@ const formatValueForEditor = (value: string | null): string => {
 
 export const DebugToolsScreen: React.FC = () => {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const placeholderColor = colors.textMuted;
   const [entries, setEntries] = useState<StorageEntry[]>([]);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [newKey, setNewKey] = useState('');
@@ -153,7 +157,7 @@ export const DebugToolsScreen: React.FC = () => {
     <View key={entry.key} style={styles.entryCard}>
       <View style={styles.entryHeader}>
         <View style={styles.entryTitleRow}>
-          <Ionicons name="document-text" size={16} color="#0a66c2" />
+          <Ionicons name="document-text" size={16} color={colors.accent} />
           <ThemedText style={styles.entryKey}>{entry.key}</ThemedText>
         </View>
         <View style={styles.entryActions}>
@@ -183,7 +187,7 @@ export const DebugToolsScreen: React.FC = () => {
         value={editedValues[entry.key] ?? ''}
         onChangeText={(value) => handleValueChange(entry.key, value)}
         placeholder="Value"
-        placeholderTextColor="#5c5d60"
+        placeholderTextColor={placeholderColor}
         autoCorrect={false}
         spellCheck={false}
       />
@@ -198,7 +202,7 @@ export const DebugToolsScreen: React.FC = () => {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={22} color="#e4e6eb" />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Debug Tools</ThemedText>
         <TouchableOpacity
@@ -207,7 +211,7 @@ export const DebugToolsScreen: React.FC = () => {
           activeOpacity={0.7}
           disabled={isLoading || isSubmitting}
         >
-          <Ionicons name="refresh" size={20} color="#e4e6eb" />
+          <Ionicons name="refresh" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -216,13 +220,13 @@ export const DebugToolsScreen: React.FC = () => {
           <ThemedText style={styles.summaryTitle}>Storage Overview</ThemedText>
           <ThemedText style={styles.summaryValue}>{totalEntries} keys detected</ThemedText>
           {(isLoading || isSubmitting) && (
-            <ActivityIndicator size="small" color="#0a66c2" style={styles.summarySpinner} />)
+            <ActivityIndicator size="small" color={colors.accent} style={styles.summarySpinner} />)
           }
         </View>
 
         <View style={styles.addCard}>
           <View style={styles.entryTitleRow}>
-            <Ionicons name="add-circle" size={18} color="#27ae60" />
+            <Ionicons name="add-circle" size={18} color={colors.success} />
             <ThemedText style={styles.sectionLabel}>Insert New Item</ThemedText>
           </View>
           <TextInput
@@ -230,7 +234,7 @@ export const DebugToolsScreen: React.FC = () => {
             value={newKey}
             onChangeText={setNewKey}
             placeholder="Key"
-            placeholderTextColor="#5c5d60"
+            placeholderTextColor={placeholderColor}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -240,7 +244,7 @@ export const DebugToolsScreen: React.FC = () => {
             value={newValue}
             onChangeText={setNewValue}
             placeholder="Value"
-            placeholderTextColor="#5c5d60"
+            placeholderTextColor={placeholderColor}
             autoCorrect={false}
             spellCheck={false}
           />
@@ -257,10 +261,10 @@ export const DebugToolsScreen: React.FC = () => {
 
         <View style={styles.entryList}>
           {isLoading && entries.length === 0 ? (
-            <ActivityIndicator size="large" color="#0a66c2" style={styles.loader} />
+            <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
           ) : entries.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="file-tray" size={32} color="#5c5d60" />
+              <Ionicons name="file-tray" size={32} color={colors.iconMuted} />
               <ThemedText style={styles.emptyText}>No storage entries detected.</ThemedText>
             </View>
           ) : (
@@ -272,168 +276,176 @@ export const DebugToolsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  content: {
-    padding: 16,
-    gap: 20,
-    paddingBottom: 40,
-  },
-  summaryCard: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e4e6eb',
-    marginBottom: 6,
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: '#b1b2b6',
-  },
-  summarySpinner: {
-    marginTop: 12,
-  },
-  addCard: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-    gap: 12,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  entryList: {
-    gap: 16,
-  },
-  entryCard: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-    gap: 12,
-  },
-  entryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  entryTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  entryKey: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  entryActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  actionButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  saveButton: {
-    backgroundColor: '#0a66c2',
-  },
-  deleteButton: {
-    backgroundColor: '#e74c3c',
-  },
-  primaryButton: {
-    backgroundColor: '#0a66c2',
-  },
-  addButton: {
-    alignSelf: 'flex-start',
-  },
-  entryInput: {
-    minHeight: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3a3b3c',
-    backgroundColor: '#1e1f20',
-    padding: 12,
-    color: '#e4e6eb',
-    fontSize: 13,
-  },
-  newValueInput: {
-    minHeight: 80,
-  },
-  emptyState: {
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#343536',
-    backgroundColor: '#1e1f20',
-    alignItems: 'center',
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#818384',
-  },
-  loader: {
-    marginTop: 24,
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    refreshButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    content: {
+      padding: 16,
+      gap: 20,
+      paddingBottom: 40,
+    },
+    summaryCard: {
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.4 : 0.15,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    summaryTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 6,
+    },
+    summaryValue: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    summarySpinner: {
+      marginTop: 12,
+    },
+    addCard: {
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: 12,
+    },
+    sectionLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    entryList: {
+      gap: 16,
+    },
+    entryCard: {
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: 12,
+    },
+    entryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    entryTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    entryKey: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    entryActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 10,
+    },
+    actionButtonText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#ffffff',
+    },
+    saveButton: {
+      backgroundColor: colors.accent,
+    },
+    deleteButton: {
+      backgroundColor: colors.danger,
+    },
+    primaryButton: {
+      backgroundColor: colors.accent,
+    },
+    addButton: {
+      alignSelf: 'flex-start',
+    },
+    entryInput: {
+      minHeight: 48,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      backgroundColor: isDark ? colors.surface : colors.backgroundMuted,
+      padding: 12,
+      color: colors.text,
+      fontSize: 13,
+    },
+    newValueInput: {
+      minHeight: 80,
+    },
+    emptyState: {
+      padding: 24,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      backgroundColor: isDark ? colors.surface : colors.backgroundMuted,
+      alignItems: 'center',
+      gap: 12,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    loader: {
+      marginTop: 24,
+    },
+  });

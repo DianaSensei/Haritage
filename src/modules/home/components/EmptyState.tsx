@@ -1,6 +1,7 @@
+import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface EmptyStateProps {
@@ -9,11 +10,13 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Ionicons name="hourglass-outline" size={64} color="#818384" />
+        <Ionicons name="hourglass-outline" size={64} color={colors.iconMuted} />
         <Text style={styles.title}>Loading posts...</Text>
         <Text style={styles.subtitle}>We're fetching the latest content for you</Text>
       </View>
@@ -23,7 +26,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => 
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        <Ionicons name="images-outline" size={72} color="#0a66c2" />
+        <Ionicons name="images-outline" size={72} color={colors.accent} />
       </View>
 
       <Text style={styles.title}>No posts yet</Text>
@@ -47,73 +50,75 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 48,
-    backgroundColor: '#1a1a1b',
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#272729',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 32,
-    borderWidth: 2,
-    borderColor: '#343536',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#e4e6eb',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#818384',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#0a66c2',
-    marginBottom: 24,
-    shadowColor: '#0a66c2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  divider: {
-    width: 48,
-    height: 1,
-    backgroundColor: '#343536',
-    marginVertical: 24,
-  },
-  hintText: {
-    fontSize: 12,
-    color: '#818384',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 24,
+      paddingVertical: 48,
+      gap: 16,
+      backgroundColor: colors.background,
+    },
+    iconContainer: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginBottom: 12,
+      lineHeight: 20,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 24,
+      paddingVertical: 14,
+      borderRadius: 999,
+      backgroundColor: colors.accent,
+      marginBottom: 16,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    actionButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#ffffff',
+    },
+    divider: {
+      width: 48,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.divider,
+      marginVertical: 12,
+    },
+    hintText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      textAlign: 'center',
+      fontStyle: 'italic',
+      lineHeight: 18,
+      maxWidth: 280,
+    },
+  });
 
 export default EmptyState;

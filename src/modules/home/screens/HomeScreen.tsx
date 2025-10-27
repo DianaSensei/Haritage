@@ -9,10 +9,9 @@ import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, FlatList, RefreshControl, Text as RNText, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, Text as RNText, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '../components/EmptyState';
-import { GlassyFAB } from '../components/GlassyFAB';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
@@ -24,7 +23,6 @@ export const HomeScreen: React.FC = () => {
     hasMore,
     loadMore,
     refreshFeed,
-    setRefreshing,
   } = useFeedStore();
   const { addNotification } = useNotificationStore();
 
@@ -33,9 +31,6 @@ export const HomeScreen: React.FC = () => {
   const [selectedPostId, setSelectedPostId] = useState<string>('');
   const flatListRef = useRef<FlatList>(null);
   const [activeFilter, setActiveFilter] = useState<string>('For you');
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-  const lastScrollY = useRef(0);
-  const fabOpacity = useRef(new Animated.Value(1)).current;
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -79,11 +74,7 @@ export const HomeScreen: React.FC = () => {
   }, [isAuthenticated, loadFeedData]);
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      refreshFeed();
-      setRefreshing(false);
-    }, 1000);
+    await refreshFeed();
   };
 
   const handleLoadMore = () => {
@@ -133,23 +124,6 @@ export const HomeScreen: React.FC = () => {
       setCurrentVideoIndex(null);
     }
   }).current;
-
-  const handleScroll = (event: any) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
-    const scrollingDown = currentScrollY > lastScrollY.current;
-    
-    // Tab bar collapses when scrolling down, so FAB should show
-    if (scrollingDown !== isScrollingDown) {
-      setIsScrollingDown(scrollingDown);
-      Animated.timing(fabOpacity, {
-        toValue: scrollingDown ? 1 : 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-    
-    lastScrollY.current = currentScrollY;
-  };
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -278,21 +252,12 @@ export const HomeScreen: React.FC = () => {
         onEndReachedThreshold={0.5}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={false}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={styles.feedList}
-      />
-      {/* Glassmorphic FAB - shows when scrolling and tab bar collapses */}
-      <GlassyFAB
-        isVisible={isScrollingDown}
-        isTabBarVisible={!isScrollingDown}
-        opacity={fabOpacity}
-        onPress={handleComposePress}
       />
       {/* Comments Modal */}
       <CommentsScreen
@@ -389,6 +354,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     statValue: {
       fontSize: 16,
       fontWeight: '700',
+      flexGrow: 1,
       color: colors.text,
     },
     statLabel: {

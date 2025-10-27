@@ -1,9 +1,10 @@
 import { CONFIG } from '@/core/config';
 import { useAppLockStore } from '@/core/store/slices/appLockSlice';
+import { useAppTheme } from '@/shared/hooks';
 import { biometricService } from '@/shared/services/security/biometricService';
 import { pinService } from '@/shared/services/security/pinService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Keyboard,
     KeyboardAvoidingView,
@@ -37,6 +38,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const pinInputRef = useRef<TextInput>(null);
   const hasAttemptedBiometric = useRef(false);
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const {
     failedAttempts,
@@ -182,7 +185,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
         style={styles.content}
       >
         <View style={styles.header}>
-          <Ionicons name="lock-closed" size={48} color="#0a66c2" />
+          <Ionicons name="lock-closed" size={48} color={colors.accent} />
           <Text style={styles.title}>Unlock Haritage</Text>
           <Text style={styles.subtitle}>Enter your 6-digit PIN</Text>
         </View>
@@ -239,7 +242,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
             <Ionicons
               name={biometricType === 'Face ID' ? 'person' : 'finger-print'}
               size={24}
-              color="#0a66c2"
+              color={colors.accent}
             />
             <Text style={styles.biometricButtonText}>
               {isBiometricLoading ? 'Authenticating...' : `Unlock with ${biometricType}`}
@@ -251,91 +254,99 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-    justifyContent: 'space-between',
-  },
-  header: {
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#818384',
-  },
-  pinDisplayWrapper: {
-    alignItems: 'center',
-    marginBottom: 40,
-    position: 'relative',
-  },
-  pinDisplay: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    width: '100%',
-    height: '100%',
-  },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#0a66c2',
-    backgroundColor: 'transparent',
-  },
-  pinDotFilled: {
-    backgroundColor: '#0a66c2',
-  },
-  pinDotError: {
-    borderColor: '#e74c3c',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#e74c3c',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  cooldownText: {
-    fontSize: 12,
-    color: '#f39c12',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  biometricButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#0a66c2',
-    backgroundColor: 'rgba(10, 102, 194, 0.1)',
-  },
-  biometricButtonDisabled: {
-    opacity: 0.6,
-  },
-  biometricButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0a66c2',
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 20,
+      paddingVertical: 40,
+      justifyContent: 'space-between',
+    },
+    header: {
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 40,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    pinDisplayWrapper: {
+      alignItems: 'center',
+      marginBottom: 40,
+      position: 'relative',
+    },
+    pinDisplay: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 16,
+    },
+    hiddenInput: {
+      position: 'absolute',
+      opacity: 0,
+      width: '100%',
+      height: '100%',
+    },
+    pinDot: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: 'transparent',
+    },
+    pinDotFilled: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    pinDotError: {
+      borderColor: colors.danger,
+      backgroundColor: colors.dangerSoft,
+    },
+    errorText: {
+      fontSize: 12,
+      color: colors.danger,
+      textAlign: 'center',
+      marginBottom: 8,
+      fontWeight: '500',
+    },
+    cooldownText: {
+      fontSize: 12,
+      color: colors.warning,
+      textAlign: 'center',
+      marginBottom: 16,
+      fontWeight: '500',
+    },
+    biometricButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.accentSoft,
+    },
+    biometricButtonDisabled: {
+      opacity: 0.6,
+    },
+    biometricButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.accent,
+    },
+  });

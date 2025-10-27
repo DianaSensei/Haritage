@@ -1,5 +1,6 @@
 import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { ThemedText } from '@/shared/components';
+import { useAppTheme } from '@/shared/hooks';
 import { biometricService } from '@/shared/services/security/biometricService';
 import { pinService } from '@/shared/services/security/pinService';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const SecurityPrivacyScreen: React.FC = () => {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const pinHash = useAppLockStore((state) => state.pinHash);
   const isBiometricEnabled = useAppLockStore((state) => state.isBiometricEnabled);
   const setBiometricEnabled = useAppLockStore((state) => state.setBiometricEnabled);
@@ -161,7 +164,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={22} color="#e4e6eb" />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Security & Privacy</ThemedText>
       </View>
@@ -172,12 +175,12 @@ export const SecurityPrivacyScreen: React.FC = () => {
       >
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="shield-checkmark" size={22} color="#0a66c2" />
+            <Ionicons name="shield-checkmark" size={22} color={colors.accent} />
             <ThemedText style={styles.cardTitle}>App Lock Status</ThemedText>
           </View>
           <ThemedText style={styles.cardDescription}>{statusText}</ThemedText>
           {isCheckingSupport && (
-            <ActivityIndicator style={styles.spinner} color="#0a66c2" size="small" />
+            <ActivityIndicator style={styles.spinner} color={colors.accent} size="small" />
           )}
         </View>
 
@@ -187,7 +190,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
               <Ionicons
                 name={isBiometricEnabled ? 'finger-print' : 'lock-closed'}
                 size={22}
-                color="#0a66c2"
+                color={colors.accent}
               />
               <View>
                 <ThemedText style={styles.toggleTitle}>{biometricType} Unlock</ThemedText>
@@ -200,8 +203,15 @@ export const SecurityPrivacyScreen: React.FC = () => {
               value={isBiometricEnabled}
               onValueChange={handleToggleBiometric}
               disabled={isToggleDisabled}
-              thumbColor={isBiometricEnabled ? '#0a66c2' : '#b1b2b6'}
-              trackColor={{ false: '#3a3b3c', true: '#0a66c2' }}
+              thumbColor={
+                isBiometricEnabled
+                  ? colors.accent
+                  : isDark
+                    ? colors.surfaceSecondary
+                    : colors.background
+              }
+              trackColor={{ false: colors.border, true: colors.accent }}
+              ios_backgroundColor={colors.border}
             />
           </View>
           {!pinHash && !isCheckingSupport && (
@@ -216,7 +226,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="information-circle" size={22} color="#0a66c2" />
+            <Ionicons name="information-circle" size={22} color={colors.accent} />
             <ThemedText style={styles.cardTitle}>About Biometrics</ThemedText>
           </View>
           <ThemedText style={styles.cardDescription}>
@@ -228,94 +238,99 @@ export const SecurityPrivacyScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a1a1b',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#e4e6eb',
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-  card: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#272729',
-    borderWidth: 1,
-    borderColor: '#404142',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#b1b2b6',
-    lineHeight: 20,
-  },
-  spinner: {
-    marginTop: 12,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  toggleLabelGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  toggleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  toggleSubtitle: {
-    fontSize: 13,
-    color: '#818384',
-  },
-  helperText: {
-    marginTop: 12,
-    fontSize: 13,
-    color: '#f39c12',
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    content: {
+      padding: 16,
+      gap: 16,
+    },
+    card: {
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.35 : 0.12,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 12,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    cardDescription: {
+      fontSize: 14,
+      color: colors.textMuted,
+      lineHeight: 20,
+    },
+    spinner: {
+      marginTop: 12,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 16,
+    },
+    toggleLabelGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      flex: 1,
+    },
+    toggleTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    toggleSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    helperText: {
+      marginTop: 12,
+      fontSize: 13,
+      color: colors.warning,
+    },
+  });

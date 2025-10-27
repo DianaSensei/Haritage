@@ -29,7 +29,7 @@ interface FeedActions {
   setCurrentPage: (page: number) => void;
   setRefreshing: (refreshing: boolean) => void;
   setFilters: (filters: { search?: string; tags?: string[]; dateRange?: 'all' | '24h' | '7d' | '30d' }) => void;
-  refreshFeed: () => void;
+  refreshFeed: () => Promise<void>;
   loadMore: () => void;
   clearFeed: () => void;
 }
@@ -122,14 +122,27 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
     set({ filters: { ...current, ...newFilters } });
   },
   
-  refreshFeed: () => {
-    set({ 
-      items: [], 
-      currentPage: 1, 
-      hasMore: true, 
-      refreshing: true,
-      error: null 
-    });
+  refreshFeed: async () => {
+    const previousItems = get().items;
+    set({ refreshing: true, error: null });
+
+    try {
+      const items = await feedStorageService.ensureFeedItems();
+      set({
+        items: items.length > 0 ? items : previousItems,
+        currentPage: 1,
+        hasMore: true,
+        refreshing: false,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Failed to refresh feed', error);
+      set({
+        items: previousItems,
+        refreshing: false,
+        error: 'Unable to refresh feed right now.',
+      });
+    }
   },
   
   loadMore: () => {

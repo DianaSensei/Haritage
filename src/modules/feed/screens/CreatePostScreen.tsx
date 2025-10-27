@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/core/store/slices/authSlice';
 import { useFeedStore } from '@/core/store/slices/feedSlice';
+import { useAppTheme } from '@/shared/hooks';
 import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem } from '@/shared/types';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,6 +29,8 @@ export const CreatePostScreen: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const { prependItem } = useFeedStore();
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -241,7 +244,7 @@ export const CreatePostScreen: React.FC = () => {
             value={title}
             onChangeText={setTitle}
             placeholder="Title"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.textMuted}
             style={styles.titleInput}
             maxLength={300}
           />
@@ -250,7 +253,7 @@ export const CreatePostScreen: React.FC = () => {
               value={body}
               onChangeText={setBody}
               placeholder="body text (optional)"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.textMuted}
               style={styles.bodyInput}
               multiline
               textAlignVertical="top"
@@ -271,7 +274,7 @@ export const CreatePostScreen: React.FC = () => {
                     }
                   }}
                   placeholder="Add URL (optional)"
-                  placeholderTextColor="#666"
+                  placeholderTextColor={colors.textMuted}
                   style={styles.urlInput}
                 />
                 {linkValidationError && <Text style={styles.errorMsg}>{linkValidationError}</Text>}
@@ -309,7 +312,7 @@ export const CreatePostScreen: React.FC = () => {
                 value={tagInput}
                 onChangeText={handleTagInput}
                 placeholder="Add tags... (space ends tag)"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textMuted}
                 style={styles.tagInput}
               />
               {tagSuggestions.length > 0 && (
@@ -331,7 +334,7 @@ export const CreatePostScreen: React.FC = () => {
                     else setPoll({ ...poll, question: text });
                   }}
                   placeholder="Poll question"
-                  placeholderTextColor="#666"
+                  placeholderTextColor={colors.textMuted}
                   style={styles.pollQuestion}
                 />
                 {poll && (
@@ -343,7 +346,7 @@ export const CreatePostScreen: React.FC = () => {
                             value={option.text}
                             onChangeText={(text) => updatePollOption(option.id, text)}
                             placeholder={`Option ${idx + 1}`}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textMuted}
                             style={styles.pollOptionText}
                           />
                           {poll.options.length > 2 && (
@@ -365,7 +368,7 @@ export const CreatePostScreen: React.FC = () => {
                   value={pollCloseHours}
                   onChangeText={setPollCloseHours}
                   placeholder="24"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textMuted}
                   style={styles.pollClose}
                   keyboardType="number-pad"
                 />
@@ -385,7 +388,7 @@ export const CreatePostScreen: React.FC = () => {
               }
             }}
           >
-            <Text style={styles.toolIcon}>+</Text>
+            <Text style={[styles.toolIcon, showUrlInput && styles.toolIconActive]}>+</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.toolBtn} onPress={pickMedia}>
             <Text style={styles.toolIcon}>📷</Text>
@@ -397,7 +400,7 @@ export const CreatePostScreen: React.FC = () => {
               if (!showPollCreator && !poll) setPoll({ question: '', options: [{ id: '1', text: '' }, { id: '2', text: '' }] });
             }}
           >
-            <Text style={styles.toolIcon}>•</Text>
+            <Text style={[styles.toolIcon, showPollCreator && styles.toolIconActive]}>•</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -405,52 +408,243 @@ export const CreatePostScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#1a1a1b' },
-  container: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  info: { color: '#fff', fontSize: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#343536', backgroundColor: '#1a1a1b' },
-  close: { fontSize: 24, color: '#818384', fontWeight: '700' },
-  postBtn: { paddingHorizontal: 18, paddingVertical: 8, backgroundColor: '#0a66c2', borderRadius: 20 },
-  postBtnDisabled: { opacity: 0.5 },
-  postBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  scrollContent: { flex: 1, paddingHorizontal: 16, paddingVertical: 12 },
-  titleInput: { color: '#e4e6eb', fontSize: 24, fontWeight: '700', marginVertical: 8, padding: 12, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  contentBox: { flex: 1, marginVertical: 8 },
-  bodyInput: { color: '#e4e6eb', fontSize: 16, flex: 1, padding: 12, minHeight: 120, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', marginTop: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  urlInput: { color: '#e4e6eb', fontSize: 14, marginTop: 8, padding: 12, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  errorMsg: { color: '#ff4500', fontSize: 12, marginTop: 4 },
-  previewBox: { marginTop: 8, padding: 12, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  previewTitle: { color: '#e4e6eb', fontWeight: '600', fontSize: 13, marginBottom: 4 },
-  previewUrl: { color: '#818384', fontSize: 11 },
-  mediaGallery: { marginTop: 8, marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 8 },
-  mediaBox: { position: 'relative', marginRight: 12 },
-  mediaThumbnail: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#343536', borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  mediaBadge: { position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,0.8)', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  mediaBadgeText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  tagsBox: { marginTop: 8, padding: 12, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  tagsList: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
-  tag: { backgroundColor: '#0a66c2', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 },
-  tagText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  tagInput: { color: '#e4e6eb', fontSize: 14, padding: 0, marginTop: 4 },
-  tagSuggestions: { marginTop: 8, backgroundColor: '#1a1a1b', borderWidth: 0 },
-  tagSuggestion: { paddingVertical: 8, paddingHorizontal: 0 },
-  tagSuggestionText: { fontSize: 13, color: '#e4e6eb' },
-  pollBox: { marginTop: 8, padding: 12, backgroundColor: '#272729', borderRadius: 8, borderWidth: 1, borderColor: '#404142', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  pollQuestion: { color: '#e4e6eb', fontSize: 16, fontWeight: '600', padding: 8, marginBottom: 8, backgroundColor: '#1a1a1b', borderRadius: 6, borderWidth: 1, borderColor: '#343536' },
-  pollOptionsList: { marginBottom: 8 },
-  pollOptionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  pollOptionText: { flex: 1, color: '#e4e6eb', fontSize: 14, borderWidth: 1, borderColor: '#343536', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#1a1a1b' },
-  pollRemove: { marginLeft: 8, width: 32, justifyContent: 'center', alignItems: 'center' },
-  pollRemoveText: { color: '#ff4500', fontSize: 16 },
-  addOption: { paddingVertical: 8, marginBottom: 8 },
-  addOptionText: { color: '#0a66c2', fontWeight: '600', fontSize: 13 },
-  pollClose: { color: '#e4e6eb', fontSize: 13, borderWidth: 1, borderColor: '#343536', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 8, marginTop: 8, backgroundColor: '#1a1a1b' },
-  toolbar: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a1a1b', paddingHorizontal: 16, paddingVertical: 8, paddingBottom: Platform.OS === 'ios' ? 20 : 8, borderTopWidth: 1, borderTopColor: '#343536' },
-  toolBtn: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 6 },
-  toolBtnActive: { backgroundColor: '#272729' },
-  toolIcon: { fontSize: 16, color: '#818384', fontWeight: '600' },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) => {
+  const sheetBackground = isDark ? colors.surfaceSecondary : colors.surface;
+  const inputBackground = isDark ? colors.surfaceTertiary : colors.surfaceSecondary;
+  const innerBackground = isDark ? colors.surface : colors.card;
+  const borderColor = colors.border;
+  const dividerColor = isDark ? colors.borderMuted : colors.border;
+  const shadowColor = isDark ? '#000000' : colors.shadow;
+  const overlayColor = isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(17, 24, 28, 0.35)';
+
+  return StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: colors.background },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+    info: { color: colors.text, fontSize: 16 },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: dividerColor,
+      backgroundColor: sheetBackground,
+    },
+  close: { fontSize: 22, color: colors.icon, fontWeight: '700' },
+    postBtn: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      backgroundColor: colors.accent,
+      borderRadius: 20,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 5,
+      elevation: 3,
+    },
+    postBtnDisabled: { opacity: 0.6 },
+    postBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
+    scrollContent: { flex: 1, paddingHorizontal: 20, paddingVertical: 16 },
+    titleInput: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: '700',
+      marginVertical: 12,
+      padding: 14,
+      backgroundColor: inputBackground,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor,
+      shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.3 : 0.14,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    contentBox: { flex: 1, gap: 12 },
+    bodyInput: {
+      color: colors.text,
+      fontSize: 16,
+      flex: 1,
+      padding: 14,
+      minHeight: 140,
+      backgroundColor: inputBackground,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor,
+      shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.3 : 0.12,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    urlInput: {
+      color: colors.text,
+      fontSize: 14,
+      marginTop: 8,
+      padding: 12,
+      backgroundColor: inputBackground,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor,
+      shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.28 : 0.12,
+      shadowRadius: 5,
+      elevation: 2,
+    },
+    errorMsg: { color: colors.danger, fontSize: 12, marginTop: 6 },
+    previewBox: {
+      marginTop: 10,
+      padding: 12,
+      backgroundColor: inputBackground,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor,
+      gap: 4,
+    },
+    previewTitle: { color: colors.text, fontWeight: '600', fontSize: 13 },
+    previewUrl: { color: colors.textMuted, fontSize: 11 },
+    mediaGallery: { marginTop: 10, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 10 },
+    mediaBox: { position: 'relative', marginRight: 14 },
+    mediaThumbnail: {
+      width: 110,
+      height: 110,
+      borderRadius: 12,
+      backgroundColor: inputBackground,
+      borderWidth: 1,
+      borderColor,
+      shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.28 : 0.12,
+      shadowRadius: 5,
+      elevation: 3,
+    },
+    mediaBadge: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      backgroundColor: overlayColor,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mediaBadgeText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
+    tagsBox: {
+      marginTop: 12,
+      padding: 14,
+      backgroundColor: inputBackground,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor,
+      gap: 8,
+    },
+    tagsList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    tag: {
+      backgroundColor: colors.accent,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    tagText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
+    tagInput: { color: colors.text, fontSize: 14, padding: 0, marginTop: 4 },
+    tagSuggestions: {
+      marginTop: 6,
+      paddingVertical: 6,
+      backgroundColor: innerBackground,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: dividerColor,
+      gap: 4,
+    },
+    tagSuggestion: { paddingVertical: 6 },
+    tagSuggestionText: { fontSize: 13, color: colors.text },
+    pollBox: {
+      marginTop: 12,
+      padding: 14,
+      backgroundColor: inputBackground,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor,
+      gap: 10,
+    },
+    pollQuestion: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: innerBackground,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: dividerColor,
+    },
+    pollOptionsList: { gap: 10 },
+    pollOptionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    pollOptionText: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 14,
+      borderWidth: 1,
+      borderColor: dividerColor,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: innerBackground,
+    },
+    pollRemove: { width: 32, justifyContent: 'center', alignItems: 'center' },
+    pollRemoveText: { color: colors.danger, fontSize: 16 },
+    addOption: { paddingVertical: 6 },
+    addOptionText: { color: colors.textLink, fontWeight: '600', fontSize: 13 },
+    pollClose: {
+      color: colors.text,
+      fontSize: 13,
+      borderWidth: 1,
+      borderColor: dividerColor,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      backgroundColor: innerBackground,
+      width: 100,
+    },
+    toolbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: sheetBackground,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: dividerColor,
+    },
+    toolBtn: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 10,
+      backgroundColor: inputBackground,
+      borderWidth: 1,
+      borderColor: dividerColor,
+    },
+    toolBtnActive: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    toolIcon: { fontSize: 16, color: colors.icon, fontWeight: '600' },
+    toolIconActive: { color: colors.accent },
+  });
+};
 
 export default CreatePostScreen;

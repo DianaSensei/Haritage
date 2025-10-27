@@ -43,8 +43,8 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
   onShare,
   onToggleSave,
 }) => {
-  const { colors } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const neutralColor = colors.textMuted;
   const activeTextColor = '#ffffff';
   const dangerColor = colors.danger;
@@ -106,7 +106,10 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
   );
 };
 
-const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
+) =>
   StyleSheet.create({
     bar: {
       flexDirection: 'row',
@@ -114,8 +117,8 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingVertical: 12,
-      borderRadius: 18,
-      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 12,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.card,
       marginTop: 8,
     },
     group: {
@@ -127,12 +130,12 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
       borderRadius: 12,
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.border : colors.border,
     },
     buttonCompact: {
       paddingHorizontal: 10,

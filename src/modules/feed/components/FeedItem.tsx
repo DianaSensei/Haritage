@@ -76,8 +76,8 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
   const [downvotesCount, setDownvotesCount] = useState(item.downvotes ?? 0);
   const [selectedPollOption, setSelectedPollOption] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(item.isSaved ?? false);
-  const { colors } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const updateItem = useFeedStore((state) => state.updateItem);
 
   useEffect(() => {
@@ -491,21 +491,28 @@ const areEqual = (prev: FeedItemProps, next: FeedItemProps) => {
 
 export const FeedItem = memo(FeedItemComponent, areEqual);
 
-const createStyles = (colors: typeof Colors.light) =>
-  StyleSheet.create({
+const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
+  const cardBackground = isDark ? colors.surfaceTertiary : colors.card;
+  const sectionBackground = isDark ? colors.surfaceSecondary : colors.surfaceSecondary;
+  const controlBackground = isDark ? colors.surfaceTertiary : colors.surface;
+  const outlineColor = isDark ? colors.borderMuted : colors.border;
+  const dividerColor = isDark ? colors.border : colors.divider;
+  const shadowColor = isDark ? '#000000' : 'rgba(15, 17, 19, 0.12)';
+
+  return StyleSheet.create({
     container: {
-      backgroundColor: colors.card,
+      backgroundColor: cardBackground,
       marginVertical: 12,
       marginHorizontal: 12,
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: outlineColor,
       overflow: 'hidden',
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      elevation: 4,
+      shadowColor,
+      shadowOffset: { width: 0, height: isDark ? 10 : 8 },
+      shadowOpacity: isDark ? 0.35 : 0.18,
+      shadowRadius: isDark ? 12 : 14,
+      elevation: isDark ? 8 : 5,
     },
     header: {
       flexDirection: 'row',
@@ -514,8 +521,8 @@ const createStyles = (colors: typeof Colors.light) =>
       paddingHorizontal: 16,
       paddingVertical: 14,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      borderBottomColor: dividerColor,
+      backgroundColor: cardBackground,
     },
     authorInfo: {
       flexDirection: 'row',
@@ -576,12 +583,12 @@ const createStyles = (colors: typeof Colors.light) =>
       borderRadius: 12,
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.border,
-      shadowColor: colors.shadow,
+      borderColor: dividerColor,
+      shadowColor,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
+      shadowOpacity: isDark ? 0.3 : 0.16,
       shadowRadius: 4,
-      elevation: 3,
+      elevation: isDark ? 4 : 2,
     },
     mediaImage: {
       width: 130,
@@ -608,10 +615,10 @@ const createStyles = (colors: typeof Colors.light) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      backgroundColor: colors.surface,
+      backgroundColor: sectionBackground,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: outlineColor,
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
@@ -633,10 +640,10 @@ const createStyles = (colors: typeof Colors.light) =>
       color: colors.textMuted,
     },
     pollBox: {
-      backgroundColor: colors.surface,
+      backgroundColor: sectionBackground,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: outlineColor,
       padding: 14,
       gap: 12,
     },
@@ -656,8 +663,8 @@ const createStyles = (colors: typeof Colors.light) =>
       paddingHorizontal: 12,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surfaceSecondary,
+      borderColor: dividerColor,
+      backgroundColor: controlBackground,
     },
     pollOptionSelected: {
       borderColor: colors.accent,
@@ -691,7 +698,9 @@ const createStyles = (colors: typeof Colors.light) =>
     reactionBar: {
       marginBottom: 12,
       borderTopWidth: 1,
-      borderTopColor: colors.border,
+      borderTopColor: dividerColor,
       borderRadius: 0,
+      backgroundColor: cardBackground,
     },
   });
+};
