@@ -28,6 +28,7 @@ Developer workflows & commands
 - Avoid to use some deprecated libraries such as 'expo-av' due to it is no longer maintained and have a drop in replacement 'expo-video', 'expo-audio' which is actively maintained by expo team.
   Code conventions & patterns to follow
 
+- Use yarn instead of npm to manage dependencies.
 - TypeScript-first: prefer adding types and export them from `src/shared/types` or the module's `types/` folder.
 - State hooks: use the exported hooks from `src/core/store` (e.g., `useAuthStore()`). Avoid introducing new global singletons — add stores under `src/core/store/slices/` following existing patterns.
 - Services: API clients and error handling live under `src/shared/services/api/` — use `client.ts` for requests and `errorHandler.ts` for normalized errors.
