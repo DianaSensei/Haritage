@@ -1,18 +1,19 @@
 import { useCommentStore } from '@/core/store';
 import { mockStore } from '@/shared/data/stores/mockDataStore';
+import { useAppTheme } from '@/shared/hooks';
 import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
     Modal,
-    SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CommentInput } from '../components/CommentInput';
 import { CommentItem } from '../components/CommentItem';
 
@@ -32,6 +33,8 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   
   const commentStore = useCommentStore();
   const comments = commentStore.getCommentsForPost(postId);
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const loadComments = useCallback(async () => {
     setIsLoading(true);
@@ -113,15 +116,15 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={styles.headerTitle}>Comments ({comments.length})</Text>
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color="#e4e6eb" />
+      <TouchableOpacity onPress={onClose} style={styles.closeButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Ionicons name="close" size={24} color={colors.icon} />
       </TouchableOpacity>
     </View>
   );
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="chatbubble-outline" size={48} color="#4a4a4a" />
+      <Ionicons name="chatbubble-outline" size={48} color={colors.iconMuted} />
       <Text style={styles.emptyText}>No comments yet</Text>
       <Text style={styles.emptySubtext}>Be the first to share your thoughts</Text>
     </View>
@@ -135,7 +138,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       <View style={styles.replyingToHeader}>
         <Text style={styles.replyingToText}>Replying to {authorName}</Text>
         <TouchableOpacity onPress={() => setReplyingTo(null)}>
-          <Ionicons name="close-circle" size={18} color="#8c919d" />
+          <Ionicons name="close-circle" size={18} color={colors.iconMuted} />
         </TouchableOpacity>
       </View>
     );
@@ -153,7 +156,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
         
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0a66c2" />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <>
@@ -190,72 +193,82 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#272729',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#343536',
-    backgroundColor: '#1f1f20',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#e4e6eb',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  listContentEmpty: {
-    flex: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#8c919d',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#4a4a4a',
-  },
-  inputContainer: {
-    backgroundColor: '#272729',
-  },
-  replyingToHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#1f1f20',
-    borderTopWidth: 1,
-    borderTopColor: '#343536',
-  },
-  replyingToText: {
-    fontSize: 12,
-    color: '#8c919d',
-    fontStyle: 'italic',
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof useAppTheme>['colors'],
+) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    listContent: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    listContentEmpty: {
+      flexGrow: 1,
+    },
+    emptyContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 24,
+      paddingVertical: 48,
+    },
+    emptyText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+      marginTop: 12,
+      textAlign: 'center',
+    },
+    emptySubtext: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    inputContainer: {
+  backgroundColor: colors.surfaceSecondary,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    replyingToHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    replyingToText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontStyle: 'italic',
+    },
+  });

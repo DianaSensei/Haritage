@@ -4,7 +4,7 @@ import {
   setStatusBarStyle,
 } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { StoreProvider } from '@/core/store';
@@ -39,7 +39,9 @@ export default function RootLayout() {
   // Set status bar style and background to prevent flicker
   useEffect(() => {
     setStatusBarStyle(theme === 'dark' ? 'light' : 'dark');
-    setStatusBarBackgroundColor(colors.background);
+    if (Platform.OS === 'android') {
+      setStatusBarBackgroundColor(colors.background);
+    }
     setStatusBarHidden(false);
   }, [colors.background, theme]);
 
