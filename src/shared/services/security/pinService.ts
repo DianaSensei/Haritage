@@ -113,6 +113,31 @@ export const pinService = {
     }
   },
 
+  async setPinSetupRequired(required: boolean): Promise<void> {
+    try {
+      await SecureStore.setItemAsync(
+        CONFIG.STORAGE_KEYS.PIN_SETUP_REQUIRED,
+        required ? 'true' : 'false'
+      );
+    } catch (error) {
+      console.error('Error storing PIN setup flag:', error);
+      throw error;
+    }
+  },
+
+  async getPinSetupRequired(): Promise<boolean | null> {
+    try {
+      const value = await SecureStore.getItemAsync(CONFIG.STORAGE_KEYS.PIN_SETUP_REQUIRED);
+      if (value === null) {
+        return null;
+      }
+      return value === 'true';
+    } catch (error) {
+      console.error('Error retrieving PIN setup flag:', error);
+      return null;
+    }
+  },
+
   /**
    * Get biometric preference
    */
@@ -134,6 +159,7 @@ export const pinService = {
       await Promise.all([
         SecureStore.deleteItemAsync(CONFIG.STORAGE_KEYS.PIN_HASH).catch(() => {}),
         SecureStore.deleteItemAsync(CONFIG.STORAGE_KEYS.BIOMETRIC_ENABLED).catch(() => {}),
+        SecureStore.deleteItemAsync(CONFIG.STORAGE_KEYS.PIN_SETUP_REQUIRED).catch(() => {}),
       ]);
     } catch (error) {
       console.error('Error clearing app lock data:', error);

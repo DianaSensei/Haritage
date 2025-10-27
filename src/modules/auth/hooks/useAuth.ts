@@ -1,4 +1,6 @@
+import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { useAuthStore } from '@/core/store/slices/authSlice';
+import { pinService } from '@/shared/services/security/pinService';
 import { useCallback } from 'react';
 import { authService } from '../services/authService';
 
@@ -139,6 +141,8 @@ export const useAuth = () => {
     
     try {
       await authService.logout();
+      await pinService.clearAppLockData();
+      useAppLockStore.getState().resetAppLock();
       storeLogout();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');

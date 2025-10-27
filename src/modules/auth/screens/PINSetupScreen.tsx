@@ -3,16 +3,17 @@ import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { biometricService } from '@/shared/services/security/biometricService';
 import { pinService } from '@/shared/services/security/pinService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    Vibration,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Vibration,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,7 +21,7 @@ interface PINSetupScreenProps {
   onComplete: () => void;
 }
 
-type SetupStep = 'create' | 'confirm' | 'biometric' | 'complete';
+type SetupStep = 'pin' | 'biometric';
 
 /**
  * PIN Setup Screen Component
@@ -32,16 +33,19 @@ type SetupStep = 'create' | 'confirm' | 'biometric' | 'complete';
 export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) => {
   const { setPinHash, setBiometricEnabled, setPinSetupRequired } = useAppLockStore();
 
-  const [step, setStep] = useState<SetupStep>('create');
+  const [step, setStep] = useState<SetupStep>('pin');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState('Biometric');
   const [isLoading, setIsLoading] = useState(false);
+  const pinInputRef = useRef<TextInput>(null);
+  const confirmInputRef = useRef<TextInput>(null);
 
   React.useEffect(() => {
     initializeBiometric();
+    pinInputRef.current?.focus();
   }, []);
 
   const initializeBiometric = async () => {
@@ -58,50 +62,44 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
     }
   };
 
-  const handleNumberPress = (num: string) => {
-    const currentPin = step === 'create' ? pin : confirmPin;
-    if (currentPin.length >= CONFIG.APP_LOCK.PIN_LENGTH) return;
+  const handlePinChange = (value: string) => {
+    const sanitized = value.replace(/\D/g, '').slice(0, CONFIG.APP_LOCK.PIN_LENGTH);
+    setPin(sanitized);
+    setError('');
 
-    const newPin = currentPin + num;
-
-    if (step === 'create') {
-      setPin(newPin);
-      setError('');
-
-      if (newPin.length === CONFIG.APP_LOCK.PIN_LENGTH) {
-        setError('PIN created. Confirm it on the next screen.');
-      }
-    } else {
-      setConfirmPin(newPin);
-      setError('');
-
-      if (newPin.length === CONFIG.APP_LOCK.PIN_LENGTH) {
-        verifyAndSavePIN(pin, newPin);
-      }
+    if (sanitized.length === CONFIG.APP_LOCK.PIN_LENGTH) {
+      confirmInputRef.current?.focus();
     }
   };
 
-  const handleBackspace = () => {
-    if (step === 'create') {
-      setPin(pin.slice(0, -1));
-      setError('');
-    } else {
-      setConfirmPin(confirmPin.slice(0, -1));
-      setError('');
+  const handleConfirmPinChange = (value: string) => {
+    const sanitized = value.replace(/\D/g, '').slice(0, CONFIG.APP_LOCK.PIN_LENGTH);
+    setConfirmPin(sanitized);
+    setError('');
+
+    if (sanitized.length === CONFIG.APP_LOCK.PIN_LENGTH) {
+      verifyAndSavePIN();
     }
   };
 
-  const verifyAndSavePIN = async (createPin: string, confirmPinInput: string) => {
-    if (createPin !== confirmPinInput) {
+  const verifyAndSavePIN = async () => {
+    if (pin.length !== CONFIG.APP_LOCK.PIN_LENGTH || confirmPin.length !== CONFIG.APP_LOCK.PIN_LENGTH) {
+      setError('Enter and confirm your 6-digit PIN.');
+      pinInputRef.current?.focus();
+      return;
+    }
+
+    if (pin !== confirmPin) {
       Vibration.vibrate(200);
       setConfirmPin('');
       setError('PINs do not match. Try again.');
+      setTimeout(() => confirmInputRef.current?.focus(), 100);
       return;
     }
 
     setIsLoading(true);
     try {
-      const hash = await pinService.hashPin(createPin);
+      const hash = await pinService.hashPin(pin);
       await pinService.storePinHash(hash);
       setPinHash(hash);
 
@@ -133,27 +131,16 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
   };
 
   const completeSetup = async (biometricEnabled: boolean) => {
+    await pinService.setPinSetupRequired(false);
     setPinSetupRequired(false);
-    onComplete();
-  };
-
-  const handleSkip = async () => {
-    // User can skip and set up later
-    setPinSetupRequired(false);
-    onComplete();
-  };
-
-  const handleClear = () => {
-    if (step === 'create') {
-      setPin('');
-    } else {
-      setConfirmPin('');
+    if (!biometricEnabled) {
+      await pinService.setBiometricEnabled(false);
+      setBiometricEnabled(false);
     }
-    setError('');
+    onComplete();
   };
 
   const isDisabled = isLoading;
-  const currentPin = step === 'create' ? pin : confirmPin;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -164,18 +151,11 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            {step === 'create' && (
+            {step === 'pin' && (
               <>
                 <Ionicons name="lock-closed" size={48} color="#0a66c2" />
                 <Text style={styles.title}>Create Your PIN</Text>
-                <Text style={styles.subtitle}>Set up a 6-digit PIN to secure your account</Text>
-              </>
-            )}
-            {step === 'confirm' && (
-              <>
-                <Ionicons name="checkmark-circle" size={48} color="#0a66c2" />
-                <Text style={styles.title}>Confirm Your PIN</Text>
-                <Text style={styles.subtitle}>Re-enter your PIN to confirm</Text>
+                <Text style={styles.subtitle}>Enter and confirm your 6-digit PIN to secure your account</Text>
               </>
             )}
             {step === 'biometric' && (
@@ -190,14 +170,61 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
           </View>
 
           {/* PIN Display */}
-          {step !== 'biometric' && (
-            <View style={styles.pinDisplay}>
-              {Array.from({ length: CONFIG.APP_LOCK.PIN_LENGTH }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[styles.pinDot, i < currentPin.length && styles.pinDotFilled]}
-                />
-              ))}
+          {step === 'pin' && (
+            <View style={styles.pinSection}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => pinInputRef.current?.focus()}
+                style={styles.pinDisplayWrapper}
+              >
+                <Text style={styles.pinLabel}>Create PIN</Text>
+                <View style={styles.pinDisplay}>
+                  {Array.from({ length: CONFIG.APP_LOCK.PIN_LENGTH }).map((_, i) => (
+                    <View key={`pin-${i}`} style={[styles.pinBox, pin[i] && styles.pinBoxFilled]}>
+                      <Text style={styles.pinBoxText}>{pin[i] ? '•' : ''}</Text>
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => confirmInputRef.current?.focus()}
+                style={styles.pinDisplayWrapper}
+              >
+                <Text style={styles.pinLabel}>Confirm PIN</Text>
+                <View style={styles.pinDisplay}>
+                  {Array.from({ length: CONFIG.APP_LOCK.PIN_LENGTH }).map((_, i) => (
+                    <View
+                      key={`confirm-${i}`}
+                      style={[styles.pinBox, confirmPin[i] && styles.pinBoxFilled, error && styles.pinBoxError]}
+                    >
+                      <Text style={styles.pinBoxText}>{confirmPin[i] ? '•' : ''}</Text>
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
+
+              <TextInput
+                ref={pinInputRef}
+                style={styles.hiddenInput}
+                value={pin}
+                onChangeText={handlePinChange}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                secureTextEntry
+                maxLength={CONFIG.APP_LOCK.PIN_LENGTH}
+                autoFocus
+              />
+              <TextInput
+                ref={confirmInputRef}
+                style={styles.hiddenInput}
+                value={confirmPin}
+                onChangeText={handleConfirmPinChange}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                secureTextEntry
+                maxLength={CONFIG.APP_LOCK.PIN_LENGTH}
+              />
             </View>
           )}
 
@@ -227,68 +254,14 @@ export const PINSetupScreen: React.FC<PINSetupScreenProps> = ({ onComplete }) =>
             </View>
           )}
 
-          {/* Numeric Keypad */}
-          {step !== 'biometric' && (
-            <>
-              <View style={styles.keypad}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                  <TouchableOpacity
-                    key={num}
-                    style={[styles.key, isDisabled && styles.keyDisabled]}
-                    onPress={() => handleNumberPress(num.toString())}
-                    disabled={isDisabled}
-                  >
-                    <Text style={styles.keyText}>{num}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={styles.bottomRow}>
-                <TouchableOpacity
-                  style={[styles.key, styles.backspaceKey, isDisabled && styles.keyDisabled]}
-                  onPress={handleBackspace}
-                  disabled={isDisabled}
-                >
-                  <Ionicons name="backspace-outline" size={24} color="#ffffff" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.key, isDisabled && styles.keyDisabled]}
-                  onPress={() => handleNumberPress('0')}
-                  disabled={isDisabled}
-                >
-                  <Text style={styles.keyText}>0</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.key, styles.clearKey, isDisabled && styles.keyDisabled]}
-                  onPress={handleClear}
-                  disabled={isDisabled}
-                >
-                  <Ionicons name="close" size={24} color="#ffffff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Step Indicator */}
-              {step === 'create' && currentPin.length === CONFIG.APP_LOCK.PIN_LENGTH && (
-                <TouchableOpacity
-                  style={[styles.nextButton, isDisabled && styles.nextButtonDisabled]}
-                  onPress={() => {
-                    setStep('confirm');
-                    setConfirmPin('');
-                  }}
-                  disabled={isDisabled}
-                >
-                  <Text style={styles.nextButtonText}>Next</Text>
-                </TouchableOpacity>
-              )}
-            </>
-          )}
-
-          {/* Skip Button */}
-          {step === 'create' && currentPin.length === 0 && (
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip} disabled={isDisabled}>
-              <Text style={styles.skipButtonText}>Skip for Now</Text>
+          {/* Next Button & clear */}
+          {step === 'pin' && (
+            <TouchableOpacity
+              style={[styles.nextButton, !(pin.length === CONFIG.APP_LOCK.PIN_LENGTH && confirmPin.length === CONFIG.APP_LOCK.PIN_LENGTH) && styles.nextButtonDisabled]}
+              onPress={verifyAndSavePIN}
+              disabled={isDisabled || pin.length !== CONFIG.APP_LOCK.PIN_LENGTH || confirmPin.length !== CONFIG.APP_LOCK.PIN_LENGTH}
+            >
+              <Text style={styles.nextButtonText}>Continue</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -326,65 +299,61 @@ const styles = StyleSheet.create({
     color: '#818384',
     textAlign: 'center',
   },
+  pinSection: {
+    gap: 24,
+    marginBottom: 32,
+  },
+  pinDisplayWrapper: {
+    gap: 12,
+  },
+  pinLabel: {
+    fontSize: 14,
+    color: '#b1b2b6',
+    fontWeight: '600',
+  },
   pinDisplay: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: 40,
+    gap: 12,
   },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
+  pinBox: {
+    width: 48,
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#343536',
+    backgroundColor: '#1f1f20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pinBoxFilled: {
     borderColor: '#0a66c2',
-    backgroundColor: 'transparent',
+    backgroundColor: '#23273a',
   },
-  pinDotFilled: {
-    backgroundColor: '#0a66c2',
+  pinBoxError: {
+    borderColor: '#e74c3c',
+  },
+  pinBoxText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#e4e6eb',
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    width: 0,
+    height: 0,
   },
   errorText: {
     fontSize: 12,
     color: '#e74c3c',
     textAlign: 'center',
     marginBottom: 16,
-  },
-  keypad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  key: {
-    width: '30%',
-    aspectRatio: 1,
-    borderRadius: 12,
-    backgroundColor: '#272729',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#343536',
-  },
-  keyDisabled: {
-    opacity: 0.5,
-  },
-  keyText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 24,
-  },
-  backspaceKey: {
-    width: '30%',
-  },
-  clearKey: {
-    width: '30%',
   },
   nextButton: {
     paddingVertical: 14,

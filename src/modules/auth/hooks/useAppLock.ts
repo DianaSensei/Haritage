@@ -24,6 +24,8 @@ export const useAppLock = () => {
     setLocked,
     setLastAuthTimestamp,
     lastAuthTimestamp,
+    suppressLockUntil,
+    clearSuppressLock,
   } = useAppLockStore();
 
   const handleAppStateChange = useCallback(
@@ -38,6 +40,14 @@ export const useAppLock = () => {
           // Check if PIN is set up
           const isPinSet = await pinService.isPinSetUp();
           if (isPinSet) {
+            const now = Date.now();
+            if (suppressLockUntil) {
+              if (suppressLockUntil > now) {
+                clearSuppressLock();
+                return;
+              }
+              clearSuppressLock();
+            }
             // Lock the app immediately or after timeout
             const timeoutMs = CONFIG.APP_LOCK.LOCK_TIMEOUT_MS;
             if (timeoutMs > 0) {
@@ -54,7 +64,14 @@ export const useAppLock = () => {
         setLastAuthTimestamp(Date.now());
       }
     },
-    [isAuthenticated, pinSetupRequired, setLocked, setLastAuthTimestamp]
+    [
+      clearSuppressLock,
+      isAuthenticated,
+      pinSetupRequired,
+      setLastAuthTimestamp,
+      setLocked,
+      suppressLockUntil,
+    ]
   );
 
   useEffect(() => {

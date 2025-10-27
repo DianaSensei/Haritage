@@ -141,7 +141,9 @@ export const AccountScreen: React.FC = () => {
   };
 
   const handleEditProfile = () => Alert.alert('Edit Profile', 'Update user info feature coming soon');
-  const handleSecurity = () => Alert.alert('Security', 'Security settings placeholder');
+  const handleSecurity = useCallback(() => {
+    router.push('/security-privacy');
+  }, [router]);
   const handleSettings = () => Alert.alert('Settings', 'App settings placeholder');
   const handleHelp = () => Alert.alert('Help', 'Help & support placeholder');
 

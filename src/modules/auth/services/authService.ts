@@ -56,7 +56,7 @@ export class AuthService {
       const data: ApiResponse<{ user: User; token: string }> = {
         data: {
           user: {
-            id: 1,
+            id: "aa",
             phoneNumber,
             name: 'Nguyễn Đức Thông',
             avatar: '',

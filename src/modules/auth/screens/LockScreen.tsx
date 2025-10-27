@@ -3,12 +3,14 @@ import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { biometricService } from '@/shared/services/security/biometricService';
 import { pinService } from '@/shared/services/security/pinService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+    Keyboard,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     Vibration,
     View,
@@ -33,6 +35,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState('Biometric');
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const pinInputRef = useRef<TextInput>(null);
+  const hasAttemptedBiometric = useRef(false);
 
   const {
     failedAttempts,
@@ -42,20 +46,13 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     resetFailedAttempts,
     setCooldown,
     setLocked,
+    setLastAuthTimestamp,
+    suppressNextLock,
   } = useAppLockStore();
 
   // Initialize biometric support
   useEffect(() => {
     initializeBiometric();
-  }, []);
-
-  // Attempt auto-unlock with biometric
-  useEffect(() => {
-    if (isBiometricAvailable && isBiometricEnabled && !pin && !error) {
-      triggerBiometricUnlock();
-    }
-    // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle cooldown timer
@@ -92,15 +89,17 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     }
   };
 
-  const triggerBiometricUnlock = async () => {
+  const triggerBiometricUnlock = React.useCallback(async () => {
     if (isBiometricLoading) return;
 
     setIsBiometricLoading(true);
     try {
+      suppressNextLock();
       const authenticated = await biometricService.authenticate();
       if (authenticated) {
         resetFailedAttempts();
         setLocked(false);
+        setLastAuthTimestamp(Date.now());
         onUnlock();
       } else {
         setError(`${biometricType} authentication failed. Use PIN instead.`);
@@ -111,25 +110,34 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     } finally {
       setIsBiometricLoading(false);
     }
-  };
+  }, [
+    suppressNextLock,
+    biometricType,
+    isBiometricLoading,
+    onUnlock,
+    resetFailedAttempts,
+    setLastAuthTimestamp,
+    setLocked,
+  ]);
 
-  const handleNumberPress = (num: string) => {
-    if (cooldownSeconds > 0 || pin.length >= CONFIG.APP_LOCK.PIN_LENGTH) return;
+  // Attempt auto-unlock with biometric when available
+  useEffect(() => {
+    if (hasAttemptedBiometric.current) return;
+    if (!isBiometricAvailable || !isBiometricEnabled) return;
 
-    const newPin = pin + num;
-    setPin(newPin);
-    setError('');
+    hasAttemptedBiometric.current = true;
+    triggerBiometricUnlock();
+  }, [isBiometricAvailable, isBiometricEnabled, triggerBiometricUnlock]);
 
-    // Auto-verify when 6 digits are entered
-    if (newPin.length === CONFIG.APP_LOCK.PIN_LENGTH) {
-      verifyPin(newPin);
-    }
-  };
-
-  const handleBackspace = () => {
+  const handlePinChange = (value: string) => {
     if (cooldownSeconds > 0) return;
-    setPin(pin.slice(0, -1));
+    const sanitized = value.replace(/\D/g, '').slice(0, CONFIG.APP_LOCK.PIN_LENGTH);
+    setPin(sanitized);
     setError('');
+
+    if (sanitized.length === CONFIG.APP_LOCK.PIN_LENGTH) {
+      verifyPin(sanitized);
+    }
   };
 
   const verifyPin = async (pinToVerify: string) => {
@@ -139,6 +147,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
       if (isValid) {
         resetFailedAttempts();
         setLocked(false);
+        Keyboard.dismiss();
+        setLastAuthTimestamp(Date.now());
         onUnlock();
       } else {
         // Invalid PIN
@@ -163,11 +173,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     }
   };
 
-  const handleClear = () => {
-    setPin('');
-    setError('');
-  };
-
   const isDisabled = cooldownSeconds > 0;
 
   return (
@@ -183,18 +188,36 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
         </View>
 
         {/* PIN Display */}
-        <View style={styles.pinDisplay}>
-          {Array.from({ length: CONFIG.APP_LOCK.PIN_LENGTH }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.pinDot,
-                i < pin.length && styles.pinDotFilled,
-                error && styles.pinDotError,
-              ]}
-            />
-          ))}
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => pinInputRef.current?.focus()}
+          style={styles.pinDisplayWrapper}
+        >
+          <View style={styles.pinDisplay}>
+            {Array.from({ length: CONFIG.APP_LOCK.PIN_LENGTH }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.pinDot,
+                  i < pin.length && styles.pinDotFilled,
+                  error && styles.pinDotError,
+                ]}
+              />
+            ))}
+          </View>
+          <TextInput
+            ref={pinInputRef}
+            style={styles.hiddenInput}
+            value={pin}
+            onChangeText={handlePinChange}
+            keyboardType="number-pad"
+            textContentType="oneTimeCode"
+            secureTextEntry
+            maxLength={CONFIG.APP_LOCK.PIN_LENGTH}
+            autoFocus
+            editable={!isDisabled}
+          />
+        </TouchableOpacity>
 
         {/* Error Message */}
         {error && <Text style={styles.errorText}>{error}</Text>}
@@ -205,46 +228,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
             Try again in {cooldownSeconds}s
           </Text>
         )}
-
-        {/* Numeric Keypad */}
-        <View style={styles.keypad}>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <TouchableOpacity
-              key={num}
-              style={[styles.key, isDisabled && styles.keyDisabled]}
-              onPress={() => handleNumberPress(num.toString())}
-              disabled={isDisabled}
-            >
-              <Text style={styles.keyText}>{num}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.bottomRow}>
-          <TouchableOpacity
-            style={[styles.key, styles.backspaceKey, isDisabled && styles.keyDisabled]}
-            onPress={handleBackspace}
-            disabled={isDisabled}
-          >
-            <Ionicons name="backspace-outline" size={24} color="#ffffff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.key, isDisabled && styles.keyDisabled]}
-            onPress={() => handleNumberPress('0')}
-            disabled={isDisabled}
-          >
-            <Text style={styles.keyText}>0</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.key, styles.clearKey, isDisabled && styles.keyDisabled]}
-            onPress={handleClear}
-            disabled={isDisabled}
-          >
-            <Ionicons name="close" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
 
         {/* Biometric Button */}
         {isBiometricAvailable && isBiometricEnabled && (
@@ -293,11 +276,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#818384',
   },
+  pinDisplayWrapper: {
+    alignItems: 'center',
+    marginBottom: 40,
+    position: 'relative',
+  },
   pinDisplay: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 16,
-    marginBottom: 40,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    width: '100%',
+    height: '100%',
   },
   pinDot: {
     width: 16,
@@ -324,43 +317,6 @@ const styles = StyleSheet.create({
     color: '#f39c12',
     textAlign: 'center',
     marginBottom: 16,
-  },
-  keypad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  key: {
-    width: '30%',
-    aspectRatio: 1,
-    borderRadius: 12,
-    backgroundColor: '#272729',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#343536',
-  },
-  keyDisabled: {
-    opacity: 0.5,
-  },
-  keyText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 24,
-  },
-  backspaceKey: {
-    width: '30%',
-  },
-  clearKey: {
-    width: '30%',
   },
   biometricButton: {
     flexDirection: 'row',

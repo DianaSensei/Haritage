@@ -3,10 +3,10 @@ import React from "react";
 import { useColorScheme } from "@/shared/hooks";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
-    Icon,
-    Label,
-    NativeTabs,
-    VectorIcon,
+  Icon,
+  Label,
+  NativeTabs,
+  VectorIcon,
 } from "expo-router/unstable-native-tabs";
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -21,7 +21,6 @@ export default function TabLayout() {
         color: textColor,
       }}
       tintColor={iconColor}
-      minimizeBehavior="onScrollDown"
     >
       <NativeTabs.Trigger name="index">
         <Label>Home</Label>
