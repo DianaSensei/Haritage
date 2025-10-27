@@ -4,13 +4,14 @@
  * Data persists in memory and can be saved/loaded from async storage
  */
 
-import { FeedItem, Notification, User } from '@/shared/types';
+import { Comment, FeedItem, Notification, User } from '@/shared/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface MockDataStore {
   users: User[];
   feedItems: FeedItem[];
   notifications: Notification[];
+  comments: Comment[];
   currentUserId?: string;
 }
 
@@ -72,6 +73,119 @@ const DEFAULT_MOCK_DATA: MockDataStore = {
       type: 'success',
       isRead: false,
       createdAt: new Date(),
+    },
+  ],
+  comments: [
+    {
+      id: 'comment1',
+      postId: '1',
+      author: {
+        id: 'user2',
+        name: 'Mike Chen',
+        avatar: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?auto=format&fit=crop&w=200&q=60',
+      },
+      content: 'Absolutely stunning! The colors are incredible. What camera did you use?',
+      upvotes: 42,
+      downvotes: 2,
+      isUpvoted: false,
+      isDownvoted: false,
+      replyCount: 2,
+      isDeleted: false,
+      createdAt: new Date(Date.now() - 1800000),
+      updatedAt: new Date(Date.now() - 1800000),
+    },
+    {
+      id: 'comment1-reply1',
+      postId: '1',
+      parentCommentId: 'comment1',
+      author: {
+        id: 'user1',
+        name: 'Sarah Johnson',
+        avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=60',
+      },
+      content: 'Thanks! Shot on a Canon EOS R6 with a 24-105mm lens.',
+      upvotes: 18,
+      downvotes: 0,
+      isUpvoted: true,
+      isDownvoted: false,
+      replyCount: 0,
+      isDeleted: false,
+      createdAt: new Date(Date.now() - 1500000),
+      updatedAt: new Date(Date.now() - 1500000),
+    },
+    {
+      id: 'comment1-reply2',
+      postId: '1',
+      parentCommentId: 'comment1',
+      author: {
+        id: 'user2',
+        name: 'Mike Chen',
+        avatar: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?auto=format&fit=crop&w=200&q=60',
+      },
+      content: "Nice! I've been considering that lens. How do you find the autofocus?",
+      upvotes: 8,
+      downvotes: 1,
+      isUpvoted: false,
+      isDownvoted: false,
+      replyCount: 0,
+      isDeleted: false,
+      createdAt: new Date(Date.now() - 1200000),
+      updatedAt: new Date(Date.now() - 1200000),
+    },
+    {
+      id: 'comment2',
+      postId: '1',
+      author: {
+        id: 'user1',
+        name: 'Sarah Johnson',
+        avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=60',
+      },
+      content: 'The lighting in golden hour is unmatched. Great composition!',
+      upvotes: 15,
+      downvotes: 0,
+      isUpvoted: false,
+      isDownvoted: false,
+      replyCount: 0,
+      isDeleted: false,
+      createdAt: new Date(Date.now() - 900000),
+      updatedAt: new Date(Date.now() - 900000),
+    },
+    {
+      id: 'comment3',
+      postId: '1',
+      author: {
+        id: 'user2',
+        name: 'Mike Chen',
+        avatar: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?auto=format&fit=crop&w=200&q=60',
+      },
+      content: '[deleted]',
+      upvotes: 3,
+      downvotes: 12,
+      isUpvoted: false,
+      isDownvoted: false,
+      replyCount: 1,
+      isDeleted: true,
+      createdAt: new Date(Date.now() - 600000),
+      updatedAt: new Date(Date.now() - 300000),
+    },
+    {
+      id: 'comment3-reply1',
+      postId: '1',
+      parentCommentId: 'comment3',
+      author: {
+        id: 'user1',
+        name: 'Sarah Johnson',
+        avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=60',
+      },
+      content: 'Appreciate the feedback!',
+      upvotes: 2,
+      downvotes: 0,
+      isUpvoted: false,
+      isDownvoted: false,
+      replyCount: 0,
+      isDeleted: false,
+      createdAt: new Date(Date.now() - 500000),
+      updatedAt: new Date(Date.now() - 500000),
     },
   ],
   currentUserId: 'user1',
@@ -239,6 +353,50 @@ class MockStore {
     if (index === -1) return false;
 
     this.data.notifications.splice(index, 1);
+    return true;
+  }
+
+  /**
+   * Comment operations
+   */
+  getComments(): Comment[] {
+    return this.data.comments;
+  }
+
+  getCommentsForPost(postId: string): Comment[] {
+    return this.data.comments.filter((c) => c.postId === postId);
+  }
+
+  getCommentById(id: string): Comment | undefined {
+    return this.data.comments.find((c) => c.id === id);
+  }
+
+  addComment(comment: Comment): void {
+    this.data.comments.unshift(comment);
+  }
+
+  updateComment(id: string, updates: Partial<Comment>): Comment | undefined {
+    const index = this.data.comments.findIndex((c) => c.id === id);
+    if (index === -1) return undefined;
+
+    this.data.comments[index] = {
+      ...this.data.comments[index],
+      ...updates,
+      updatedAt: new Date(),
+    };
+    return this.data.comments[index];
+  }
+
+  deleteComment(id: string): boolean {
+    const index = this.data.comments.findIndex((c) => c.id === id);
+    if (index === -1) return false;
+
+    this.data.comments[index] = {
+      ...this.data.comments[index],
+      isDeleted: true,
+      content: '[deleted]',
+      updatedAt: new Date(),
+    };
     return true;
   }
 }
