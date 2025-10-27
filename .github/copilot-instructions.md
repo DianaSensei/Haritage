@@ -22,7 +22,6 @@ Big-picture architecture (what to know)
 Developer workflows & commands
 
 - Start development: `yarn start` (uses `expo start`). Platform shortcuts in `package.json`: `yarn ios`, `yarn android`, `yarn web`.
-- Reset project: `yarn reset-project` runs `scripts/reset-project.js` (useful before CI or when switching branches).
 - Linting: `yarn lint` (uses Expo lint config). There is no test runner configured in package.json by default — check `README.md` if you need tests added.
 - Avoid to use cat commands to modify files due to the vscode terminal will disconnect shell.
 - Avoid to use some deprecated libraries such as 'expo-av' due to it is no longer maintained and have a drop in replacement 'expo-video', 'expo-audio' which is actively maintained by expo team.
