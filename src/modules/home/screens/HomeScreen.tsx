@@ -2,6 +2,7 @@ import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { useNotificationStore } from '@/core/store/slices/notificationSlice';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { FeedItem } from '@/modules/feed/components/FeedItem';
+import { CommentsScreen } from '@/modules/feed/screens/CommentsScreen';
 import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +28,8 @@ export const HomeScreen: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number | null>(null);
+  const [commentsModalVisible, setCommentsModalVisible] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string>('');
   const flatListRef = useRef<FlatList>(null);
   const [activeFilter, setActiveFilter] = useState<string>('For you');
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -362,8 +365,8 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   const handleComment = useCallback((id: string) => {
-    console.log('Comment on item:', id);
-    Alert.alert('Comment', 'Opening comment thread...');
+    setSelectedPostId(id);
+    setCommentsModalVisible(true);
   }, []);
 
   const handleShare = useCallback((id: string) => {
@@ -558,6 +561,12 @@ export const HomeScreen: React.FC = () => {
         isTabBarVisible={!isScrollingDown}
         opacity={fabOpacity}
         onPress={handleComposePress}
+      />
+      {/* Comments Modal */}
+      <CommentsScreen
+        visible={commentsModalVisible}
+        postId={selectedPostId}
+        onClose={() => setCommentsModalVisible(false)}
       />
     </SafeAreaView>
   );

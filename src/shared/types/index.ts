@@ -61,6 +61,26 @@ export interface Notification {
     actionUrl?: string;
 }
 
+export interface Comment {
+    id: string;
+    postId: string;
+    parentCommentId?: string; // For replies
+    author: {
+        id: string;
+        name: string;
+        avatar: string;
+    };
+    content: string;
+    upvotes: number;
+    downvotes: number;
+    isUpvoted: boolean;
+    isDownvoted: boolean;
+    replyCount: number;
+    isDeleted: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export interface AdItem {
     id: string;
     title: string;
