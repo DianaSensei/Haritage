@@ -37,6 +37,8 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
   
   const replies = getRepliesForComment(comment.postId, comment.id);
   const canReply = depth < MAX_REPLY_DEPTH;
+  const hasAvatar = Boolean(comment.author.avatar);
+  const avatarIconSize = depth > 0 ? 20 : 24;
   const isNested = depth > 0;
 
   const applyVote = (nextState: 'upvote' | 'downvote' | 'none') => {
@@ -100,10 +102,18 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
   return (
     <View style={[styles.container, isNested && styles.nestedContainer]}>
       <View style={styles.commentContent}>
-        <Image
-          source={{ uri: comment.author.avatar }}
-          style={[styles.avatar, isNested && styles.smallAvatar]}
-        />
+        {hasAvatar ? (
+          <Image
+            source={{ uri: comment.author.avatar }}
+            style={[styles.avatar, isNested && styles.smallAvatar]}
+          />
+        ) : (
+          <View
+            style={[styles.avatar, isNested && styles.smallAvatar, styles.avatarFallback]}
+          >
+            <Ionicons name="person-circle-outline" size={avatarIconSize} color="#8c919d" />
+          </View>
+        )}
         <View style={styles.commentBody}>
           <View style={styles.header}>
             <Text style={styles.authorName}>{comment.author.name}</Text>
@@ -234,6 +244,11 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#343536',
+  },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1f1f20',
   },
   smallAvatar: {
     width: 28,

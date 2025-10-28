@@ -1,4 +1,4 @@
-import { useCommentStore } from '@/core/store';
+import { useAuthStore, useCommentStore } from '@/core/store';
 import { mockStore } from '@/shared/data/stores/mockDataStore';
 import { useAppTheme } from '@/shared/hooks';
 import { Comment } from '@/shared/types';
@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   type ListRenderItemInfo,
   Modal,
@@ -41,6 +42,8 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
 }) => {
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const currentUser = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   const selectPostComments = useMemo(
     () =>
@@ -96,8 +99,10 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   }, [visible, postId, loadComments]);
 
   const handleAddComment = (text: string) => {
-    const currentUser = mockStore.getCurrentUser();
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.warn('Attempted to add a comment without an authenticated user.');
+      return;
+    }
     const parentCommentId = replyTarget?.parentId;
 
     const newComment: Comment = {
@@ -218,6 +223,26 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     );
   };
 
+  const renderCommentingUserBanner = () => {
+    if (!currentUser) return null;
+    const displayName = currentUser.name || 'You';
+
+    return (
+      <View style={styles.commentingAsRow}>
+        {currentUser.avatar ? (
+          <Image source={{ uri: currentUser.avatar }} style={styles.commentingAvatar} />
+        ) : (
+          <View style={styles.commentingAvatarFallback}>
+            <Ionicons name="person-circle-outline" size={20} color={iconMuted} />
+          </View>
+        )}
+        <Text style={styles.commentingAsText}>
+          Commenting as <Text style={styles.commentingAsName}>{displayName}</Text>
+        </Text>
+      </View>
+    );
+  };
+
   const keyExtractor = useCallback((item: Comment) => item.id, []);
 
   const renderCommentItem = useCallback(
@@ -267,15 +292,25 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
             
             <View style={styles.inputContainer}>
               {renderCommentInputHeader()}
-              <CommentInput
-                placeholder={
-                  replyTarget
-                    ? `Reply to ${getReplyingToAuthor()}...`
-                    : 'Add a comment...'
-                }
-                onSubmit={handleAddComment}
-                autoFocus={false}
-              />
+              {isAuthenticated && currentUser ? (
+                <>
+                  {renderCommentingUserBanner()}
+                  <CommentInput
+                    placeholder={
+                      replyTarget
+                        ? `Reply to ${getReplyingToAuthor()}...`
+                        : 'Add a comment...'
+                    }
+                    onSubmit={handleAddComment}
+                    autoFocus={false}
+                  />
+                </>
+              ) : (
+                <View style={styles.authPrompt}>
+                  <Ionicons name="lock-closed-outline" size={18} color={iconMuted} />
+                  <Text style={styles.authPromptText}>Sign in to add a comment.</Text>
+                </View>
+              )}
             </View>
           </KeyboardAvoidingView>
         )}
@@ -367,5 +402,45 @@ const createStyles = (
       fontSize: 12,
       color: colors.textMuted,
       fontStyle: 'italic',
+    },
+    commentingAsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    commentingAvatar: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+    },
+    commentingAvatarFallback: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    commentingAsText: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    commentingAsName: {
+      fontWeight: '600',
+      color: colors.text,
+    },
+    authPrompt: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 20,
+      gap: 8,
+    },
+    authPromptText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      textAlign: 'center',
     },
   });

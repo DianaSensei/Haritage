@@ -55,10 +55,6 @@ export default function TabLayout() {
           <Label>Home</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="home" />} />
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="explore">
-          <Label>Explore</Label>
-          <Icon src={<VectorIcon family={MaterialIcons} name="send" />} />
-        </NativeTabs.Trigger>
         <NativeTabs.Trigger name="map">
           <Label>Map</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="map" />} />
