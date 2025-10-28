@@ -5,18 +5,28 @@ import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    type ListRenderItemInfo,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  type ListRenderItemInfo,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommentInput } from '../components/CommentInput';
 import { CommentItem } from '../components/CommentItem';
+
+const EMPTY_COMMENTS: Comment[] = [];
+
+type ReplyTarget = {
+  commentId: string;
+  parentId: string;
+  authorName: string;
+};
 
 interface CommentsScreenProps {
   visible: boolean;
@@ -29,10 +39,16 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   postId,
   onClose,
 }) => {
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  const postComments = useCommentStore((state) => state.commentsByPost[postId] ?? []);
+  const selectPostComments = useMemo(
+    () =>
+      (state: { commentsByPost: Record<string, Comment[]> }) =>
+        postId ? state.commentsByPost[postId] ?? EMPTY_COMMENTS : EMPTY_COMMENTS,
+    [postId],
+  );
+  const postComments = useCommentStore(selectPostComments);
   const setComments = useCommentStore((state) => state.setComments);
   const addCommentToStore = useCommentStore((state) => state.addComment);
   const updateCommentInStore = useCommentStore((state) => state.updateComment);
@@ -40,9 +56,22 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     () => postComments.filter((comment) => !comment.parentCommentId),
     [postComments],
   );
+  const commentLookup = useMemo(() => {
+    const map = new Map<string, Comment>();
+    postComments.forEach((comment) => {
+      map.set(comment.id, comment);
+    });
+    return map;
+  }, [postComments]);
   const { colors } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const iconMuted = colors.iconMuted;
+  // Offset ensures the modal header stays visible when the keyboard appears.
+  const keyboardVerticalOffset = useMemo(
+    () => (Platform.OS === 'ios' ? insets.top + 64 : 0),
+    [insets.top],
+  );
 
   const loadComments = useCallback(async () => {
     setIsLoading(true);
@@ -69,11 +98,12 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const handleAddComment = (text: string) => {
     const currentUser = mockStore.getCurrentUser();
     if (!currentUser) return;
+    const parentCommentId = replyTarget?.parentId;
 
     const newComment: Comment = {
       id: `comment-${Date.now()}`,
       postId,
-      parentCommentId: replyingTo || undefined,
+      parentCommentId,
       author: {
         id: currentUser.id,
         name: currentUser.name || 'Anonymous',
@@ -95,14 +125,14 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     mockStore.addComment(newComment);
     
     // Update reply count if this is a reply
-    if (replyingTo) {
-      const parentComment = mockStore.getCommentById(replyingTo);
+    if (parentCommentId) {
+      const parentComment = mockStore.getCommentById(parentCommentId);
       if (parentComment) {
         const updatedReplyCount = (parentComment.replyCount || 0) + 1;
-        updateCommentInStore(replyingTo, { replyCount: updatedReplyCount });
-        mockStore.updateComment(replyingTo, { replyCount: updatedReplyCount });
+        updateCommentInStore(parentCommentId, { replyCount: updatedReplyCount });
+        mockStore.updateComment(parentCommentId, { replyCount: updatedReplyCount });
       }
-      setReplyingTo(null);
+      setReplyTarget(null);
     }
 
     // Save to persistent storage
@@ -111,15 +141,48 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     });
   };
 
-  const handleReply = useCallback((commentId: string) => {
-    setReplyingTo(commentId);
-  }, []);
+  useEffect(() => {
+    if (!visible && replyTarget) {
+      setReplyTarget(null);
+    }
+  }, [visible, replyTarget]);
 
-  const getReplyingToAuthor = () => {
-    if (!replyingTo) return null;
-    const comment = comments.find((c) => c.id === replyingTo);
-    return comment?.author.name;
-  };
+  const resolveParentCommentId = useCallback(
+    (comment: Comment) => {
+      if (!comment.parentCommentId) {
+        return comment.id;
+      }
+
+      let currentParentId: string | undefined = comment.parentCommentId;
+      let currentParent = currentParentId
+        ? commentLookup.get(currentParentId)
+        : undefined;
+
+      while (currentParent?.parentCommentId) {
+        currentParentId = currentParent.parentCommentId;
+        currentParent = currentParentId
+          ? commentLookup.get(currentParentId)
+          : undefined;
+      }
+
+      return currentParentId ?? comment.parentCommentId ?? comment.id;
+    },
+    [commentLookup],
+  );
+
+  const handleReply = useCallback(
+    (comment: Comment) => {
+      const parentId = resolveParentCommentId(comment);
+      setReplyTarget({
+        commentId: comment.id,
+        parentId,
+        authorName: comment.author.name,
+      });
+    },
+    [resolveParentCommentId],
+  );
+
+  const getReplyingToAuthor = () => replyTarget?.authorName ?? null;
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -142,13 +205,13 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   );
 
   const renderCommentInputHeader = () => {
-    if (!replyingTo) return null;
+    if (!replyTarget) return null;
 
     const authorName = getReplyingToAuthor();
     return (
       <View style={styles.replyingToHeader}>
         <Text style={styles.replyingToText}>Replying to {authorName}</Text>
-        <TouchableOpacity onPress={() => setReplyingTo(null)}>
+        <TouchableOpacity onPress={() => setReplyTarget(null)}>
           <Ionicons name="close-circle" size={18} color={iconMuted} />
         </TouchableOpacity>
       </View>
@@ -171,7 +234,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         {renderHeader()}
         
         {isLoading ? (
@@ -179,8 +242,13 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
             <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
-          <>
+          <KeyboardAvoidingView
+            style={styles.content}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={keyboardVerticalOffset}
+          >
             <FlatList
+              style={styles.list}
               data={comments}
               keyExtractor={keyExtractor}
               renderItem={renderCommentItem}
@@ -201,7 +269,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
               {renderCommentInputHeader()}
               <CommentInput
                 placeholder={
-                  replyingTo
+                  replyTarget
                     ? `Reply to ${getReplyingToAuthor()}...`
                     : 'Add a comment...'
                 }
@@ -209,7 +277,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
                 autoFocus={false}
               />
             </View>
-          </>
+          </KeyboardAvoidingView>
         )}
       </SafeAreaView>
     </Modal>
@@ -247,6 +315,12 @@ const createStyles = (
       alignItems: 'center',
       justifyContent: 'center',
     },
+    content: {
+      flex: 1,
+    },
+    list: {
+      flex: 1,
+    },
     listContent: {
       paddingHorizontal: 16,
       paddingVertical: 8,
@@ -275,7 +349,7 @@ const createStyles = (
       textAlign: 'center',
     },
     inputContainer: {
-  backgroundColor: colors.surfaceSecondary,
+      backgroundColor: colors.surfaceSecondary,
       borderTopWidth: 1,
       borderTopColor: colors.border,
     },

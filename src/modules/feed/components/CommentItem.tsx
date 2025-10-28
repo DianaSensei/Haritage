@@ -3,20 +3,20 @@ import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState } from 'react';
 import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface CommentItemProps {
   comment: Comment;
-  onReply?: (commentId: string) => void;
+  onReply?: (comment: Comment) => void;
   depth?: number;
 }
 
-const MAX_DEPTH = 3;
+const MAX_REPLY_DEPTH = 2;
 
 const CommentItemComponent: React.FC<CommentItemProps> = ({
   comment,
@@ -36,7 +36,7 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
   const getRepliesForComment = useCommentStore((state) => state.getRepliesForComment);
   
   const replies = getRepliesForComment(comment.postId, comment.id);
-  const canReply = depth < MAX_DEPTH;
+  const canReply = depth < MAX_REPLY_DEPTH;
   const isNested = depth > 0;
 
   const applyVote = (nextState: 'upvote' | 'downvote' | 'none') => {
@@ -89,7 +89,7 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
 
   const handleReply = () => {
     if (canReply && onReply) {
-      onReply(comment.id);
+      onReply(comment);
     }
   };
 
