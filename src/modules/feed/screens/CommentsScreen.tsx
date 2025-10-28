@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    type ListRenderItemInfo,
     Modal,
     StyleSheet,
     Text,
@@ -31,10 +32,17 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  const commentStore = useCommentStore();
-  const comments = commentStore.getCommentsForPost(postId);
+  const postComments = useCommentStore((state) => state.commentsByPost[postId] ?? []);
+  const setComments = useCommentStore((state) => state.setComments);
+  const addCommentToStore = useCommentStore((state) => state.addComment);
+  const updateCommentInStore = useCommentStore((state) => state.updateComment);
+  const comments = useMemo(
+    () => postComments.filter((comment) => !comment.parentCommentId),
+    [postComments],
+  );
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const iconMuted = colors.iconMuted;
 
   const loadComments = useCallback(async () => {
     setIsLoading(true);
@@ -43,13 +51,13 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       await new Promise((resolve) => setTimeout(resolve, 500));
       
       const mockComments = mockStore.getCommentsForPost(postId);
-      commentStore.setComments(postId, mockComments);
+      setComments(postId, mockComments);
     } catch (error) {
       console.error('Error loading comments:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [commentStore, postId]);
+  }, [postId, setComments]);
 
   // Load comments when modal opens
   useEffect(() => {
@@ -83,7 +91,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     };
 
     // Add to store
-    commentStore.addComment(newComment);
+    addCommentToStore(newComment);
     mockStore.addComment(newComment);
     
     // Update reply count if this is a reply
@@ -91,7 +99,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       const parentComment = mockStore.getCommentById(replyingTo);
       if (parentComment) {
         const updatedReplyCount = (parentComment.replyCount || 0) + 1;
-        commentStore.updateComment(replyingTo, { replyCount: updatedReplyCount });
+        updateCommentInStore(replyingTo, { replyCount: updatedReplyCount });
         mockStore.updateComment(replyingTo, { replyCount: updatedReplyCount });
       }
       setReplyingTo(null);
@@ -103,9 +111,9 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     });
   };
 
-  const handleReply = (commentId: string) => {
+  const handleReply = useCallback((commentId: string) => {
     setReplyingTo(commentId);
-  };
+  }, []);
 
   const getReplyingToAuthor = () => {
     if (!replyingTo) return null;
@@ -122,12 +130,15 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     </View>
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="chatbubble-outline" size={48} color={colors.iconMuted} />
-      <Text style={styles.emptyText}>No comments yet</Text>
-      <Text style={styles.emptySubtext}>Be the first to share your thoughts</Text>
-    </View>
+  const listEmptyComponent = useMemo(
+    () => (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="chatbubble-outline" size={48} color={iconMuted} />
+        <Text style={styles.emptyText}>No comments yet</Text>
+        <Text style={styles.emptySubtext}>Be the first to share your thoughts</Text>
+      </View>
+    ),
+    [iconMuted, styles],
   );
 
   const renderCommentInputHeader = () => {
@@ -138,11 +149,20 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       <View style={styles.replyingToHeader}>
         <Text style={styles.replyingToText}>Replying to {authorName}</Text>
         <TouchableOpacity onPress={() => setReplyingTo(null)}>
-          <Ionicons name="close-circle" size={18} color={colors.iconMuted} />
+          <Ionicons name="close-circle" size={18} color={iconMuted} />
         </TouchableOpacity>
       </View>
     );
   };
+
+  const keyExtractor = useCallback((item: Comment) => item.id, []);
+
+  const renderCommentItem = useCallback(
+    ({ item }: ListRenderItemInfo<Comment>) => (
+      <CommentItem comment={item} onReply={handleReply} />
+    ),
+    [handleReply],
+  );
 
   return (
     <Modal
@@ -162,16 +182,19 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
           <>
             <FlatList
               data={comments}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <CommentItem comment={item} onReply={handleReply} />
-              )}
+              keyExtractor={keyExtractor}
+              renderItem={renderCommentItem}
               contentContainerStyle={[
                 styles.listContent,
                 comments.length === 0 && styles.listContentEmpty,
               ]}
-              ListEmptyComponent={renderEmpty}
+              ListEmptyComponent={listEmptyComponent}
               showsVerticalScrollIndicator={false}
+              initialNumToRender={12}
+              maxToRenderPerBatch={12}
+              windowSize={9}
+              removeClippedSubviews
+              keyboardShouldPersistTaps="handled"
             />
             
             <View style={styles.inputContainer}>
