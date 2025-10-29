@@ -89,6 +89,69 @@ export const resources: Resource = {
           unknown: 'Unexpected error occurred.',
         },
       },
+      debugTools: {
+        title: 'Debug Tools',
+        helper: {
+          primary: 'Inspect AsyncStorage entries saved by Haritage.',
+          secondary: 'Edit or remove items to verify integration flows during development.',
+        },
+        sections: {
+          overview: {
+            title: 'Storage Summary',
+            description: 'Currently tracking {{count}} keys across the local store.',
+          },
+          manage: {
+            title: 'Create New Entry',
+            description: 'Add a key/value pair for quick testing or configuration overrides.',
+          },
+          entries: {
+            title: 'Stored Entries',
+            description: 'Review existing AsyncStorage records and adjust their payloads.',
+          },
+        },
+        summary: {
+          count: '{{count}} keys detected',
+        },
+        placeholders: {
+          key: 'Storage key',
+          value: 'Value',
+        },
+        buttons: {
+          save: 'Save',
+          delete: 'Delete',
+          saveItem: 'Save item',
+        },
+        actions: {
+          refresh: 'Refresh storage data',
+        },
+        alerts: {
+          load: {
+            title: 'Load failed',
+            body: 'Could not load storage data.',
+          },
+          save: {
+            title: 'Save failed',
+            body: 'Could not save this entry.',
+          },
+          delete: {
+            title: 'Delete failed',
+            body: 'Could not delete this entry.',
+          },
+          confirmDelete: {
+            title: 'Delete entry',
+            body: 'Remove “{{key}}” from storage?',
+          },
+          missingKey: {
+            title: 'Missing key',
+            body: 'Provide a storage key.',
+          },
+          create: {
+            title: 'Create failed',
+            body: 'Could not create the entry.',
+          },
+        },
+        empty: 'No storage entries detected.',
+      },
       securityPrivacy: {
         title: 'Security & Privacy',
         biometricGeneric: 'Biometric',
@@ -133,6 +196,69 @@ export const resources: Resource = {
             title: 'Error',
             body: 'Could not update biometric preference. Try again later.',
           },
+        debugTools: {
+          title: 'Công cụ gỡ lỗi',
+          helper: {
+            primary: 'Kiểm tra các mục AsyncStorage mà Haritage đã lưu.',
+            secondary: 'Chỉnh sửa hoặc xoá mục để kiểm thử trong quá trình phát triển.',
+          },
+          sections: {
+            overview: {
+              title: 'Tổng quan bộ nhớ',
+              description: 'Hiện đang theo dõi {{count}} khóa trong bộ nhớ cục bộ.',
+            },
+            manage: {
+              title: 'Tạo mục mới',
+              description: 'Thêm cặp khóa/giá trị để thử nghiệm nhanh hoặc ghi đè cấu hình.',
+            },
+            entries: {
+              title: 'Các mục đã lưu',
+              description: 'Xem và điều chỉnh các bản ghi AsyncStorage hiện có.',
+            },
+          },
+          summary: {
+            count: 'Phát hiện {{count}} khóa',
+          },
+          placeholders: {
+            key: 'Khóa lưu trữ',
+            value: 'Giá trị',
+          },
+          buttons: {
+            save: 'Lưu',
+            delete: 'Xóa',
+            saveItem: 'Lưu mục',
+          },
+          actions: {
+            refresh: 'Tải lại dữ liệu lưu trữ',
+          },
+          alerts: {
+            load: {
+              title: 'Tải thất bại',
+              body: 'Không thể tải dữ liệu lưu trữ.',
+            },
+            save: {
+              title: 'Lưu thất bại',
+              body: 'Không thể lưu mục này.',
+            },
+            delete: {
+              title: 'Xóa thất bại',
+              body: 'Không thể xóa mục này.',
+            },
+            confirmDelete: {
+              title: 'Xóa mục',
+              body: 'Bạn có chắc chắn muốn xóa “{{key}}” khỏi bộ nhớ?',
+            },
+            missingKey: {
+              title: 'Thiếu khóa',
+              body: 'Vui lòng nhập khóa lưu trữ.',
+            },
+            create: {
+              title: 'Tạo thất bại',
+              body: 'Không thể tạo mục này.',
+            },
+          },
+          empty: 'Không có mục lưu trữ nào.',
+        },
         },
       },
       support: {
