@@ -4,10 +4,10 @@ import { View } from 'react-native';
 import { useAppTheme } from '@/shared/hooks';
 import { MaterialIcons } from '@expo/vector-icons';
 import {
-  Icon,
-  Label,
-  NativeTabs,
-  VectorIcon,
+    Icon,
+    Label,
+    NativeTabs,
+    VectorIcon,
 } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
@@ -60,6 +60,10 @@ export default function TabLayout() {
         <NativeTabs.Trigger name="map">
           <Label>{t('tabs.map')}</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="map" />} />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="commercial">
+          <Label>{t('tabs.commercial')}</Label>
+          <Icon src={<VectorIcon family={MaterialIcons} name="storefront" />} />
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="account">
           <Label>{t('tabs.account')}</Label>

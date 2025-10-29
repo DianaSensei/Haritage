@@ -17,6 +17,7 @@ export const resources: Resource = {
       tabs: {
         home: 'Home',
         map: 'Map',
+        commercial: 'Commercial',
         account: 'Account',
       },
       comments: {
@@ -50,6 +51,7 @@ export const resources: Resource = {
         },
         menu: {
           securityPrivacy: 'Security & Privacy',
+          savedFeeds: 'Saved feed',
           appSettings: 'App Settings',
           helpSupport: 'Help & Support',
           debugTools: 'Debug Tools',
@@ -377,6 +379,69 @@ export const resources: Resource = {
           vi: 'Vietnamese',
         },
       },
+      savedFeeds: {
+        title: 'Saved feed',
+        helper: {
+          title: 'Saved for later',
+          description: 'Bookmark posts to revisit them quickly on this device.',
+        },
+        stats: {
+          count: '{{count}} saved {{count, plural, one {post} other {posts}}}',
+          label: 'Saved posts',
+          caption: 'Bookmarks stay on this device.',
+        },
+        empty: {
+          title: 'No saved posts yet',
+          subtitle: 'Use the bookmark on any post to store it here for quick access.',
+        },
+        item: {
+          unsave: 'Remove from saved',
+          untitled: 'Untitled post',
+          noDescription: 'No description provided.',
+        },
+        alerts: {
+          loadFailedTitle: 'Sync error',
+          loadFailedBody: 'We could not load saved posts right now.',
+          syncFailedTitle: 'Update failed',
+          syncFailedBody: 'We could not update this saved post.',
+        },
+      },
+      commercial: {
+        title: 'Marketplace',
+        subtitle: 'Discover curated stores and product drops.',
+        searchPlaceholder: 'Search stores or products',
+        sections: {
+          forYou: {
+            title: 'For you',
+            subtitle: 'Fresh picks tailored to your taste.',
+          },
+          topSale: {
+            title: 'Top sale',
+            subtitle: 'Trending items selling fast.',
+          },
+          newArrivals: {
+            title: 'New item',
+            subtitle: 'Just landed this week.',
+          },
+          buyAgain: {
+            title: 'Buy again',
+            subtitle: 'Reorder your recent favorites.',
+          },
+          suggestions: {
+            title: 'Suggestion',
+            subtitle: 'You might also like these picks.',
+          },
+        },
+        search: {
+          title: 'Search',
+          resultsFor: '{{count}} {{count, plural, one {result} other {results}}} for “{{query}}”',
+          emptyPrompt: 'Type to search for stores or products.',
+          emptyResultsTitle: 'No matches yet',
+          emptyResultsSubtitle: 'Try a different keyword or check your spelling.',
+          recentTitle: 'Recent searches',
+          clearAction: 'Clear',
+        },
+      },
       commentsScreen: {
         signInPrompt: 'Sign in to add a comment.',
       },
@@ -435,6 +500,7 @@ export const resources: Resource = {
       tabs: {
         home: 'Trang chủ',
         map: 'Bản đồ',
+        commercial: 'Thương mại',
         account: 'Tài khoản',
       },
       comments: {
@@ -468,6 +534,7 @@ export const resources: Resource = {
         },
         menu: {
           securityPrivacy: 'Bảo mật & Quyền riêng tư',
+          savedFeeds: 'Bài viết đã lưu',
           appSettings: 'Cài đặt ứng dụng',
           helpSupport: 'Trợ giúp & Hỗ trợ',
           debugTools: 'Công cụ gỡ lỗi',
@@ -667,6 +734,69 @@ export const resources: Resource = {
         languages: {
           en: 'Tiếng Anh',
           vi: 'Tiếng Việt',
+        },
+      },
+      savedFeeds: {
+        title: 'Bài viết đã lưu',
+        helper: {
+          title: 'Lưu để xem sau',
+          description: 'Đánh dấu bài viết để xem lại nhanh chóng trên thiết bị này.',
+        },
+        stats: {
+          count: '{{count}} bài đã lưu',
+          label: 'Bài đã lưu',
+          caption: 'Các bài đánh dấu sẽ được giữ trên thiết bị này.',
+        },
+        empty: {
+          title: 'Chưa có bài viết nào',
+          subtitle: 'Dùng biểu tượng đánh dấu để lưu bài viết vào đây.',
+        },
+        item: {
+          unsave: 'Bỏ khỏi mục đã lưu',
+          untitled: 'Bài viết chưa có tiêu đề',
+          noDescription: 'Chưa có mô tả.',
+        },
+        alerts: {
+          loadFailedTitle: 'Lỗi đồng bộ',
+          loadFailedBody: 'Không thể tải danh sách bài viết đã lưu.',
+          syncFailedTitle: 'Cập nhật thất bại',
+          syncFailedBody: 'Không thể cập nhật trạng thái của bài viết này.',
+        },
+      },
+      commercial: {
+        title: 'Gian hàng',
+        subtitle: 'Khám phá các cửa hàng tuyển chọn và sản phẩm mới nhất.',
+        searchPlaceholder: 'Tìm cửa hàng hoặc sản phẩm',
+        sections: {
+          forYou: {
+            title: 'Dành cho bạn',
+            subtitle: 'Lựa chọn phù hợp với sở thích của bạn.',
+          },
+          topSale: {
+            title: 'Bán chạy',
+            subtitle: 'Những món đang được mua nhiều.',
+          },
+          newArrivals: {
+            title: 'Hàng mới',
+            subtitle: 'Vừa cập bến tuần này.',
+          },
+          buyAgain: {
+            title: 'Mua lại',
+            subtitle: 'Đặt lại các món yêu thích gần đây.',
+          },
+          suggestions: {
+            title: 'Gợi ý',
+            subtitle: 'Có thể bạn sẽ thích những lựa chọn này.',
+          },
+        },
+        search: {
+          title: 'Tìm kiếm',
+          resultsFor: '{{count}} {{count, plural, one {kết quả} other {kết quả}}} cho “{{query}}”',
+          emptyPrompt: 'Nhập từ khóa để tìm cửa hàng hoặc sản phẩm.',
+          emptyResultsTitle: 'Chưa có kết quả phù hợp',
+          emptyResultsSubtitle: 'Thử từ khóa khác hoặc kiểm tra chính tả.',
+          recentTitle: 'Tìm kiếm gần đây',
+          clearAction: 'Xóa',
         },
       },
       commentsScreen: {

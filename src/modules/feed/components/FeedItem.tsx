@@ -1,19 +1,20 @@
 import { Colors } from '@/core/config/theme';
 import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { useAppTheme } from '@/shared/hooks';
+import { feedStorageService } from '@/shared/services/storage/feedStorageService';
 import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
-  Dimensions,
-  Image,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Dimensions,
+    Image,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { ReactionBar } from './ReactionBar';
 import { VideoPlayer } from './VideoPlayer';
@@ -200,8 +201,15 @@ const FeedItemComponent: React.FC<FeedItemProps> = ({
   };
 
   const handleSaveToCollection = () => {
-    setIsSaved((prev) => !prev);
-    updateItem(item.id, { isSaved: !isSaved });
+    const nextSaved = !isSaved;
+    setIsSaved(nextSaved);
+    updateItem(item.id, { isSaved: nextSaved });
+
+    feedStorageService
+      .updateFeedItem(item.id, { isSaved: nextSaved })
+      .catch((error) => {
+        console.warn('Failed to persist saved state', error);
+      });
   };
 
   const formatTimeAgo = (date: Date) => {

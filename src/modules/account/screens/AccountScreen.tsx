@@ -182,6 +182,9 @@ export const AccountScreen: React.FC = () => {
   const handleSecurity = useCallback(() => {
     router.push('/security-privacy');
   }, [router]);
+  const handleSavedFeeds = useCallback(() => {
+    router.push('/saved-feeds');
+  }, [router]);
   const handleSettings = useCallback(() => {
     router.push('/app-settings');
   }, [router]);
@@ -279,6 +282,12 @@ export const AccountScreen: React.FC = () => {
               icon="shield-checkmark"
               label={t('account.menu.securityPrivacy')}
               onPress={handleSecurity}
+            />
+            <View style={styles.divider} />
+            <MenuItem
+              icon="bookmark"
+              label={t('account.menu.savedFeeds')}
+              onPress={handleSavedFeeds}
             />
             <View style={styles.divider} />
             <MenuItem

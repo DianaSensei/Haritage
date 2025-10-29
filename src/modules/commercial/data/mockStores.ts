@@ -1,0 +1,266 @@
+import {
+    CommercialSection,
+    CommercialSectionItem,
+    StoreFront,
+} from '@/modules/commercial/types';
+
+export const mockStoreFronts: StoreFront[] = [
+  {
+    id: 'store-luna-living',
+    name: 'Luna Living',
+    category: 'home',
+    accentColor: '#F3E7D9',
+    initials: 'LL',
+    rating: 4.8,
+    followers: 23500,
+    productCount: 128,
+    tags: ['Decor', 'Minimal'],
+    promoMessage: 'Bundle & save 15% this weekend',
+    products: [
+      { id: 'prod-throw', name: 'Woven Throw Blanket', price: '$24.90' },
+      { id: 'prod-planter', name: 'Ceramic Planter Duo', price: '$18.50' },
+      { id: 'prod-lamp', name: 'Ambient Table Lamp', price: '$32.00' },
+    ],
+  },
+  {
+    id: 'store-vibe-lab',
+    name: 'Vibe Lab Electronics',
+    category: 'electronics',
+    accentColor: '#D6E7FF',
+    initials: 'VL',
+    rating: 4.6,
+    followers: 48210,
+    productCount: 203,
+    tags: ['Audio', 'Smart Home'],
+    promoMessage: 'Free shipping on orders over $40',
+    products: [
+      { id: 'prod-headphones', name: 'Noise-cancel Headphones', price: '$79.00' },
+      { id: 'prod-speaker', name: 'Smart Speaker Mini', price: '$39.90' },
+      { id: 'prod-light', name: 'Gradient Light Strip', price: '$22.50' },
+    ],
+  },
+  {
+    id: 'store-aurora-beauty',
+    name: 'Aurora Beauty Co.',
+    category: 'beauty',
+    accentColor: '#F9E0F2',
+    initials: 'AB',
+    rating: 4.9,
+    followers: 18900,
+    productCount: 96,
+    tags: ['Skincare', 'Vegan'],
+    promoMessage: 'Buy 2 serums, get 1 mask free',
+    products: [
+      { id: 'prod-serum', name: 'Radiance Serum', price: '$28.00' },
+      { id: 'prod-cream', name: 'Hydration Gel Cream', price: '$26.50' },
+      { id: 'prod-set', name: 'Mini Glow Set', price: '$18.90' },
+    ],
+  },
+  {
+    id: 'store-pulse-fit',
+    name: 'PulseFit Active',
+    category: 'lifestyle',
+    accentColor: '#DDF5EC',
+    initials: 'PF',
+    rating: 4.7,
+    followers: 15420,
+    productCount: 142,
+    tags: ['Athleisure', 'Accessories'],
+    promoMessage: 'New arrivals drop every Friday',
+    products: [
+      { id: 'prod-joggers', name: 'AirFlex Joggers', price: '$34.00' },
+      { id: 'prod-bottle', name: 'Insulated Bottle', price: '$14.50' },
+      { id: 'prod-band', name: 'Resistance Band Trio', price: '$19.90' },
+    ],
+  },
+  {
+    id: 'store-harvest',
+    name: 'Harvest Pantry',
+    category: 'grocery',
+    accentColor: '#F2EFD4',
+    initials: 'HP',
+    rating: 4.5,
+    followers: 12870,
+    productCount: 76,
+    tags: ['Organic', 'Local'],
+    promoMessage: 'Daily essentials delivered in 2h',
+    products: [
+      { id: 'prod-coffee', name: 'Cold Brew Pack', price: '$16.00' },
+      { id: 'prod-granola', name: 'Nutty Granola', price: '$12.40' },
+      { id: 'prod-tea', name: 'Botanical Tea Set', price: '$15.90' },
+    ],
+  },
+];
+
+const buildItem = (
+  store: StoreFront,
+  data: Omit<CommercialSectionItem, 'storeId' | 'storeName' | 'storeBadge' | 'accentColor'> &
+    Partial<Pick<CommercialSectionItem, 'accentColor'>>,
+): CommercialSectionItem => ({
+  storeId: store.id,
+  storeName: store.name,
+  storeBadge: store.initials,
+  accentColor: data.accentColor ?? store.accentColor,
+  ...data,
+});
+
+const storeById = (id: string) => mockStoreFronts.find((store) => store.id === id)!;
+
+export const mockSectionItems: Record<CommercialSection, CommercialSectionItem[]> = {
+  forYou: [
+    buildItem(storeById('store-luna-living'), {
+      id: 'fy-throw-set',
+      name: 'Layered Throw Set',
+      subtitle: 'Hand-loomed cotton, neutral palette',
+      price: '$29.90',
+      badge: 'New drop',
+      tags: ['Home', 'Cozy'],
+    }),
+    buildItem(storeById('store-aurora-beauty'), {
+      id: 'fy-serum-duo',
+      name: 'Glow Ritual Duo',
+      subtitle: 'Vitamin C + Hyaluronic combo',
+      price: '$42.00',
+      badge: 'Bundle deal',
+      tags: ['Skincare'],
+    }),
+    buildItem(storeById('store-vibe-lab'), {
+      id: 'fy-pulse-buds',
+      name: 'Pulse Buds Mini',
+      subtitle: 'Compact true wireless audio',
+      price: '$54.90',
+      tags: ['Audio'],
+    }),
+    buildItem(storeById('store-pulse-fit'), {
+      id: 'fy-travel-kit',
+      name: 'Active Travel Kit',
+      subtitle: 'Carry + bottle + resistance bands',
+      price: '$44.00',
+      tags: ['Travel'],
+    }),
+  ],
+  topSale: [
+    buildItem(storeById('store-vibe-lab'), {
+      id: 'ts-speaker',
+      name: 'Smart Speaker Mini',
+      subtitle: 'Top seller • 2K+ sold this week',
+      price: '$39.90',
+      badge: 'Flash sale',
+      tags: ['Smart Home'],
+    }),
+    buildItem(storeById('store-pulse-fit'), {
+      id: 'ts-airflex',
+      name: 'AirFlex Joggers',
+      subtitle: 'Moisture-wicking fabric blend',
+      price: '$34.00',
+      tags: ['Athleisure'],
+    }),
+    buildItem(storeById('store-harvest'), {
+      id: 'ts-coldbrew',
+      name: 'Cold Brew Pack',
+      subtitle: 'Best seller • ships in 2h',
+      price: '$16.00',
+      tags: ['Pantry'],
+    }),
+    buildItem(storeById('store-aurora-beauty'), {
+      id: 'ts-hydration',
+      name: 'Hydration Gel Cream',
+      subtitle: 'Oil-free daily moisturizer',
+      price: '$26.50',
+      tags: ['Daily use'],
+    }),
+  ],
+  newArrivals: [
+    buildItem(storeById('store-luna-living'), {
+      id: 'na-dome-lamp',
+      name: 'Dome Glass Lamp',
+      subtitle: 'Soft-glow, tap dimmer',
+      price: '$36.00',
+      badge: 'Just in',
+      tags: ['Lighting'],
+    }),
+    buildItem(storeById('store-pulse-fit'), {
+      id: 'na-flex-mat',
+      name: 'FlexFlow Mat',
+      subtitle: 'Dual texture, non-slip finish',
+      price: '$24.90',
+      tags: ['Fitness'],
+    }),
+    buildItem(storeById('store-aurora-beauty'), {
+      id: 'na-midnight-mask',
+      name: 'Midnight Recovery Mask',
+      subtitle: 'Overnight repair treatment',
+      price: '$21.50',
+      tags: ['Night care'],
+    }),
+    buildItem(storeById('store-vibe-lab'), {
+      id: 'na-lightstrip',
+      name: 'Gradient Light Strip',
+      subtitle: 'Syncs with music • App ready',
+      price: '$22.50',
+      tags: ['Lighting'],
+    }),
+  ],
+  buyAgain: [
+    buildItem(storeById('store-harvest'), {
+      id: 'ba-granola',
+      name: 'Nutty Granola',
+      subtitle: 'Reorder in 1 tap • 12oz',
+      price: '$12.40',
+      tags: ['Breakfast'],
+    }),
+    buildItem(storeById('store-luna-living'), {
+      id: 'ba-planter',
+      name: 'Ceramic Planter Duo',
+      subtitle: 'Restock reminder • bestseller',
+      price: '$18.50',
+      tags: ['Decor'],
+    }),
+    buildItem(storeById('store-pulse-fit'), {
+      id: 'ba-bottle',
+      name: 'Insulated Bottle',
+      subtitle: 'Keeps cold for 24h',
+      price: '$14.50',
+      tags: ['Hydration'],
+    }),
+    buildItem(storeById('store-aurora-beauty'), {
+      id: 'ba-serum',
+      name: 'Radiance Serum',
+      subtitle: 'Auto-refill available',
+      price: '$28.00',
+      tags: ['Skincare'],
+    }),
+  ],
+  suggestions: [
+    buildItem(storeById('store-vibe-lab'), {
+      id: 'sg-sleepbuds',
+      name: 'Sleep Buds S',
+      subtitle: 'Adaptive white-noise generator',
+      price: '$44.90',
+      tags: ['Night routine'],
+    }),
+    buildItem(storeById('store-luna-living'), {
+      id: 'sg-scent-diffuser',
+      name: 'Scent Diffuser Capsule',
+      subtitle: 'Refill-friendly, 3-week runtime',
+      price: '$19.50',
+      tags: ['Aromatherapy'],
+    }),
+    buildItem(storeById('store-pulse-fit'), {
+      id: 'sg-ankle-weights',
+      name: 'Soft Ankle Weights',
+      subtitle: 'Adjustable up to 2kg',
+      price: '$27.00',
+      tags: ['Strength'],
+    }),
+    buildItem(storeById('store-harvest'), {
+      id: 'sg-herbal-tea',
+      name: 'Botanical Tea Set',
+      subtitle: '6 blends, caffeine-free',
+      price: '$15.90',
+      tags: ['Tea'],
+    }),
+  ],
+};
+
+export const allCommercialItems: CommercialSectionItem[] = Object.values(mockSectionItems).flat();
