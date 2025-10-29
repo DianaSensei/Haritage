@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLanguageStore } from '@/core/store';
 import { ThemedText } from '@/shared/components';
+import { SettingsHeader } from '@/shared/components/layout/SettingsHeader';
 import { useAppTheme } from '@/shared/hooks';
 import { SUPPORTED_LANGUAGES, type AppLanguage } from '@/shared/i18n';
 import type { ThemePreference } from '@/shared/types';
@@ -69,18 +70,11 @@ export const AppSettingsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.goBack')}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.icon} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>{t('appSettings.title')}</ThemedText>
-        <View style={styles.headerSpacer} />
-      </View>
+      <SettingsHeader
+        title={t('appSettings.title')}
+        onBack={() => router.back()}
+        backAccessibilityLabel={t('common.goBack')}
+      />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
@@ -183,30 +177,6 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.divider,
-      backgroundColor: colors.surface,
-    },
-    backButton: {
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: colors.surfaceSecondary,
-    },
-    headerTitle: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: 18,
-      fontWeight: '600',
-    },
-    headerSpacer: {
-      width: 32,
     },
     content: {
       paddingHorizontal: 16,

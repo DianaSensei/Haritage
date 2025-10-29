@@ -1,6 +1,7 @@
 import { CONFIG } from '@/core/config';
 import { faqService, type FAQItem } from '@/modules/support/services/faqService';
 import { ThemedText } from '@/shared/components';
+import { SettingsHeader } from '@/shared/components/layout/SettingsHeader';
 import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -26,8 +27,8 @@ interface FaqMetaState {
 
 export const SupportScreen: React.FC = () => {
   const router = useRouter();
-  const { colors, isDark } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
 
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
@@ -35,6 +36,8 @@ export const SupportScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [expandedFaqIds, setExpandedFaqIds] = useState<string[]>([]);
+  const [isFaqSectionExpanded, setIsFaqSectionExpanded] = useState(true);
 
   const formatTimestamp = useCallback(
     (value: number | null): string | null => {
@@ -70,6 +73,7 @@ export const SupportScreen: React.FC = () => {
       try {
         const result = await faqService.getFaqs({ forceRefresh });
         setFaqItems(result.faqs);
+        setExpandedFaqIds([]);
         setFaqMeta({
           fromCache: result.fromCache,
           stale: result.stale,
@@ -174,6 +178,19 @@ export const SupportScreen: React.FC = () => {
     return lines;
   }, [faqMeta.fromCache, faqMeta.stale, formattedUpdatedAt, t]);
 
+  const handleToggleFaq = useCallback(
+    (id: string) => {
+      setExpandedFaqIds((current) =>
+        current.includes(id) ? current.filter((faqId) => faqId !== id) : [...current, id]
+      );
+    },
+    []
+  );
+
+  const handleToggleFaqSection = useCallback(() => {
+    setIsFaqSectionExpanded((prev) => !prev);
+  }, []);
+
   const renderFaqContent = () => {
     if (isLoading && !faqItems.length) {
       return (
@@ -191,37 +208,47 @@ export const SupportScreen: React.FC = () => {
       );
     }
 
-    return faqItems.map((item, index) => (
-      <View
-        key={item.id}
-        style={[styles.optionRow, styles.optionRowStatic, index > 0 && styles.optionRowDivider]}
-      >
-        <View style={[styles.optionIcon, styles.optionIconFaq]}>
-          <Ionicons name="help-circle-outline" size={18} color={colors.accent} />
+    return faqItems.map((item, index) => {
+      const isExpanded = expandedFaqIds.includes(item.id);
+
+      return (
+        <View key={item.id}>
+          <TouchableOpacity
+            style={[styles.optionRow, index > 0 && styles.optionRowDivider]}
+            onPress={() => handleToggleFaq(item.id)}
+            activeOpacity={0.72}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: isExpanded }}
+          >
+            <View style={[styles.optionIcon, styles.optionIconFaq]}>
+              <Ionicons name="help-circle-outline" size={18} color={colors.accent} />
+            </View>
+            <View style={styles.optionContent}>
+              <ThemedText style={styles.optionTitle}>{t(item.questionKey)}</ThemedText>
+            </View>
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.iconMuted}
+            />
+          </TouchableOpacity>
+          {isExpanded ? (
+            <View style={styles.faqAnswerContainer}>
+              <ThemedText style={styles.faqAnswerText}>{t(item.answerKey)}</ThemedText>
+            </View>
+          ) : null}
         </View>
-        <View style={styles.optionContent}>
-          <ThemedText style={styles.optionTitle}>{item.question}</ThemedText>
-          <ThemedText style={styles.optionDescription}>{item.answer}</ThemedText>
-        </View>
-      </View>
-    ));
+      );
+    });
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.goBack')}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.icon} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>{t('support.title')}</ThemedText>
-        <View style={styles.headerSpacer} />
-      </View>
+      <SettingsHeader
+        title={t('support.title')}
+        onBack={() => router.back()}
+        backAccessibilityLabel={t('common.goBack')}
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -269,41 +296,60 @@ export const SupportScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>{t('support.faq.title')}</ThemedText>
-          <ThemedText style={styles.sectionDescription}>{t('support.faq.description')}</ThemedText>
+          <TouchableOpacity
+            style={styles.sectionHeaderRow}
+            onPress={handleToggleFaqSection}
+            activeOpacity={0.72}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: isFaqSectionExpanded }}
+          >
+            <View style={styles.sectionHeaderTextGroup}>
+              <ThemedText style={styles.sectionTitle}>{t('support.faq.title')}</ThemedText>
+              <ThemedText style={styles.sectionDescription}>{t('support.faq.description')}</ThemedText>
+            </View>
+            <Ionicons
+              name={isFaqSectionExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={colors.iconMuted}
+            />
+          </TouchableOpacity>
         </View>
 
-        {faqHelperLines.length > 0 && (
-          <View style={styles.helperCard}>
-            <Ionicons name="time-outline" size={20} color={colors.info} />
-            <View style={styles.helperTextGroup}>
-              {faqHelperLines.map((line, index) => (
-                <ThemedText
-                  key={`${line}-${index}`}
-                  style={index === 0 ? styles.helperText : styles.helperSubtext}
-                >
-                  {line}
-                </ThemedText>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={styles.optionCard}>{renderFaqContent()}</View>
-
-        {errorMessage && (
+        {isFaqSectionExpanded && (
           <>
-            <View style={styles.errorBanner}>
-              <Ionicons name="warning-outline" size={18} color={colors.warning} />
-              <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
-            </View>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={handleRefresh}
-              activeOpacity={0.8}
-            >
-              <ThemedText style={styles.retryButtonText}>{t('support.actions.retry')}</ThemedText>
-            </TouchableOpacity>
+            {faqHelperLines.length > 0 && (
+              <View style={styles.helperCard}>
+                <Ionicons name="time-outline" size={20} color={colors.info} />
+                <View style={styles.helperTextGroup}>
+                  {faqHelperLines.map((line, index) => (
+                    <ThemedText
+                      key={`${line}-${index}`}
+                      style={index === 0 ? styles.helperText : styles.helperSubtext}
+                    >
+                      {line}
+                    </ThemedText>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <View style={styles.optionCard}>{renderFaqContent()}</View>
+
+            {errorMessage && (
+              <>
+                <View style={styles.errorBanner}>
+                  <Ionicons name="warning-outline" size={18} color={colors.warning} />
+                  <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+                </View>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={handleRefresh}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={styles.retryButtonText}>{t('support.actions.retry')}</ThemedText>
+                </TouchableOpacity>
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -311,36 +357,11 @@ export const SupportScreen: React.FC = () => {
   );
 };
 
-const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: boolean) =>
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.divider,
-      backgroundColor: colors.surface,
-    },
-    backButton: {
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: colors.surfaceSecondary,
-    },
-    headerTitle: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: 18,
-      fontWeight: '600',
-      color: colors.text,
-    },
-    headerSpacer: {
-      width: 32,
     },
     content: {
       paddingHorizontal: 16,
@@ -370,6 +391,15 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
       color: colors.textMuted,
     },
     section: {
+      gap: 8,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionHeaderTextGroup: {
+      flex: 1,
       gap: 8,
     },
     sectionTitle: {
@@ -428,6 +458,21 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
     optionDescription: {
       fontSize: 13,
       color: colors.textMuted,
+    },
+    faqAnswerContainer: {
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+      backgroundColor: colors.surfaceSecondary,
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.borderMuted,
+    },
+    faqAnswerText: {
+      marginTop: 12,
+      fontSize: 14,
+      color: colors.textMuted,
+      lineHeight: 20,
     },
     optionStateRow: {
       flexDirection: 'row',

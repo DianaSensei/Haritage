@@ -159,6 +159,24 @@ export const resources: Resource = {
           error: 'We could not refresh FAQs right now. Showing any saved answers below.',
           cached: 'Loaded from saved answers.',
           lastUpdated: 'Last updated {{time}}',
+          items: {
+            gettingStarted: {
+              question: 'How do I get started with Haritage?',
+              answer: 'Sign in with your account, explore the Home feed for inspiration, and create new posts from the compose button when you are ready to share.',
+            },
+            languageSwitch: {
+              question: 'How do I change the app language?',
+              answer: 'Open App Settings from your account tab, scroll to the Language section, and pick the language you want. The interface updates right away.',
+            },
+            appLock: {
+              question: 'How can I secure the app with a PIN or biometrics?',
+              answer: 'Set up a PIN from Security & Privacy. Once a PIN is set, you can enable biometric unlock and manage authentication preferences there.',
+            },
+            contactTeam: {
+              question: 'What should I do if I still need help?',
+              answer: 'Use the call or email actions above to reach the Haritage support team. We aim to respond within one business day.',
+            },
+          },
         },
         actions: {
           retry: 'Try again',
@@ -433,6 +451,24 @@ export const resources: Resource = {
           error: 'Không thể cập nhật danh sách FAQ. Đang hiển thị dữ liệu đã lưu (nếu có).',
           cached: 'Đang hiển thị nội dung đã lưu.',
           lastUpdated: 'Cập nhật lần cuối {{time}}',
+          items: {
+            gettingStarted: {
+              question: 'Làm sao để bắt đầu với Haritage?',
+              answer: 'Đăng nhập tài khoản, khám phá nguồn tin Trang chủ để lấy cảm hứng và tạo bài viết mới bằng nút đăng bài khi bạn sẵn sàng chia sẻ.',
+            },
+            languageSwitch: {
+              question: 'Làm sao để đổi ngôn ngữ ứng dụng?',
+              answer: 'Mở Cài đặt ứng dụng trong tab Tài khoản, cuộn đến phần Ngôn ngữ và chọn ngôn ngữ mong muốn. Giao diện sẽ cập nhật ngay lập tức.',
+            },
+            appLock: {
+              question: 'Làm sao để bảo vệ ứng dụng bằng mã PIN hoặc sinh trắc học?',
+              answer: 'Thiết lập mã PIN trong mục Bảo mật & Quyền riêng tư. Sau khi có mã PIN, bạn có thể bật mở khóa sinh trắc học và quản lý tùy chọn xác thực tại đó.',
+            },
+            contactTeam: {
+              question: 'Nếu vẫn cần hỗ trợ thì tôi nên làm gì?',
+              answer: 'Sử dụng các thao tác gọi hoặc gửi email ở trên để liên hệ đội hỗ trợ Haritage. Chúng tôi sẽ phản hồi trong vòng một ngày làm việc.',
+            },
+          },
         },
         actions: {
           retry: 'Thử lại',

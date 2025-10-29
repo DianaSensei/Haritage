@@ -1,6 +1,7 @@
 import { CONFIG } from '@/core/config';
 import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { ThemedText } from '@/shared/components';
+import { SettingsHeader } from '@/shared/components/layout/SettingsHeader';
 import { useAppTheme } from '@/shared/hooks';
 import { biometricService } from '@/shared/services/security/biometricService';
 import { pinService } from '@/shared/services/security/pinService';
@@ -14,7 +15,6 @@ import {
     ScrollView,
     StyleSheet,
     Switch,
-    TouchableOpacity,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +24,7 @@ const FALLBACK_BIOMETRIC_TYPE = '__fallback__';
 export const SecurityPrivacyScreen: React.FC = () => {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const pinHash = useAppLockStore((state) => state.pinHash);
   const isBiometricEnabled = useAppLockStore((state) => state.isBiometricEnabled);
@@ -108,6 +108,36 @@ export const SecurityPrivacyScreen: React.FC = () => {
     t,
   ]);
 
+  const biometricSubtitle = useMemo(
+    () =>
+      isBiometricSupported
+        ? t('securityPrivacy.cards.biometric.subtitleSupported', { appName: CONFIG.APP_NAME })
+        : t('securityPrivacy.cards.biometric.subtitleUnsupported'),
+    [isBiometricSupported, t]
+  );
+
+  const biometricFootnotes = useMemo(() => {
+    const notes: { key: string; text: string; tone: 'warning' | 'info' }[] = [];
+
+    if (!pinHash && !isCheckingSupport) {
+      notes.push({
+        key: 'pin-required',
+        text: t('securityPrivacy.cards.biometric.pinHelper'),
+        tone: 'warning',
+      });
+    }
+
+    if (isProcessingToggle) {
+      notes.push({
+        key: 'updating',
+        text: t('securityPrivacy.cards.biometric.updating'),
+        tone: 'info',
+      });
+    }
+
+    return notes;
+  }, [isCheckingSupport, isProcessingToggle, pinHash, t]);
+
   const handleToggleBiometric = useCallback(
     async (nextValue: boolean) => {
       if (isProcessingToggle) {
@@ -183,52 +213,63 @@ export const SecurityPrivacyScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>{t('securityPrivacy.title')}</ThemedText>
-      </View>
+      <SettingsHeader
+        title={t('securityPrivacy.title')}
+        onBack={() => router.back()}
+        backAccessibilityLabel={t('common.goBack')}
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="shield-checkmark" size={22} color={colors.accent} />
-            <ThemedText style={styles.cardTitle}>{t('securityPrivacy.cards.status.title')}</ThemedText>
+        <View
+          style={[
+            styles.helperCard,
+            !isBiometricSupported ? styles.helperCardNeutral : undefined,
+          ]}
+        >
+          <Ionicons
+            name={isBiometricSupported ? 'shield-checkmark' : 'shield-outline'}
+            size={20}
+            color={isBiometricSupported ? colors.info : colors.warning}
+          />
+          <View style={styles.helperTextGroup}>
+            <ThemedText style={styles.helperText}>
+              {t('securityPrivacy.cards.status.title')}
+            </ThemedText>
+            <ThemedText style={styles.helperSubtext}>{statusText}</ThemedText>
           </View>
-          <ThemedText style={styles.cardDescription}>{statusText}</ThemedText>
           {isCheckingSupport && (
-            <ActivityIndicator style={styles.spinner} color={colors.accent} size="small" />
+            <ActivityIndicator
+              style={styles.helperSpinner}
+              color={colors.accent}
+              size="small"
+            />
           )}
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleLabelGroup}>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>
+            {t('securityPrivacy.cards.biometric.title', { type: biometricTypeLabel })}
+          </ThemedText>
+          <ThemedText style={styles.sectionDescription}>{biometricSubtitle}</ThemedText>
+        </View>
+
+        <View style={styles.optionCard}>
+          <View style={styles.optionRow}>
+            <View style={styles.optionIcon}>
               <Ionicons
                 name={isBiometricEnabled ? 'finger-print' : 'lock-closed'}
-                size={22}
+                size={18}
                 color={colors.accent}
               />
-              <View>
-                <ThemedText style={styles.toggleTitle}>
-                  {t('securityPrivacy.cards.biometric.title', { type: biometricTypeLabel })}
-                </ThemedText>
-                <ThemedText style={styles.toggleSubtitle}>
-                  {isBiometricSupported
-                    ? t('securityPrivacy.cards.biometric.subtitleSupported', {
-                        appName: CONFIG.APP_NAME,
-                      })
-                    : t('securityPrivacy.cards.biometric.subtitleUnsupported')}
-                </ThemedText>
-              </View>
+            </View>
+            <View style={styles.optionContent}>
+              <ThemedText style={styles.optionTitle}>
+                {t('securityPrivacy.cards.biometric.title', { type: biometricTypeLabel })}
+              </ThemedText>
+              <ThemedText style={styles.optionDescription}>{biometricSubtitle}</ThemedText>
             </View>
             <Switch
               value={isBiometricEnabled}
@@ -241,129 +282,145 @@ export const SecurityPrivacyScreen: React.FC = () => {
                     ? colors.surfaceSecondary
                     : colors.background
               }
-              trackColor={{ false: colors.border, true: colors.accent }}
-              ios_backgroundColor={colors.border}
+              trackColor={{ false: colors.borderMuted, true: colors.accent }}
+              ios_backgroundColor={colors.borderMuted}
             />
           </View>
-          {!pinHash && !isCheckingSupport && (
-            <ThemedText style={styles.helperText}>
-              {t('securityPrivacy.cards.biometric.pinHelper')}
-            </ThemedText>
-          )}
-          {isProcessingToggle && (
-            <ThemedText style={styles.helperText}>
-              {t('securityPrivacy.cards.biometric.updating')}
-            </ThemedText>
+          {biometricFootnotes.length > 0 && (
+            <View style={styles.optionFootnote}>
+              {biometricFootnotes.map((note) => (
+                <ThemedText
+                  key={note.key}
+                  style={
+                    note.tone === 'warning' ? styles.footnoteWarning : styles.footnoteInfo
+                  }
+                >
+                  {note.text}
+                </ThemedText>
+              ))}
+            </View>
           )}
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="information-circle" size={22} color={colors.accent} />
-            <ThemedText style={styles.cardTitle}>{t('securityPrivacy.cards.about.title')}</ThemedText>
+        <View style={[styles.helperCard, styles.helperCardNeutral]}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.icon} />
+          <View style={styles.helperTextGroup}>
+            <ThemedText style={styles.helperText}>
+              {t('securityPrivacy.cards.about.title')}
+            </ThemedText>
+            <ThemedText style={styles.helperSubtext}>
+              {t('securityPrivacy.cards.about.description', { appName: CONFIG.APP_NAME })}
+            </ThemedText>
           </View>
-          <ThemedText style={styles.cardDescription}>
-            {t('securityPrivacy.cards.about.description', { appName: CONFIG.APP_NAME })}
-          </ThemedText>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const createStyles = (
-  colors: ReturnType<typeof useAppTheme>['colors'],
-  isDark: boolean,
-) =>
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    header: {
+    content: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 20,
+    },
+    helperCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: colors.infoSoft,
+      borderWidth: 1,
+      borderColor: colors.info,
+    },
+    helperCardNeutral: {
+      backgroundColor: colors.surfaceSecondary,
+      borderColor: colors.border,
+    },
+    helperTextGroup: {
+      flex: 1,
+      gap: 4,
+    },
+    helperText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    helperSubtext: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    helperSpinner: {
+      marginLeft: 12,
+    },
+    section: {
+      gap: 8,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    sectionDescription: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    optionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    optionRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      paddingVertical: 14,
+      gap: 16,
     },
-    backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+    optionIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
       justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 12,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderMuted,
     },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: colors.text,
-    },
-    content: {
-      padding: 16,
-      gap: 16,
-    },
-    card: {
-      padding: 16,
-      borderRadius: 16,
-      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDark ? 0.35 : 0.12,
-      shadowRadius: 6,
-      elevation: 4,
-    },
-    cardHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      marginBottom: 12,
-    },
-    cardTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.text,
-    },
-    cardDescription: {
-      fontSize: 14,
-      color: colors.textMuted,
-      lineHeight: 20,
-    },
-    spinner: {
-      marginTop: 12,
-    },
-    toggleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 16,
-    },
-    toggleLabelGroup: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
+    optionContent: {
       flex: 1,
+      gap: 4,
     },
-    toggleTitle: {
+    optionTitle: {
       fontSize: 16,
       fontWeight: '600',
       color: colors.text,
     },
-    toggleSubtitle: {
+    optionDescription: {
       fontSize: 13,
       color: colors.textMuted,
     },
-    helperText: {
-      marginTop: 12,
+    optionFootnote: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.borderMuted,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    footnoteWarning: {
       fontSize: 13,
       color: colors.warning,
+    },
+    footnoteInfo: {
+      fontSize: 13,
+      color: colors.textMuted,
     },
   });
