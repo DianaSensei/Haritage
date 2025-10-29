@@ -7,14 +7,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -135,26 +135,74 @@ export const SupportScreen: React.FC = () => {
     }
   }, [t]);
 
-  const renderFaqItems = () => {
+  const contactOptions = useMemo(
+    () => [
+      {
+        key: 'call',
+        icon: 'call-outline' as const,
+        title: t('support.contact.actions.call.title'),
+        description: t('support.contact.actions.call.description', {
+          phone: CONFIG.SUPPORT.PHONE_NUMBER,
+        }),
+        onPress: handleCallSupport,
+      },
+      {
+        key: 'email',
+        icon: 'mail-outline' as const,
+        title: t('support.contact.actions.email.title'),
+        description: t('support.contact.actions.email.description', {
+          email: CONFIG.SUPPORT.EMAIL,
+        }),
+        onPress: handleEmailSupport,
+      },
+    ],
+    [handleCallSupport, handleEmailSupport, t]
+  );
+
+  const faqHelperLines = useMemo(() => {
+    const lines: string[] = [];
+    if (formattedUpdatedAt) {
+      lines.push(t('support.faq.lastUpdated', { time: formattedUpdatedAt }));
+    }
+    if (faqMeta.fromCache) {
+      lines.push(
+        faqMeta.stale
+          ? `${t('support.faq.cached')} — ${t('support.actions.retry')}`
+          : t('support.faq.cached')
+      );
+    }
+    return lines;
+  }, [faqMeta.fromCache, faqMeta.stale, formattedUpdatedAt, t]);
+
+  const renderFaqContent = () => {
     if (isLoading && !faqItems.length) {
       return (
-        <View style={styles.loadingState}>
+        <View style={styles.optionStateRow}>
           <ActivityIndicator color={colors.accent} size="small" />
         </View>
       );
     }
 
-    if (!faqItems.length && !isLoading) {
-      return <ThemedText style={styles.emptyText}>{t('support.faq.empty')}</ThemedText>;
+    if (!faqItems.length) {
+      return (
+        <View style={styles.optionStateRow}>
+          <ThemedText style={styles.optionStateText}>{t('support.faq.empty')}</ThemedText>
+        </View>
+      );
     }
 
-    return faqItems.map((item) => (
-      <View key={item.id} style={styles.faqCard}>
-        <View style={styles.faqHeader}>
-          <Ionicons name="help-buoy" size={20} color={colors.accent} />
-          <ThemedText style={styles.faqQuestion}>{item.question}</ThemedText>
+    return faqItems.map((item, index) => (
+      <View
+        key={item.id}
+        style={[styles.optionRow, styles.optionRowStatic, index > 0 && styles.optionRowDivider]}
+      >
+        <View style={[styles.optionIcon, styles.optionIconFaq]}>
+          <Ionicons name="help-circle-outline" size={18} color={colors.accent} />
         </View>
-        <ThemedText style={styles.faqAnswer}>{item.answer}</ThemedText>
+        <View style={styles.optionContent}>
+          <ThemedText style={styles.optionTitle}>{item.question}</ThemedText>
+          <ThemedText style={styles.optionDescription}>{item.answer}</ThemedText>
+        </View>
       </View>
     ));
   };
@@ -163,20 +211,21 @@ export const SupportScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
           style={styles.backButton}
+          onPress={() => router.back()}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.goBack')}
         >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <Ionicons name="chevron-back" size={20} color={colors.icon} />
         </TouchableOpacity>
-        <View style={styles.headerTextGroup}>
-          <ThemedText style={styles.headerTitle}>{t('support.title')}</ThemedText>
-          <ThemedText style={styles.headerSubtitle}>{t('support.subtitle')}</ThemedText>
-        </View>
+        <ThemedText style={styles.headerTitle}>{t('support.title')}</ThemedText>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -185,81 +234,78 @@ export const SupportScreen: React.FC = () => {
             colors={[colors.accent]}
           />
         }
-        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>{t('support.contact.title')}</ThemedText>
-          <ThemedText style={styles.sectionSubtitle}>{t('support.contact.description')}</ThemedText>
-
-          <View style={styles.cardGroup}>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={handleCallSupport}
-              activeOpacity={0.78}
-            >
-              <View style={styles.actionIconWrapper}>
-                <Ionicons name="call" size={18} color={colors.surface} />
-              </View>
-              <View style={styles.actionTextWrapper}>
-                <ThemedText style={styles.actionTitle}>
-                  {t('support.contact.actions.call.title')}
-                </ThemedText>
-                <ThemedText style={styles.actionSubtitle}>
-                  {t('support.contact.actions.call.description', { phone: CONFIG.SUPPORT.PHONE_NUMBER })}
-                </ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={handleEmailSupport}
-              activeOpacity={0.78}
-            >
-              <View style={styles.actionIconWrapper}>
-                <Ionicons name="mail" size={18} color={colors.surface} />
-              </View>
-              <View style={styles.actionTextWrapper}>
-                <ThemedText style={styles.actionTitle}>
-                  {t('support.contact.actions.email.title')}
-                </ThemedText>
-                <ThemedText style={styles.actionSubtitle}>
-                  {t('support.contact.actions.email.description', { email: CONFIG.SUPPORT.EMAIL })}
-                </ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
-            </TouchableOpacity>
+        <View style={styles.helperCard}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.info} />
+          <View style={styles.helperTextGroup}>
+            <ThemedText style={styles.helperText}>{t('support.subtitle')}</ThemedText>
           </View>
         </View>
 
         <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>{t('support.contact.title')}</ThemedText>
+          <ThemedText style={styles.sectionDescription}>{t('support.contact.description')}</ThemedText>
+        </View>
+
+        <View style={styles.optionCard}>
+          {contactOptions.map((option, index) => (
+            <TouchableOpacity
+              key={option.key}
+              style={[styles.optionRow, index > 0 && styles.optionRowDivider]}
+              onPress={option.onPress}
+              activeOpacity={0.72}
+              accessibilityRole="button"
+            >
+              <View style={styles.optionIcon}>
+                <Ionicons name={option.icon} size={18} color={colors.accent} />
+              </View>
+              <View style={styles.optionContent}>
+                <ThemedText style={styles.optionTitle}>{option.title}</ThemedText>
+                <ThemedText style={styles.optionDescription}>{option.description}</ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>{t('support.faq.title')}</ThemedText>
-          <ThemedText style={styles.sectionSubtitle}>{t('support.faq.description')}</ThemedText>
+          <ThemedText style={styles.sectionDescription}>{t('support.faq.description')}</ThemedText>
+        </View>
 
-          {formattedUpdatedAt && (
-            <ThemedText style={styles.helperText}>
-              {t('support.faq.lastUpdated', { time: formattedUpdatedAt })}
-            </ThemedText>
-          )}
+        {faqHelperLines.length > 0 && (
+          <View style={styles.helperCard}>
+            <Ionicons name="time-outline" size={20} color={colors.info} />
+            <View style={styles.helperTextGroup}>
+              {faqHelperLines.map((line, index) => (
+                <ThemedText
+                  key={`${line}-${index}`}
+                  style={index === 0 ? styles.helperText : styles.helperSubtext}
+                >
+                  {line}
+                </ThemedText>
+              ))}
+            </View>
+          </View>
+        )}
 
-          {faqMeta.fromCache && (
-            <ThemedText style={styles.helperText}>
-              {faqMeta.stale
-                ? `${t('support.faq.cached')} — ${t('support.actions.retry')}`
-                : t('support.faq.cached')}
-            </ThemedText>
-          )}
+        <View style={styles.optionCard}>{renderFaqContent()}</View>
 
-          {errorMessage && <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>}
-
-          {renderFaqItems()}
-
-          {!isLoading && errorMessage && (
-            <TouchableOpacity style={styles.retryButton} onPress={handleRefresh} activeOpacity={0.8}>
+        {errorMessage && (
+          <>
+            <View style={styles.errorBanner}>
+              <Ionicons name="warning-outline" size={18} color={colors.warning} />
+              <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+            </View>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={handleRefresh}
+              activeOpacity={0.8}
+            >
               <ThemedText style={styles.retryButtonText}>{t('support.actions.retry')}</ThemedText>
             </TouchableOpacity>
-          )}
-        </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -274,153 +320,149 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: 
     header: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+      borderBottomColor: colors.divider,
+      backgroundColor: colors.surface,
     },
     backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 12,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-    headerTextGroup: {
-      flex: 1,
+      padding: 8,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceSecondary,
     },
     headerTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: colors.text,
-    },
-    headerSubtitle: {
-      marginTop: 2,
-      fontSize: 14,
-      color: colors.textMuted,
-    },
-    content: {
-      padding: 16,
-      gap: 20,
-    },
-    section: {
-      padding: 16,
-      borderRadius: 16,
-      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDark ? 0.35 : 0.12,
-      shadowRadius: 6,
-      elevation: 4,
-    },
-    sectionTitle: {
+      flex: 1,
+      textAlign: 'center',
       fontSize: 18,
       fontWeight: '600',
       color: colors.text,
     },
-    sectionSubtitle: {
-      marginTop: 6,
-      fontSize: 14,
-      color: colors.textMuted,
+    headerSpacer: {
+      width: 32,
     },
-    cardGroup: {
-      marginTop: 16,
-      gap: 12,
+    content: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 20,
     },
-    actionCard: {
+    helperCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      borderRadius: 14,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      gap: 14,
+      gap: 12,
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: colors.infoSoft,
+      borderWidth: 1,
+      borderColor: colors.info,
     },
-    actionIconWrapper: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.accent,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    actionTextWrapper: {
+    helperTextGroup: {
       flex: 1,
+      gap: 4,
     },
-    actionTitle: {
+    helperText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    helperSubtext: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    section: {
+      gap: 8,
+    },
+    sectionTitle: {
       fontSize: 16,
       fontWeight: '600',
       color: colors.text,
     },
-    actionSubtitle: {
-      marginTop: 2,
-      fontSize: 13,
-      color: colors.textMuted,
-    },
-    loadingState: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 24,
-    },
-    emptyText: {
-      marginTop: 12,
+    sectionDescription: {
       fontSize: 14,
       color: colors.textMuted,
     },
-    errorText: {
-      marginTop: 12,
-      fontSize: 13,
-      color: colors.warning,
-    },
-    helperText: {
-      marginTop: 12,
-      fontSize: 12,
-      color: colors.textMuted,
-    },
-    faqCard: {
-      marginTop: 16,
-      padding: 16,
-      borderRadius: 14,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
-      borderWidth: StyleSheet.hairlineWidth,
+    optionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      borderWidth: 1,
       borderColor: colors.border,
-      gap: 12,
+      overflow: 'hidden',
     },
-    faqHeader: {
+    optionRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      gap: 16,
     },
-    faqQuestion: {
+    optionRowDivider: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.borderMuted,
+    },
+    optionRowStatic: {
+      backgroundColor: colors.surface,
+    },
+    optionIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderMuted,
+    },
+    optionIconFaq: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    optionContent: {
       flex: 1,
-      fontSize: 15,
+      gap: 4,
+    },
+    optionTitle: {
+      fontSize: 16,
       fontWeight: '600',
       color: colors.text,
     },
-    faqAnswer: {
+    optionDescription: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    optionStateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 28,
+      paddingHorizontal: 16,
+    },
+    optionStateText: {
       fontSize: 14,
       color: colors.textMuted,
-      lineHeight: 20,
+    },
+    errorBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.warning,
+      backgroundColor: colors.warningSoft,
+    },
+    errorText: {
+      flex: 1,
+      fontSize: 14,
+      color: colors.warning,
     },
     retryButton: {
-      marginTop: 16,
       alignSelf: 'flex-start',
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 12,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderWidth: 1,
       borderColor: colors.border,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
+      backgroundColor: colors.surfaceSecondary,
     },
     retryButtonText: {
       fontSize: 14,
