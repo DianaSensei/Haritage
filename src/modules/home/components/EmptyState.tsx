@@ -2,6 +2,7 @@ import { useAppTheme } from '@/shared/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface EmptyStateProps {
@@ -12,13 +13,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => 
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <Ionicons name="hourglass-outline" size={64} color={colors.iconMuted} />
-        <Text style={styles.title}>Loading posts...</Text>
-        <Text style={styles.subtitle}>We're fetching the latest content for you</Text>
+        <Text style={styles.title}>{t('home.emptyState.loadingTitle')}</Text>
+        <Text style={styles.subtitle}>{t('home.emptyState.loadingSubtitle')}</Text>
       </View>
     );
   }
@@ -29,8 +31,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => 
         <Ionicons name="images-outline" size={72} color={colors.accent} />
       </View>
 
-      <Text style={styles.title}>No posts yet</Text>
-      <Text style={styles.subtitle}>Be the first to share something with the community!</Text>
+      <Text style={styles.title}>{t('home.emptyState.emptyTitle')}</Text>
+      <Text style={styles.subtitle}>{t('home.emptyState.emptySubtitle')}</Text>
 
       <TouchableOpacity
         style={styles.actionButton}
@@ -38,14 +40,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading = false }) => 
         activeOpacity={0.8}
       >
         <Ionicons name="create-outline" size={18} color="#ffffff" />
-        <Text style={styles.actionButtonText}>Create First Post</Text>
+        <Text style={styles.actionButtonText}>{t('home.emptyState.actionButton')}</Text>
       </TouchableOpacity>
 
       <View style={styles.divider} />
 
-      <Text style={styles.hintText}>
-        Posts from the community will appear here. Follow creators to see their latest updates.
-      </Text>
+      <Text style={styles.hintText}>{t('home.emptyState.hint')}</Text>
     </View>
   );
 };

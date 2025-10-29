@@ -4,6 +4,7 @@ import { useAppTheme } from '@/shared/hooks';
 import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   FlatList,
@@ -70,6 +71,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const iconMuted = colors.iconMuted;
+  const { t } = useTranslation();
   // Offset ensures the modal header stays visible when the keyboard appears.
   const keyboardVerticalOffset = useMemo(
     () => (Platform.OS === 'ios' ? insets.top + 64 : 0),
@@ -111,7 +113,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       parentCommentId,
       author: {
         id: currentUser.id,
-        name: currentUser.name || 'Anonymous',
+        name: currentUser.name || t('comments.anonymous'),
         avatar: currentUser.avatar || '',
       },
       content: text,
@@ -187,11 +189,9 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     [resolveParentCommentId],
   );
 
-  const getReplyingToAuthor = () => replyTarget?.authorName ?? null;
-
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.headerTitle}>Comments ({comments.length})</Text>
+      <Text style={styles.headerTitle}>{t('comments.countLabel', { count: comments.length })}</Text>
       <TouchableOpacity onPress={onClose} style={styles.closeButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <Ionicons name="close" size={24} color={colors.icon} />
       </TouchableOpacity>
@@ -202,20 +202,20 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
     () => (
       <View style={styles.emptyContainer}>
         <Ionicons name="chatbubble-outline" size={48} color={iconMuted} />
-        <Text style={styles.emptyText}>No comments yet</Text>
-        <Text style={styles.emptySubtext}>Be the first to share your thoughts</Text>
+        <Text style={styles.emptyText}>{t('comments.emptyTitle')}</Text>
+        <Text style={styles.emptySubtext}>{t('comments.emptySubtitle')}</Text>
       </View>
     ),
-    [iconMuted, styles],
+    [iconMuted, styles, t],
   );
 
   const renderCommentInputHeader = () => {
     if (!replyTarget) return null;
 
-    const authorName = getReplyingToAuthor();
+    const authorName = replyTarget?.authorName ?? t('comments.anonymous');
     return (
       <View style={styles.replyingToHeader}>
-        <Text style={styles.replyingToText}>Replying to {authorName}</Text>
+        <Text style={styles.replyingToText}>{t('comments.replyingTo', { name: authorName })}</Text>
         <TouchableOpacity onPress={() => setReplyTarget(null)}>
           <Ionicons name="close-circle" size={18} color={iconMuted} />
         </TouchableOpacity>
@@ -225,7 +225,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
 
   const renderCommentingUserBanner = () => {
     if (!currentUser) return null;
-    const displayName = currentUser.name || 'You';
+    const displayName = currentUser.name || t('comments.you');
 
     return (
       <View style={styles.commentingAsRow}>
@@ -237,7 +237,8 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
           </View>
         )}
         <Text style={styles.commentingAsText}>
-          Commenting as <Text style={styles.commentingAsName}>{displayName}</Text>
+          {t('comments.commentingAsPrefix')}{' '}
+          <Text style={styles.commentingAsName}>{displayName}</Text>
         </Text>
       </View>
     );
@@ -298,8 +299,10 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
                   <CommentInput
                     placeholder={
                       replyTarget
-                        ? `Reply to ${getReplyingToAuthor()}...`
-                        : 'Add a comment...'
+                        ? t('comments.replyPlaceholder', {
+                            name: replyTarget?.authorName ?? t('comments.anonymous'),
+                          })
+                        : t('comments.placeholder')
                     }
                     onSubmit={handleAddComment}
                     autoFocus={false}
@@ -308,7 +311,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
               ) : (
                 <View style={styles.authPrompt}>
                   <Ionicons name="lock-closed-outline" size={18} color={iconMuted} />
-                  <Text style={styles.authPromptText}>Sign in to add a comment.</Text>
+                  <Text style={styles.authPromptText}>{t('commentsScreen.signInPrompt')}</Text>
                 </View>
               )}
             </View>

@@ -1,3 +1,4 @@
+import { CONFIG } from '@/core/config';
 import { useAppLockStore } from '@/core/store/slices/appLockSlice';
 import { ThemedText } from '@/shared/components';
 import { useAppTheme } from '@/shared/hooks';
@@ -6,6 +7,7 @@ import { pinService } from '@/shared/services/security/pinService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
     Alert,
@@ -17,10 +19,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const FALLBACK_BIOMETRIC_TYPE = '__fallback__';
+
 export const SecurityPrivacyScreen: React.FC = () => {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
   const pinHash = useAppLockStore((state) => state.pinHash);
   const isBiometricEnabled = useAppLockStore((state) => state.isBiometricEnabled);
   const setBiometricEnabled = useAppLockStore((state) => state.setBiometricEnabled);
@@ -29,7 +34,12 @@ export const SecurityPrivacyScreen: React.FC = () => {
   const [isCheckingSupport, setIsCheckingSupport] = useState(true);
   const [isProcessingToggle, setIsProcessingToggle] = useState(false);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
-  const [biometricType, setBiometricType] = useState('Biometric');
+  const [biometricTypeKey, setBiometricTypeKey] = useState<string>(FALLBACK_BIOMETRIC_TYPE);
+
+  const biometricTypeLabel =
+    biometricTypeKey === FALLBACK_BIOMETRIC_TYPE
+      ? t('securityPrivacy.biometricGeneric')
+      : biometricTypeKey;
 
   useFocusEffect(
     useCallback(() => {
@@ -43,19 +53,20 @@ export const SecurityPrivacyScreen: React.FC = () => {
             pinService.isBiometricEnabled(),
           ]);
 
-          const type = supported ? await biometricService.getBiometricTypeName() : 'Biometric';
+          const type = supported ? await biometricService.getBiometricTypeName() : null;
 
           if (!isMounted) {
             return;
           }
 
           setIsBiometricSupported(supported);
-          setBiometricType(type);
+          setBiometricTypeKey(type?.trim() ? type : FALLBACK_BIOMETRIC_TYPE);
           setBiometricEnabled(storedEnabled);
         } catch (error) {
           console.warn('Failed to hydrate biometric state', error);
           if (isMounted) {
             setIsBiometricSupported(false);
+            setBiometricTypeKey(FALLBACK_BIOMETRIC_TYPE);
           }
         } finally {
           if (isMounted) {
@@ -74,26 +85,27 @@ export const SecurityPrivacyScreen: React.FC = () => {
 
   const statusText = useMemo(() => {
     if (isCheckingSupport) {
-      return 'Checking device support...';
+      return t('securityPrivacy.status.checking');
     }
 
     if (!isBiometricSupported) {
-      return 'Biometric authentication is not available on this device.';
+      return t('securityPrivacy.status.notSupported');
     }
 
     if (!pinHash) {
-      return 'Set up a PIN to enable biometric unlocking.';
+      return t('securityPrivacy.status.noPin');
     }
 
     return isBiometricEnabled
-      ? `${biometricType} unlock is currently enabled.`
-      : `${biometricType} unlock is currently disabled.`;
+      ? t('securityPrivacy.status.enabled', { type: biometricTypeLabel })
+      : t('securityPrivacy.status.disabled', { type: biometricTypeLabel });
   }, [
-    biometricType,
+    biometricTypeLabel,
     isBiometricEnabled,
     isBiometricSupported,
     isCheckingSupport,
     pinHash,
+    t,
   ]);
 
   const handleToggleBiometric = useCallback(
@@ -103,12 +115,18 @@ export const SecurityPrivacyScreen: React.FC = () => {
       }
 
       if (!pinHash) {
-        Alert.alert('PIN required', 'Please create a PIN before enabling biometrics.');
+        Alert.alert(
+          t('securityPrivacy.alerts.pinRequired.title'),
+          t('securityPrivacy.alerts.pinRequired.body')
+        );
         return;
       }
 
       if (!isBiometricSupported) {
-        Alert.alert('Not supported', 'This device does not support biometric authentication.');
+        Alert.alert(
+          t('securityPrivacy.alerts.notSupported.title'),
+          t('securityPrivacy.alerts.notSupported.body')
+        );
         return;
       }
 
@@ -118,7 +136,10 @@ export const SecurityPrivacyScreen: React.FC = () => {
           suppressNextLock();
           const authenticated = await biometricService.authenticate();
           if (!authenticated) {
-            Alert.alert('Authentication failed', 'Biometric authentication was canceled or failed.');
+            Alert.alert(
+              t('securityPrivacy.alerts.authFailed.title'),
+              t('securityPrivacy.alerts.authFailed.body')
+            );
             return;
           }
         }
@@ -127,7 +148,10 @@ export const SecurityPrivacyScreen: React.FC = () => {
         setBiometricEnabled(nextValue);
       } catch (error) {
         console.error('Failed to update biometric preference', error);
-        Alert.alert('Error', 'Could not update biometric preference. Try again later.');
+        Alert.alert(
+          t('securityPrivacy.alerts.error.title'),
+          t('securityPrivacy.alerts.error.body')
+        );
       } finally {
         setIsProcessingToggle(false);
       }
@@ -138,6 +162,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
       pinHash,
       setBiometricEnabled,
       suppressNextLock,
+      t,
     ]
   );
 
@@ -166,7 +191,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Security & Privacy</ThemedText>
+        <ThemedText style={styles.headerTitle}>{t('securityPrivacy.title')}</ThemedText>
       </View>
 
       <ScrollView
@@ -176,7 +201,7 @@ export const SecurityPrivacyScreen: React.FC = () => {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="shield-checkmark" size={22} color={colors.accent} />
-            <ThemedText style={styles.cardTitle}>App Lock Status</ThemedText>
+            <ThemedText style={styles.cardTitle}>{t('securityPrivacy.cards.status.title')}</ThemedText>
           </View>
           <ThemedText style={styles.cardDescription}>{statusText}</ThemedText>
           {isCheckingSupport && (
@@ -193,9 +218,15 @@ export const SecurityPrivacyScreen: React.FC = () => {
                 color={colors.accent}
               />
               <View>
-                <ThemedText style={styles.toggleTitle}>{biometricType} Unlock</ThemedText>
+                <ThemedText style={styles.toggleTitle}>
+                  {t('securityPrivacy.cards.biometric.title', { type: biometricTypeLabel })}
+                </ThemedText>
                 <ThemedText style={styles.toggleSubtitle}>
-                  {isBiometricSupported ? 'Use biometrics to unlock Haritage.' : 'Unavailable on this device.'}
+                  {isBiometricSupported
+                    ? t('securityPrivacy.cards.biometric.subtitleSupported', {
+                        appName: CONFIG.APP_NAME,
+                      })
+                    : t('securityPrivacy.cards.biometric.subtitleUnsupported')}
                 </ThemedText>
               </View>
             </View>
@@ -216,21 +247,23 @@ export const SecurityPrivacyScreen: React.FC = () => {
           </View>
           {!pinHash && !isCheckingSupport && (
             <ThemedText style={styles.helperText}>
-              Create a PIN to enable biometric unlocking.
+              {t('securityPrivacy.cards.biometric.pinHelper')}
             </ThemedText>
           )}
           {isProcessingToggle && (
-            <ThemedText style={styles.helperText}>Updating preference...</ThemedText>
+            <ThemedText style={styles.helperText}>
+              {t('securityPrivacy.cards.biometric.updating')}
+            </ThemedText>
           )}
         </View>
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="information-circle" size={22} color={colors.accent} />
-            <ThemedText style={styles.cardTitle}>About Biometrics</ThemedText>
+            <ThemedText style={styles.cardTitle}>{t('securityPrivacy.cards.about.title')}</ThemedText>
           </View>
           <ThemedText style={styles.cardDescription}>
-            Haritage uses your device biometrics through the operating system. We never store raw biometric data and you can disable access at any time.
+            {t('securityPrivacy.cards.about.description', { appName: CONFIG.APP_NAME })}
           </ThemedText>
         </View>
       </ScrollView>

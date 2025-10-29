@@ -1,48 +1,71 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLanguageStore } from '@/core/store';
 import { ThemedText } from '@/shared/components';
 import { useAppTheme } from '@/shared/hooks';
+import { SUPPORTED_LANGUAGES, type AppLanguage } from '@/shared/i18n';
 import type { ThemePreference } from '@/shared/types';
-
-const THEME_OPTIONS: {
-  value: ThemePreference;
-  title: string;
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  {
-    value: 'system',
-    title: 'System Default',
-    description: 'Match your device appearance automatically.',
-    icon: 'phone-portrait-outline',
-  },
-  {
-    value: 'light',
-    title: 'Light',
-    description: 'Bright surfaces with crisp contrast.',
-    icon: 'sunny-outline',
-  },
-  {
-    value: 'dark',
-    title: 'Dark',
-    description: 'Dimmed surfaces with reduced glare.',
-    icon: 'moon-outline',
-  },
-];
 
 export const AppSettingsScreen: React.FC = () => {
   const router = useRouter();
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguageStore();
   const { colors, themePreference, setThemePreference, theme } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const activeThemeLabel = themePreference === 'system'
-    ? `System (currently ${theme === 'dark' ? 'Dark' : 'Light'})`
-    : themePreference === 'dark'
-      ? 'Dark'
-      : 'Light';
+  const themeOptions = useMemo(
+    () => [
+      {
+        value: 'system' as ThemePreference,
+        title: t('appSettings.themes.systemTitle'),
+        description: t('appSettings.themes.systemDescription'),
+        icon: 'phone-portrait-outline' as const,
+      },
+      {
+        value: 'light' as ThemePreference,
+        title: t('appSettings.themes.lightTitle'),
+        description: t('appSettings.themes.lightDescription'),
+        icon: 'sunny-outline' as const,
+      },
+      {
+        value: 'dark' as ThemePreference,
+        title: t('appSettings.themes.darkTitle'),
+        description: t('appSettings.themes.darkDescription'),
+        icon: 'moon-outline' as const,
+      },
+    ],
+    [t]
+  );
+
+  const activeThemeLabel = useMemo(() => {
+    const themeLabels: Record<ThemePreference, string> = {
+      system: `${t('appSettings.themes.systemTitle')} (${t(
+        theme === 'dark' ? 'appSettings.themes.darkTitle' : 'appSettings.themes.lightTitle'
+      )})`,
+      light: t('appSettings.themes.lightTitle'),
+      dark: t('appSettings.themes.darkTitle'),
+    };
+
+    return themeLabels[themePreference];
+  }, [t, themePreference, theme]);
+
+  const languageOptions = useMemo(
+    () =>
+      (Object.keys(SUPPORTED_LANGUAGES) as AppLanguage[]).map((value) => ({
+        value,
+        title: t(`appSettings.languages.${value}` as const),
+      })),
+    [t]
+  );
+
+  const activeLanguageLabel =
+    languageOptions.find((option) => option.value === language)?.title ??
+    SUPPORTED_LANGUAGES[language]?.label ??
+    language.toUpperCase();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -51,24 +74,24 @@ export const AppSettingsScreen: React.FC = () => {
           style={styles.backButton}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('common.goBack')}
         >
           <Ionicons name="chevron-back" size={20} color={colors.icon} />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>App Settings</ThemedText>
+        <ThemedText style={styles.headerTitle}>{t('appSettings.title')}</ThemedText>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Appearance</ThemedText>
+          <ThemedText style={styles.sectionTitle}>{t('appSettings.appearanceTitle')}</ThemedText>
           <ThemedText style={styles.sectionDescription}>
-            Choose how Haritage should look. You can follow the device or force a specific theme.
+            {t('appSettings.appearanceDescription')}
           </ThemedText>
         </View>
 
         <View style={styles.optionCard}>
-          {THEME_OPTIONS.map((option, index) => {
+          {themeOptions.map((option) => {
             const isActive = themePreference === option.value;
             return (
               <TouchableOpacity
@@ -102,7 +125,52 @@ export const AppSettingsScreen: React.FC = () => {
         <View style={styles.helperCard}>
           <Ionicons name="information-circle-outline" size={20} color={colors.info} />
           <ThemedText style={styles.helperText}>
-            Active preference: {activeThemeLabel}
+            {t('appSettings.helperActivePreference', { label: activeThemeLabel })}
+          </ThemedText>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>{t('appSettings.languageTitle')}</ThemedText>
+          <ThemedText style={styles.sectionDescription}>
+            {t('appSettings.languageDescription')}
+          </ThemedText>
+        </View>
+
+        <View style={styles.optionCard}>
+          {languageOptions.map((option) => {
+            const isActive = language === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.optionRow, isActive && styles.optionRowActive]}
+                onPress={() => setLanguage(option.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isActive }}
+              >
+                <View style={[styles.optionIcon, isActive && styles.optionIconActive]}>
+                  <ThemedText
+                    style={[styles.languageCode, isActive && styles.languageCodeActive]}
+                  >
+                    {option.value.toUpperCase()}
+                  </ThemedText>
+                </View>
+                <View style={styles.optionContent}>
+                  <ThemedText style={styles.optionTitle}>{option.title}</ThemedText>
+                </View>
+                <Ionicons
+                  name={isActive ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={20}
+                  color={isActive ? colors.accent : colors.iconMuted}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.helperCard}>
+          <Ionicons name="globe-outline" size={20} color={colors.info} />
+          <ThemedText style={styles.helperText}>
+            {t('appSettings.helperActivePreference', { label: activeLanguageLabel })}
           </ThemedText>
         </View>
       </ScrollView>
@@ -214,5 +282,13 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flex: 1,
       fontSize: 14,
       color: colors.text,
+    },
+    languageCode: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    languageCodeActive: {
+      color: colors.accent,
     },
   });

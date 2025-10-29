@@ -37,6 +37,8 @@ export const CONFIG = {
         USER_DATA: 'haritage.user_data',
         BIOMETRIC_ENABLED: 'haritage.biometric_enabled',
         THEME_PREFERENCE: 'haritage.theme_preference',
+        LANGUAGE_PREFERENCE: 'haritage.language_preference',
+        SUPPORT_FAQ_CACHE: 'haritage.support_faq_cache',
         PIN_HASH: 'haritage.pin_hash',
         PIN_SETUP_REQUIRED: 'haritage.pin_setup_required',
         APP_LOCK_ENABLED: 'haritage.app_lock_enabled',
@@ -52,6 +54,11 @@ export const CONFIG = {
     NETWORK: {
         TIMEOUT_MS: 15000,
         RETRY_COUNT: 0,
+    },
+    SUPPORT: {
+        PHONE_NUMBER: '+1-800-555-0100',
+        EMAIL: 'support@haritage.com',
+        FAQ_CACHE_MS: 1000 * 60 * 60, // 1 hour
     },
     // Asset references (local requires so bundler includes them)
     ASSETS: {

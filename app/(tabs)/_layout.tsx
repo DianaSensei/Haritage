@@ -9,9 +9,11 @@ import {
   NativeTabs,
   VectorIcon,
 } from 'expo-router/unstable-native-tabs';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const { colors } = useAppTheme();
+  const { t } = useTranslation();
 
   const containerStyle = useMemo(
     () => ({ flex: 1, backgroundColor: colors.background }),
@@ -52,15 +54,15 @@ export default function TabLayout() {
         iconColor={iconColor}
       >
         <NativeTabs.Trigger name="index">
-          <Label>Home</Label>
+          <Label>{t('tabs.home')}</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="home" />} />
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="map">
-          <Label>Map</Label>
+          <Label>{t('tabs.map')}</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="map" />} />
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="account">
-          <Label>Account</Label>
+          <Label>{t('tabs.account')}</Label>
           <Icon src={<VectorIcon family={MaterialIcons} name="person" />} />
         </NativeTabs.Trigger>
       </NativeTabs>

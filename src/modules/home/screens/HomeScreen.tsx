@@ -9,6 +9,7 @@ import { FeedItem as FeedItemType } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, RefreshControl, Text as RNText, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '../components/EmptyState';
@@ -30,9 +31,11 @@ export const HomeScreen: React.FC = () => {
   const [commentsModalVisible, setCommentsModalVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string>('');
   const flatListRef = useRef<FlatList>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('For you');
+  const [activeFilter, setActiveFilter] = useState<string>('forYou');
   const { colors } = useAppTheme();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const numberLocale = useMemo(() => (i18n.language === 'vi' ? 'vi-VN' : 'en-US'), [i18n.language]);
 
   const feedStats = useMemo(() => {
     const postCount = feedItems.length;
@@ -46,7 +49,15 @@ export const HomeScreen: React.FC = () => {
     };
   }, [feedItems]);
 
-  const filterChips = ['For you', 'Nearby', 'Popular', 'Following'];
+  const filterChips = useMemo(
+    () => [
+      { id: 'forYou', label: t('home.filters.forYou') },
+      { id: 'nearby', label: t('home.filters.nearby') },
+      { id: 'popular', label: t('home.filters.popular') },
+      { id: 'following', label: t('home.filters.following') },
+    ],
+    [t]
+  );
 
   const loadFeedData = useCallback(async () => {
     try {
@@ -55,8 +66,8 @@ export const HomeScreen: React.FC = () => {
 
       addNotification({
         id: 'notif1',
-        title: 'Welcome to Haritage!',
-        message: 'Explore amazing posts from the community',
+        title: t('home.notifications.welcomeTitle'),
+        message: t('home.notifications.welcomeMessage'),
         type: 'success',
         isRead: false,
         createdAt: new Date(),
@@ -64,7 +75,7 @@ export const HomeScreen: React.FC = () => {
     } catch (error) {
       console.error('Error loading feed data:', error);
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   // Load feed from storage on mount
   useEffect(() => {
@@ -94,8 +105,8 @@ export const HomeScreen: React.FC = () => {
 
   const handleShare = useCallback((id: string) => {
     console.log('Share item:', id);
-    Alert.alert('Share', 'Opening share dialog...');
-  }, []);
+    Alert.alert(t('home.alerts.shareTitle'), t('home.alerts.shareBody'));
+  }, [t]);
 
   const handleComposePress = useCallback(() => {
     router.push('/create-post');
@@ -152,39 +163,39 @@ export const HomeScreen: React.FC = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
-        <RNText style={styles.headerTitle}>Discover</RNText>
+        <RNText style={styles.headerTitle}>{t('home.header.title')}</RNText>
         <TouchableOpacity
           style={styles.composeButton}
           onPress={handleComposePress}
           accessibilityRole="button"
-          accessibilityLabel="Create post"
+          accessibilityLabel={t('home.header.composeAccessibility')}
         >
           <Ionicons name="create-outline" size={16} color="#ffffff" />
-          <RNText style={styles.composeLabel}>New post</RNText>
+          <RNText style={styles.composeLabel}>{t('home.header.composeLabel')}</RNText>
         </TouchableOpacity>
       </View>
-      <RNText style={styles.headerSubtitle}>Stories curated for your interests</RNText>
+      <RNText style={styles.headerSubtitle}>{t('home.header.subtitle')}</RNText>
 
       <View style={styles.statRow}>
         <View style={styles.statCard}>
           <Ionicons name="albums-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
-            <RNText style={styles.statValue}>{feedStats.postCount.toLocaleString()}</RNText>
-            <RNText style={styles.statLabel}>Posts</RNText>
+            <RNText style={styles.statValue}>{feedStats.postCount.toLocaleString(numberLocale)}</RNText>
+            <RNText style={styles.statLabel}>{t('home.stats.posts')}</RNText>
           </View>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="thumbs-up-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
-            <RNText style={styles.statValue}>{feedStats.totalLikes.toLocaleString()}</RNText>
-            <RNText style={styles.statLabel}>Appreciations</RNText>
+            <RNText style={styles.statValue}>{feedStats.totalLikes.toLocaleString(numberLocale)}</RNText>
+            <RNText style={styles.statLabel}>{t('home.stats.appreciations')}</RNText>
           </View>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.accent} />
           <View style={styles.statContent}>
-            <RNText style={styles.statValue}>{feedStats.totalComments.toLocaleString()}</RNText>
-            <RNText style={styles.statLabel}>Conversations</RNText>
+            <RNText style={styles.statValue}>{feedStats.totalComments.toLocaleString(numberLocale)}</RNText>
+            <RNText style={styles.statLabel}>{t('home.stats.conversations')}</RNText>
           </View>
         </View>
       </View>
@@ -196,19 +207,19 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={styles.filterContent}
       >
         {filterChips.map((chip) => {
-          const isActive = chip === activeFilter;
+          const isActive = chip.id === activeFilter;
           return (
             <TouchableOpacity
-              key={chip}
+              key={chip.id}
               style={[styles.filterChip, isActive && styles.filterChipActive]}
-              onPress={() => setActiveFilter(chip)}
+              onPress={() => setActiveFilter(chip.id)}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
             >
               <RNText
                 style={[styles.filterChipText, isActive && styles.filterChipTextActive]}
               >
-                {chip}
+                {chip.label}
               </RNText>
             </TouchableOpacity>
           );

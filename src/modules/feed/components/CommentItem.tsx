@@ -1,7 +1,8 @@
 import { useCommentStore } from '@/core/store';
 import { Comment } from '@/shared/types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Image,
     StyleSheet,
@@ -40,6 +41,8 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
   const hasAvatar = Boolean(comment.author.avatar);
   const avatarIconSize = depth > 0 ? 20 : 24;
   const isNested = depth > 0;
+  const { t, i18n } = useTranslation();
+  const numberLocale = useMemo(() => (i18n.language === 'vi' ? 'vi-VN' : 'en-US'), [i18n.language]);
 
   const applyVote = (nextState: 'upvote' | 'downvote' | 'none') => {
     let updatedUpvotes = upvotes;
@@ -83,10 +86,22 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    if (diffInSeconds < 60) {
+      return t('commentItem.justNow');
+    }
+
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return t('commentItem.minuteAgo', { count: minutes });
+    }
+
+    if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return t('commentItem.hourAgo', { count: hours });
+    }
+
+    const days = Math.floor(diffInSeconds / 86400);
+    return t('commentItem.dayAgo', { count: days });
   };
 
   const handleReply = () => {
@@ -116,7 +131,9 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
         )}
         <View style={styles.commentBody}>
           <View style={styles.header}>
-            <Text style={styles.authorName}>{comment.author.name}</Text>
+            <Text style={styles.authorName}>
+              {comment.author.name || t('comments.anonymous')}
+            </Text>
             <Text style={styles.timestamp}>{formatTimeAgo(comment.createdAt)}</Text>
           </View>
           
@@ -145,7 +162,7 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
                   voteState === 'upvote' && styles.voteCountActive,
                 ]}
               >
-                {upvotes}
+                {upvotes.toLocaleString(numberLocale)}
               </Text>
             </TouchableOpacity>
 
@@ -167,14 +184,14 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
                   voteState === 'downvote' && styles.voteCountDanger,
                 ]}
               >
-                {downvotes}
+                {downvotes.toLocaleString(numberLocale)}
               </Text>
             </TouchableOpacity>
 
             {canReply && !comment.isDeleted && (
               <TouchableOpacity onPress={handleReply} style={styles.replyButton}>
                 <Ionicons name="return-down-forward-outline" size={14} color="#8c919d" />
-                <Text style={styles.replyText}>Reply</Text>
+                <Text style={styles.replyText}>{t('commentItem.reply')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -190,7 +207,9 @@ const CommentItemComponent: React.FC<CommentItemProps> = ({
               color="#8c919d"
             />
             <Text style={styles.showRepliesText}>
-              {showReplies ? 'Hide' : 'Show'} {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+              {showReplies
+                ? t('commentItem.hideReplies', { count: replies.length })
+                : t('commentItem.showReplies', { count: replies.length })}
             </Text>
           </TouchableOpacity>
 

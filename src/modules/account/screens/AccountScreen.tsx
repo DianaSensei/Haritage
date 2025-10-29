@@ -8,14 +8,15 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,7 +34,21 @@ export const AccountScreen: React.FC = () => {
   const router = useRouter();
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const { colors } = useAppTheme();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const joinedDate = useMemo(() => {
+    if (!user?.createdAt) {
+      return null;
+    }
+
+    const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-US';
+
+    return new Date(user.createdAt).toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }, [user?.createdAt, i18n.language]);
 
   const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onPress, isDanger }) => (
     <TouchableOpacity
@@ -69,8 +84,8 @@ export const AccountScreen: React.FC = () => {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          'Permission required',
-          'Allow access to your photos so you can choose a new avatar.'
+          t('account.alerts.permissionTitle'),
+          t('account.alerts.permissionBody')
         );
         return;
       }
@@ -89,7 +104,10 @@ export const AccountScreen: React.FC = () => {
 
       const [asset] = pickerResult.assets;
       if (!asset?.uri) {
-        Alert.alert('Selection failed', 'We could not read this image. Please try another one.');
+        Alert.alert(
+          t('account.alerts.selectionFailedTitle'),
+          t('account.alerts.selectionFailedBody')
+        );
         return;
       }
 
@@ -98,7 +116,7 @@ export const AccountScreen: React.FC = () => {
       const uploadResult = await userService.uploadAvatar(asset.uri);
 
       if (!uploadResult.success) {
-        throw new Error(uploadResult.error || 'Failed to upload avatar.');
+        throw new Error(uploadResult.error || t('account.alerts.uploadFailedFallback'));
       }
 
       const nextAvatar = uploadResult.data.avatarUrl;
@@ -108,23 +126,28 @@ export const AccountScreen: React.FC = () => {
         syncAuthorAvatar(String(user.id), nextAvatar);
       }
 
-      Alert.alert('Avatar updated', 'Your profile photo has been refreshed.');
+      Alert.alert(
+        t('account.alerts.uploadSuccessTitle'),
+        t('account.alerts.uploadSuccessBody')
+      );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected error occurred.';
-      Alert.alert('Upload failed', message);
+      const fallbackMessage = t('account.errors.unknown');
+      const message =
+        error instanceof Error && error.message ? error.message : fallbackMessage;
+      Alert.alert(t('account.alerts.uploadFailedTitle'), message);
     } finally {
       setIsUploadingAvatar(false);
     }
-  }, [isUploadingAvatar, updateUser, user?.id, syncAuthorAvatar]);
+  }, [isUploadingAvatar, t, updateUser, user?.id, syncAuthorAvatar]);
 
   const handleLogout = () => {
     Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
+      t('account.alerts.logoutTitle'),
+      t('account.alerts.logoutBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Log out',
+          text: t('account.menu.logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -136,10 +159,15 @@ export const AccountScreen: React.FC = () => {
               } catch (e) {
                 console.warn('Router replace failed', e);
               }
-              Alert.alert('Logged out', 'You have been logged out');
+              Alert.alert(
+                t('account.alerts.logoutSuccessTitle'),
+                t('account.alerts.logoutSuccess')
+              );
             } catch (err) {
               console.error('Logout failed', err);
-              Alert.alert('Logout failed', (err instanceof Error) ? err.message : 'Unknown error');
+              const message =
+                err instanceof Error && err.message ? err.message : t('account.errors.unknown');
+              Alert.alert(t('account.alerts.logoutFailedTitle'), message);
             }
           },
         },
@@ -148,14 +176,18 @@ export const AccountScreen: React.FC = () => {
     );
   };
 
-  const handleEditProfile = () => Alert.alert('Edit Profile', 'Update user info feature coming soon');
+  const handleEditProfile = useCallback(() => {
+    Alert.alert(t('account.buttons.editProfile'), t('account.alerts.editProfileBody'));
+  }, [t]);
   const handleSecurity = useCallback(() => {
     router.push('/security-privacy');
   }, [router]);
   const handleSettings = useCallback(() => {
     router.push('/app-settings');
   }, [router]);
-  const handleHelp = () => Alert.alert('Help', 'Help & support placeholder');
+  const handleHelp = useCallback(() => {
+    router.push('/help-support');
+  }, [router]);
   const handleDebug = useCallback(() => {
     router.push('/debug-tools');
   }, [router]);
@@ -199,14 +231,14 @@ export const AccountScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          <ThemedText style={styles.userName}>{user?.name ?? 'Guest User'}</ThemedText>
+          <ThemedText style={styles.userName}>{user?.name ?? t('account.guestUser')}</ThemedText>
 
           {/* Info Section */}
           <View style={styles.infoSection}>
             {user?.phoneNumber && (
               <View style={styles.infoRow}>
                 <Ionicons name="phone-portrait" size={16} color={colors.accent} />
-                <ThemedText style={styles.infoLabel}>Phone</ThemedText>
+                <ThemedText style={styles.infoLabel}>{t('account.info.phone')}</ThemedText>
                 <ThemedText style={styles.infoValue}>{user.phoneNumber}</ThemedText>
                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               </View>
@@ -215,23 +247,17 @@ export const AccountScreen: React.FC = () => {
             {user?.email && (
               <View style={styles.infoRow}>
                 <Ionicons name="mail" size={16} color={colors.accent} />
-                <ThemedText style={styles.infoLabel}>Email</ThemedText>
+                <ThemedText style={styles.infoLabel}>{t('account.info.email')}</ThemedText>
                 <ThemedText style={styles.infoValue}>{user.email}</ThemedText>
                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               </View>
             )}
 
-            {user?.createdAt && (
+            {joinedDate && (
               <View style={styles.infoRow}>
                 <Ionicons name="calendar" size={16} color={colors.accent} />
-                <ThemedText style={styles.infoLabel}>Joined</ThemedText>
-                <ThemedText style={styles.infoValue}>
-                  {new Date(user.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </ThemedText>
+                <ThemedText style={styles.infoLabel}>{t('account.info.joined')}</ThemedText>
+                <ThemedText style={styles.infoValue}>{joinedDate}</ThemedText>
               </View>
             )}
           </View>
@@ -239,29 +265,31 @@ export const AccountScreen: React.FC = () => {
           {/* Status Badge */}
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
-            <ThemedText style={styles.statusText}>Account Active</ThemedText>
+            <ThemedText style={styles.statusText}>{t('account.statusActive')}</ThemedText>
           </View>
         </View>
 
         {/* Settings Section */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Settings</ThemedText>
+          <ThemedText style={styles.sectionTitle}>
+            {t('account.sections.settings')}
+          </ThemedText>
           <View style={styles.menuContainer}>
             <MenuItem
               icon="shield-checkmark"
-              label="Security & Privacy"
+              label={t('account.menu.securityPrivacy')}
               onPress={handleSecurity}
             />
             <View style={styles.divider} />
             <MenuItem
               icon="settings"
-              label="App Settings"
+              label={t('account.menu.appSettings')}
               onPress={handleSettings}
             />
             <View style={styles.divider} />
             <MenuItem
               icon="help-circle"
-              label="Help & Support"
+              label={t('account.menu.helpSupport')}
               onPress={handleHelp}
             />
           </View>
@@ -269,11 +297,13 @@ export const AccountScreen: React.FC = () => {
 
         {/* Debug Section */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Debug</ThemedText>
+          <ThemedText style={styles.sectionTitle}>
+            {t('account.sections.debug')}
+          </ThemedText>
           <View style={styles.menuContainer}>
             <MenuItem
               icon="code-working"
-              label="Debug Tools"
+              label={t('account.menu.debugTools')}
               onPress={handleDebug}
             />
           </View>
@@ -281,11 +311,13 @@ export const AccountScreen: React.FC = () => {
 
         {/* Account Section */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+          <ThemedText style={styles.sectionTitle}>
+            {t('account.sections.account')}
+          </ThemedText>
           <View style={styles.menuContainer}>
             <MenuItem
               icon="log-out"
-              label="Log out"
+              label={t('account.menu.logout')}
               onPress={handleLogout}
               isDanger={true}
             />
@@ -294,8 +326,10 @@ export const AccountScreen: React.FC = () => {
 
         {/* Footer Info */}
         <View style={styles.footer}>
-          <ThemedText style={styles.footerText}>Haritage v1.0.0</ThemedText>
-          <ThemedText style={styles.footerSubtext}>© 2025 All rights reserved</ThemedText>
+          <ThemedText style={styles.footerText}>{t('account.helper.version')}</ThemedText>
+          <ThemedText style={styles.footerSubtext}>
+            {t('common.ownedBy', { year: 2025 })}
+          </ThemedText>
         </View>
       </ScrollView>
     </SafeAreaView>

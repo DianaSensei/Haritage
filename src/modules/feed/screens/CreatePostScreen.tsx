@@ -6,6 +6,7 @@ import { FeedItem } from '@/shared/types';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,6 +32,7 @@ export const CreatePostScreen: React.FC = () => {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -105,7 +107,7 @@ export const CreatePostScreen: React.FC = () => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permissions required', 'Please allow photo library access.');
+        Alert.alert(t('createPost.alerts.permissionTitle'), t('createPost.alerts.permissionBody'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -121,7 +123,7 @@ export const CreatePostScreen: React.FC = () => {
       setSelectedMedia((prev) => [...prev, ...added]);
     } catch (error) {
       console.warn('pickMedia error', error);
-      Alert.alert('Error', 'Unable to pick media.');
+      Alert.alert(t('createPost.alerts.errorTitle'), t('createPost.alerts.mediaError'));
     }
   };
 
@@ -144,12 +146,12 @@ export const CreatePostScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert('Validation', 'Please add a title.');
+      Alert.alert(t('createPost.alerts.validationTitle'), t('createPost.validation.titleRequired'));
       return;
     }
     const hasContent = body.trim() || selectedMedia.length > 0 || linkUrl.trim() || (poll && poll.question.trim());
     if (!hasContent) {
-      Alert.alert('Validation', 'Please add at least one content type.');
+      Alert.alert(t('createPost.alerts.validationTitle'), t('createPost.validation.contentRequired'));
       return;
     }
     setIsSubmitting(true);
@@ -175,7 +177,7 @@ export const CreatePostScreen: React.FC = () => {
         id: localPostId,
         type: primaryMedia ? (primaryMedia.type === 'video' ? 'video' : 'image') : 'text',
         title: trimmedTitle || undefined,
-        content: trimmedBody || trimmedLink || trimmedTitle || 'Shared an update',
+        content: trimmedBody || trimmedLink || trimmedTitle || t('createPost.helper.defaultContent'),
         thumbnail: primaryMedia?.uri,
         videoUrl: primaryMedia?.type === 'video' ? primaryMedia.uri : undefined,
         mediaUris: selectedMedia.length ? selectedMedia.map((media) => media.uri) : undefined,
@@ -184,7 +186,7 @@ export const CreatePostScreen: React.FC = () => {
         poll: pollData,
         author: {
           id: String(user?.id ?? '0'),
-          name: user?.name ?? 'You',
+          name: user?.name ?? t('createPost.helper.authorFallback'),
           avatar: user?.avatar ?? '',
         },
         likes: 0,
@@ -210,11 +212,11 @@ export const CreatePostScreen: React.FC = () => {
       setPollCloseHours('24');
       setShowPollCreator(false);
 
-      Alert.alert('Success', 'Post saved to your feed.');
+      Alert.alert(t('createPost.alerts.successTitle'), t('createPost.alerts.successBody'));
       router.back();
     } catch (error) {
       console.warn('create post error', error);
-      Alert.alert('Error', 'Failed to save your post locally.');
+      Alert.alert(t('createPost.alerts.errorTitle'), t('createPost.alerts.errorBody'));
     } finally {
       setIsSubmitting(false);
     }
@@ -223,7 +225,7 @@ export const CreatePostScreen: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <View style={styles.center}>
-        <Text style={styles.info}>You must be logged in to create a post.</Text>
+        <Text style={styles.info}>{t('createPost.unauthenticatedTitle')}</Text>
       </View>
     );
   }
@@ -236,14 +238,16 @@ export const CreatePostScreen: React.FC = () => {
             <Text style={styles.close}>✕</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.postBtn, isSubmitting && styles.postBtnDisabled]} onPress={handleSubmit} disabled={isSubmitting}>
-            <Text style={styles.postBtnText}>{isSubmitting ? '...' : 'Post'}</Text>
+            <Text style={styles.postBtnText}>
+              {isSubmitting ? t('createPost.submitting') : t('createPost.submit')}
+            </Text>
           </TouchableOpacity>
         </View>
         <ScrollView style={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <TextInput
             value={title}
             onChangeText={setTitle}
-            placeholder="Title"
+            placeholder={t('createPost.titlePlaceholder')}
             placeholderTextColor={colors.textMuted}
             style={styles.titleInput}
             maxLength={300}
@@ -252,7 +256,7 @@ export const CreatePostScreen: React.FC = () => {
             <TextInput
               value={body}
               onChangeText={setBody}
-              placeholder="body text (optional)"
+              placeholder={t('createPost.bodyPlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={styles.bodyInput}
               multiline
@@ -266,14 +270,14 @@ export const CreatePostScreen: React.FC = () => {
                     setLinkUrl(url);
                     if (url.trim()) {
                       if (!isValidUrl(url)) {
-                        setLinkValidationError('Invalid URL format');
+                        setLinkValidationError(t('createPost.urlInvalid'));
                       } else {
                         setLinkValidationError('');
                         setLinkPreview({ url, title: new URL(url).hostname, description: url });
                       }
                     }
                   }}
-                  placeholder="Add URL (optional)"
+                  placeholder={t('createPost.urlPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   style={styles.urlInput}
                 />
@@ -311,7 +315,7 @@ export const CreatePostScreen: React.FC = () => {
               <TextInput
                 value={tagInput}
                 onChangeText={handleTagInput}
-                placeholder="Add tags... (space ends tag)"
+                placeholder={t('createPost.tagPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 style={styles.tagInput}
               />
@@ -333,7 +337,7 @@ export const CreatePostScreen: React.FC = () => {
                     if (!poll) setPoll({ question: text, options: [{ id: '1', text: '' }, { id: '2', text: '' }] });
                     else setPoll({ ...poll, question: text });
                   }}
-                  placeholder="Poll question"
+                  placeholder={t('createPost.pollQuestionPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   style={styles.pollQuestion}
                 />
@@ -345,7 +349,7 @@ export const CreatePostScreen: React.FC = () => {
                           <TextInput
                             value={option.text}
                             onChangeText={(text) => updatePollOption(option.id, text)}
-                            placeholder={`Option ${idx + 1}`}
+                            placeholder={t('createPost.pollOptionPlaceholder', { index: idx + 1 })}
                             placeholderTextColor={colors.textMuted}
                             style={styles.pollOptionText}
                           />
@@ -359,7 +363,7 @@ export const CreatePostScreen: React.FC = () => {
                     </View>
                     {poll.options.length < 4 && (
                       <TouchableOpacity style={styles.addOption} onPress={addPollOption}>
-                        <Text style={styles.addOptionText}>+ Add option</Text>
+                        <Text style={styles.addOptionText}>{t('createPost.pollAddOption')}</Text>
                       </TouchableOpacity>
                     )}
                   </>
@@ -367,7 +371,7 @@ export const CreatePostScreen: React.FC = () => {
                 <TextInput
                   value={pollCloseHours}
                   onChangeText={setPollCloseHours}
-                  placeholder="24"
+                  placeholder={t('createPost.pollCloseHoursPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   style={styles.pollClose}
                   keyboardType="number-pad"
@@ -387,10 +391,17 @@ export const CreatePostScreen: React.FC = () => {
                 setLinkValidationError('');
               }
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t('createPost.toolbar.add')}
           >
             <Text style={[styles.toolIcon, showUrlInput && styles.toolIconActive]}>+</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.toolBtn} onPress={pickMedia}>
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={pickMedia}
+            accessibilityRole="button"
+            accessibilityLabel={t('createPost.toolbar.media')}
+          >
             <Text style={styles.toolIcon}>📷</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -399,6 +410,8 @@ export const CreatePostScreen: React.FC = () => {
               setShowPollCreator(!showPollCreator);
               if (!showPollCreator && !poll) setPoll({ question: '', options: [{ id: '1', text: '' }, { id: '2', text: '' }] });
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t('createPost.toolbar.poll')}
           >
             <Text style={[styles.toolIcon, showPollCreator && styles.toolIconActive]}>•</Text>
           </TouchableOpacity>

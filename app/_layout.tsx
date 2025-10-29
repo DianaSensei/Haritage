@@ -1,11 +1,13 @@
 import {
-  setStatusBarBackgroundColor,
-  setStatusBarHidden,
-  setStatusBarStyle,
+    setStatusBarBackgroundColor,
+    setStatusBarHidden,
+    setStatusBarStyle,
 } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
+
+import '@/shared/i18n';
 
 import { StoreProvider } from '@/core/store';
 import { useAppLockStore } from '@/core/store/slices/appLockSlice';
