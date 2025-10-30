@@ -653,6 +653,60 @@ export const resources: Resource = {
           collapse: 'Hide cart',
           expand: 'Show cart',
         },
+        orderDetail: {
+          title: 'Order details',
+          statusLabels: {
+            init: 'Order created',
+            order_received: 'Order received',
+            in_process: 'Preparing order',
+            in_delivery: 'Out for delivery',
+            complete: 'Delivered',
+            cancelled: 'Cancelled',
+            fail: 'Failed',
+          },
+          fulfillment: {
+            delivery: 'Delivery',
+            pickup: 'Pickup',
+            dine_in: 'Dine in',
+          },
+          progress: {
+            title: 'Order progress',
+          },
+          items: {
+            title: 'Items',
+            optionLabel: '{{label}}: {{value}}',
+            quantity: '×{{count}}',
+          },
+          payment: {
+            title: 'Payment summary',
+            subtotal: 'Subtotal',
+            delivery: 'Delivery',
+            tax: 'Tax',
+            discount: 'Discount',
+            total: 'Total',
+            status: {
+              paid: 'Paid',
+              pending: 'Pending',
+              refunded: 'Refunded',
+              failed: 'Payment failed',
+            },
+          },
+          contact: {
+            title: 'Contact',
+          },
+          delivery: {
+            title: 'Delivery address',
+          },
+          pickup: {
+            title: 'Pickup location',
+          },
+          dineIn: {
+            title: 'Dine-in location',
+          },
+          notes: {
+            title: 'Notes',
+          },
+        },
       },
       commentsScreen: {
         signInPrompt: 'Sign in to add a comment.',
@@ -712,6 +766,60 @@ export const resources: Resource = {
       tabs: {
         home: 'Trang chủ',
         map: 'Bản đồ',
+        orderDetail: {
+          title: 'Chi tiết đơn hàng',
+          statusLabels: {
+            init: 'Đơn hàng đã tạo',
+            order_received: 'Cửa hàng đã nhận',
+            in_process: 'Đang chuẩn bị',
+            in_delivery: 'Đang giao',
+            complete: 'Đã hoàn tất',
+            cancelled: 'Đã hủy',
+            fail: 'Thất bại',
+          },
+          fulfillment: {
+            delivery: 'Giao tận nơi',
+            pickup: 'Nhận tại cửa hàng',
+            dine_in: 'Dùng tại chỗ',
+          },
+          progress: {
+            title: 'Tiến trình đơn hàng',
+          },
+          items: {
+            title: 'Sản phẩm',
+            optionLabel: '{{label}}: {{value}}',
+            quantity: '×{{count}}',
+          },
+          payment: {
+            title: 'Thanh toán',
+            subtotal: 'Tạm tính',
+            delivery: 'Phí giao',
+            tax: 'Thuế',
+            discount: 'Giảm giá',
+            total: 'Tổng cộng',
+            status: {
+              paid: 'Đã thanh toán',
+              pending: 'Đang chờ',
+              refunded: 'Đã hoàn tiền',
+              failed: 'Thanh toán thất bại',
+            },
+          },
+          contact: {
+            title: 'Thông tin liên hệ',
+          },
+          delivery: {
+            title: 'Địa chỉ giao hàng',
+          },
+          pickup: {
+            title: 'Điểm nhận hàng',
+          },
+          dineIn: {
+            title: 'Địa điểm dùng tại chỗ',
+          },
+          notes: {
+            title: 'Ghi chú',
+          },
+        },
         commercial: 'Thương mại',
         account: 'Tài khoản',
       },

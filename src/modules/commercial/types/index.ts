@@ -78,6 +78,49 @@ export interface StoreOrder {
 
 export type FulfillmentMethod = 'delivery' | 'pickup' | 'dine_in';
 
+export type OrderProgressStatus =
+  | 'init'
+  | 'order_received'
+  | 'in_process'
+  | 'in_delivery'
+  | 'complete'
+  | 'cancelled'
+  | 'fail';
+
+export interface OrderTimelineEntry {
+  status: OrderProgressStatus;
+  timestamp: string | null;
+}
+
+export interface OrderDetail {
+  id: string;
+  orderNumber: string;
+  placedAt: string;
+  fulfillmentMethod: FulfillmentMethod;
+  store: {
+    id: string;
+    name: string;
+    logoUrl?: string;
+  };
+  deliveryAddress?: {
+    label: string;
+    detail: string;
+  };
+  pickupAddress?: string;
+  dineInLocation?: string;
+  paymentSummary: {
+    method: string;
+    status: 'paid' | 'pending' | 'refunded' | 'failed';
+    totalCents: number;
+    currency: string;
+  };
+  contact: CheckoutContact;
+  items: CheckoutItem[];
+  pricing: CheckoutPricing;
+  timeline: OrderTimelineEntry[];
+  statusNotes?: string;
+}
+
 export interface CheckoutOptionChoice {
   label: string;
   value: string;
