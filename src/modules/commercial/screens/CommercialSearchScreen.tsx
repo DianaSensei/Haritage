@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+    Image,
     ScrollView,
     StyleSheet,
     TextInput,
@@ -248,8 +249,25 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, store, onPres
     accessibilityRole="button"
     onPress={onPress}
   >
-    <View style={[styles.resultBadge, { backgroundColor: item.accentColor }]}>
-      <ThemedText style={styles.resultBadgeText}>{item.storeBadge}</ThemedText>
+    <View style={styles.resultMedia}>
+      {item.imageUrl ? (
+        <>
+          <Image source={{ uri: item.imageUrl }} style={styles.resultImage} resizeMode="cover" />
+          <View
+            style={[styles.resultBadgeOverlay, { backgroundColor: item.accentColor }]}
+            accessible={false}
+          >
+            <ThemedText style={styles.resultBadgeText}>{item.storeBadge}</ThemedText>
+          </View>
+        </>
+      ) : (
+        <View
+          style={[styles.resultBadgeFallback, { backgroundColor: item.accentColor }]}
+          accessible={false}
+        >
+          <ThemedText style={styles.resultBadgeText}>{item.storeBadge}</ThemedText>
+        </View>
+      )}
     </View>
 
     <View style={styles.resultBody}>
@@ -416,7 +434,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     resultCard: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: 16,
       padding: 16,
       borderRadius: 18,
@@ -429,15 +447,34 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       shadowRadius: 10,
       elevation: 3,
     },
-    resultBadge: {
-      width: 44,
-      height: 44,
-      borderRadius: 16,
+    resultMedia: {
+      width: 78,
+      alignItems: 'center',
+    },
+    resultImage: {
+      width: 78,
+      height: 78,
+      borderRadius: 14,
+    },
+    resultBadgeOverlay: {
+      position: 'absolute',
+      bottom: -8,
+      left: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    resultBadgeFallback: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
     },
     resultBadgeText: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '700',
       color: '#0f1113',
     },

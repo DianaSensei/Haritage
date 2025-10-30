@@ -112,6 +112,21 @@ export const StoreInfoScreen: React.FC = () => {
             </View>
           ) : null}
 
+          {store.galleryImages?.length ? (
+            <View style={styles.gallerySection}>
+              <SectionHeader title={t('commercial.storeInfo.galleryTitle')} styles={styles} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.galleryScroll}
+              >
+                {store.galleryImages.map((image, index) => (
+                  <Image key={`${index}-${image}`} source={{ uri: image }} style={styles.galleryImage} />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
           <View style={styles.statRow}>
             <StatPill
               icon="star"
@@ -154,10 +169,16 @@ export const StoreInfoScreen: React.FC = () => {
           <View style={styles.categoryWrapper}>
             {store.categories.map((category) => (
               <View key={category.id} style={styles.categoryBlock}>
+                {category.coverImageUrl ? (
+                  <Image source={{ uri: category.coverImageUrl }} style={styles.categoryImage} resizeMode="cover" />
+                ) : null}
                 <ThemedText style={styles.categoryTitle}>{category.title}</ThemedText>
                 <View style={styles.categoryList}>
                   {category.items.map((item) => (
-                    <View key={item.id} style={styles.productRow}>
+                    <TouchableOpacity key={item.id} style={styles.productCard} activeOpacity={0.82}>
+                      {item.imageUrl ? (
+                        <Image source={{ uri: item.imageUrl }} style={styles.productThumbnail} resizeMode="cover" />
+                      ) : null}
                       <View style={styles.productInfo}>
                         <ThemedText style={styles.productName}>{item.name}</ThemedText>
                         {item.description ? (
@@ -166,8 +187,10 @@ export const StoreInfoScreen: React.FC = () => {
                           </ThemedText>
                         ) : null}
                       </View>
-                      <ThemedText style={styles.productPrice}>{item.price}</ThemedText>
-                    </View>
+                      <View style={styles.productPriceTag}>
+                        <ThemedText style={styles.productPriceText}>{item.price}</ThemedText>
+                      </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
@@ -188,12 +211,12 @@ const createStyles = (
       backgroundColor: colors.background,
     },
     scrollContent: {
-      paddingBottom: 32,
+      paddingBottom: 24,
     },
     bannerWrapper: {
       position: 'relative',
-      height: 200,
-      marginBottom: 24,
+      height: 160,
+      marginBottom: 20,
     },
     bannerImage: {
       width: '100%',
@@ -213,28 +236,28 @@ const createStyles = (
       borderColor: colors.border,
     },
     contentWrapper: {
-      paddingHorizontal: 20,
-      gap: 24,
+      paddingHorizontal: 16,
+      gap: 20,
     },
     headerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 16,
+      gap: 12,
     },
     logoImage: {
-      width: 72,
-      height: 72,
-      borderRadius: 24,
+      width: 60,
+      height: 60,
+      borderRadius: 20,
     },
     logoFallback: {
-      width: 72,
-      height: 72,
-      borderRadius: 24,
+      width: 60,
+      height: 60,
+      borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
     },
     logoFallbackText: {
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: '700',
       color: colors.text,
     },
@@ -243,12 +266,12 @@ const createStyles = (
       gap: 8,
     },
     storeName: {
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: '700',
       color: colors.text,
     },
     storeCategory: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
       textTransform: 'capitalize',
     },
@@ -256,109 +279,142 @@ const createStyles = (
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      padding: 12,
-      borderRadius: 16,
+      padding: 10,
+      borderRadius: 14,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
     promoText: {
       flex: 1,
-      fontSize: 13,
+      fontSize: 12,
       color: colors.accentStrong,
+    },
+    gallerySection: {
+      gap: 10,
+    },
+    galleryScroll: {
+      gap: 10,
+      paddingRight: 4,
+    },
+    galleryImage: {
+      width: 140,
+      height: 100,
+      borderRadius: 14,
     },
     statRow: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 8,
       justifyContent: 'space-between',
     },
     statPill: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 14,
-      borderRadius: 16,
-      gap: 6,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 14,
+      gap: 4,
     },
     statIconWrapper: {
-      width: 24,
-      height: 24,
+      width: 22,
+      height: 22,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.accentSoft,
     },
     statValue: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '700',
       color: colors.text,
     },
     statLabel: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
     },
     sectionHeader: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
       color: colors.text,
     },
     infoSection: {
-      gap: 12,
+      gap: 10,
     },
     description: {
-      fontSize: 14,
-      lineHeight: 20,
+      fontSize: 13,
+      lineHeight: 19,
       color: colors.text,
     },
     metaRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 6,
     },
     metaText: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
     },
     categoryWrapper: {
-      gap: 20,
+      gap: 16,
     },
     categoryBlock: {
-      gap: 12,
-      padding: 16,
-      borderRadius: 18,
+      gap: 10,
+      padding: 14,
+      borderRadius: 16,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
+    categoryImage: {
+      width: '100%',
+      height: 120,
+      borderRadius: 12,
+    },
     categoryTitle: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '600',
       color: colors.text,
     },
     categoryList: {
-      gap: 12,
+      gap: 10,
     },
-    productRow: {
+    productCard: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 16,
-      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 10,
+      padding: 12,
+      borderRadius: 14,
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    productThumbnail: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
     },
     productInfo: {
       flex: 1,
-      gap: 4,
+      gap: 3,
     },
     productName: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
     },
     productDescription: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
-      lineHeight: 18,
+      lineHeight: 16,
     },
-    productPrice: {
-      fontSize: 13,
+    productPriceTag: {
+      marginLeft: 'auto',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 10,
+      backgroundColor: colors.accentSoft,
+    },
+    productPriceText: {
+      fontSize: 12,
       fontWeight: '600',
       color: colors.accentStrong,
     },
