@@ -69,10 +69,6 @@ export const CartQuantityControls: React.FC<CartQuantityControlsProps> = ({
     decrementItem(id);
   }, [decrementItem, id, quantity, removeItem]);
 
-  const handleRemove = useCallback(() => {
-    removeItem(id);
-  }, [id, removeItem]);
-
   if (quantity === 0) {
     return (
       <TouchableOpacity
@@ -88,12 +84,9 @@ export const CartQuantityControls: React.FC<CartQuantityControlsProps> = ({
       >
         <Ionicons
           name="cart-outline"
-          size={variant === 'compact' ? 14 : 16}
+          size={variant === 'compact' ? 16 : 18}
           color={colors.background}
         />
-        <ThemedText style={styles.addButtonLabel}>
-          {t('commercial.cart.add')}
-        </ThemedText>
       </TouchableOpacity>
     );
   }
@@ -110,7 +103,7 @@ export const CartQuantityControls: React.FC<CartQuantityControlsProps> = ({
         style={[styles.controlButton, variant === 'compact' ? styles.controlButtonCompact : null]}
         onPress={handleDecrease}
         activeOpacity={0.85}
-        accessibilityLabel={t('commercial.cart.decrease')}
+        accessibilityLabel={t(quantity <= 1 ? 'commercial.cart.remove' : 'commercial.cart.decrease')}
       >
         <Ionicons
           name={quantity <= 1 ? 'trash-outline' : 'remove'}
@@ -131,18 +124,6 @@ export const CartQuantityControls: React.FC<CartQuantityControlsProps> = ({
           color={colors.text}
         />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.removeButton, variant === 'compact' ? styles.removeButtonCompact : null]}
-        onPress={handleRemove}
-        activeOpacity={0.85}
-        accessibilityLabel={t('commercial.cart.remove')}
-      >
-        <Ionicons
-          name="close"
-          size={variant === 'compact' ? 14 : 16}
-          color={colors.iconMuted}
-        />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -150,41 +131,36 @@ export const CartQuantityControls: React.FC<CartQuantityControlsProps> = ({
 const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
   StyleSheet.create({
     addButton: {
-      flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 999,
+      justifyContent: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       backgroundColor: colors.accentStrong,
     },
     addButtonCompact: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-    },
-    addButtonLabel: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: colors.background,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
     },
     quantityContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.surfaceSecondary,
       borderRadius: 999,
-      paddingVertical: 6,
-      paddingHorizontal: 8,
+      paddingVertical: 5,
+      paddingHorizontal: 7,
       gap: 6,
     },
     quantityContainerCompact: {
-      paddingVertical: 4,
-      paddingHorizontal: 6,
+      paddingVertical: 3,
+      paddingHorizontal: 5,
       gap: 4,
     },
     controlButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surface,
@@ -192,29 +168,14 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       borderColor: colors.border,
     },
     controlButtonCompact: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-    },
-    removeButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    removeButtonCompact: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
     },
     quantityLabel: {
-      minWidth: 24,
+      minWidth: 22,
       textAlign: 'center',
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
       color: colors.text,
     },

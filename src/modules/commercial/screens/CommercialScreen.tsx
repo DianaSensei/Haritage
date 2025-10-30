@@ -70,18 +70,18 @@ export const CommercialScreen: React.FC = () => {
     [cartItemsMap],
   );
   const locale = i18n.language ?? 'en';
-  const collapsedSheetSpace = 132;
-  const expandedSheetSpace = Math.min(height * 0.55, 420);
+  const collapsedSheetSpace = 96;
+  const expandedSheetSpace = Math.min(height * 0.48, 360);
   const baseBottomInset = useMemo(
     () => (tabBarHeight > 0 ? tabBarHeight : insets.bottom),
     [insets.bottom, tabBarHeight],
   );
-  const cartSheetBottomOffset = baseBottomInset + 12;
+  const cartSheetBottomOffset = baseBottomInset + 8;
   const contentPaddingBottom = useMemo(
     () =>
       totalQuantity > 0
         ? (isCartExpanded ? expandedSheetSpace : collapsedSheetSpace) + cartSheetBottomOffset
-        : 32 + baseBottomInset,
+        : 24 + baseBottomInset,
     [baseBottomInset, cartSheetBottomOffset, expandedSheetSpace, isCartExpanded, totalQuantity],
   );
 
@@ -197,7 +197,7 @@ export const CommercialScreen: React.FC = () => {
       </ScrollView>
 
       {totalQuantity > 0 ? (
-        <View style={[styles.cartSheetWrapper, { bottom: cartSheetBottomOffset, paddingBottom: 12 }]}
+  <View style={[styles.cartSheetWrapper, { bottom: cartSheetBottomOffset, paddingBottom: 8 }]}
           pointerEvents="box-none"
         >
           <View
@@ -410,21 +410,21 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       backgroundColor: colors.background,
     },
     content: {
-      paddingHorizontal: 16,
-      gap: 24,
+      paddingHorizontal: 14,
+      gap: 20,
     },
     headerSection: {
-      gap: 8,
-      paddingTop: 12,
+      gap: 6,
+      paddingTop: 10,
     },
     title: {
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: '700',
       color: colors.text,
       fontFamily: Fonts.sans,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textMuted,
       lineHeight: 20,
     },
@@ -432,119 +432,119 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderRadius: 16,
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 14,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
     searchPlaceholder: {
       flex: 1,
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textMuted,
     },
     sectionBlock: {
-      gap: 16,
+      gap: 12,
     },
     sectionHeader: {
-      gap: 4,
+      gap: 3,
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: '700',
       color: colors.text,
     },
     sectionSubtitle: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
-      lineHeight: 18,
+      lineHeight: 16,
     },
     productRow: {
       flexDirection: 'row',
-      gap: 16,
-      paddingRight: 8,
+      gap: 14,
+      paddingRight: 6,
     },
     productCard: {
-      width: 220,
-      padding: 16,
-      borderRadius: 18,
+      width: 208,
+      padding: 14,
+      borderRadius: 16,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      gap: 12,
+      gap: 10,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 3,
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      elevation: 2,
     },
     productImage: {
       width: '100%',
-      height: 110,
-      borderRadius: 12,
+      height: 104,
+      borderRadius: 10,
     },
     storeBadge: {
-      width: 40,
-      height: 40,
-      borderRadius: 14,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
     },
     storeBadgeText: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '700',
       color: '#0f1113',
     },
     productContent: {
-      gap: 8,
+      gap: 6,
     },
     productBadge: {
       alignSelf: 'flex-start',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
       backgroundColor: colors.accentSoft,
     },
     productBadgeText: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: '600',
       color: colors.accentStrong,
     },
     productTitle: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: '600',
       color: colors.text,
     },
     productSubtitle: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
-      lineHeight: 18,
+      lineHeight: 16,
     },
     productFooter: {
-      gap: 12,
+      gap: 10,
     },
     productPriceRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 12,
+      gap: 10,
     },
     productPrice: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: '700',
       color: colors.accentStrong,
     },
     productStoreRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      gap: 5,
       flex: 1,
-      maxWidth: 132,
+      maxWidth: 120,
     },
     productStoreName: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
     },
     productCartControls: {
@@ -553,16 +553,16 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     productTagRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 6,
+      gap: 5,
     },
     productTagChip: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 10,
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      borderRadius: 8,
       backgroundColor: colors.surfaceSecondary,
     },
     productTagText: {
-      fontSize: 11,
+      fontSize: 10,
       color: colors.textMuted,
     },
     cartSheetWrapper: {
@@ -570,35 +570,35 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
     },
     cartSheetContainer: {
-      borderRadius: 22,
+      borderRadius: 20,
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.surface,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
-      elevation: 6,
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 4,
       overflow: 'hidden',
-      gap: 16,
+      gap: 10,
     },
     cartSheetCollapsedContainer: {
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      gap: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      gap: 8,
     },
     cartSheetExpandedContainer: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 16,
-      gap: 16,
+      paddingHorizontal: 12,
+      paddingTop: 9,
+      paddingBottom: 10,
+      gap: 12,
     },
     cartHandle: {
       alignSelf: 'center',
-      width: 36,
+      width: 28,
       height: 4,
       borderRadius: 999,
       backgroundColor: colors.border,
@@ -607,24 +607,24 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 12,
+      gap: 8,
     },
     cartHeaderText: {
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
     },
     cartSummaryText: {
-      fontSize: 13,
+      fontSize: 11,
       color: colors.textMuted,
     },
     cartHeaderMeta: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 5,
     },
     cartTotalText: {
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: '700',
       color: colors.text,
     },
@@ -633,36 +633,36 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       backgroundColor: colors.border,
     },
     cartItemsScroll: {
-      maxHeight: 280,
+      maxHeight: 220,
     },
     cartItemsList: {
-      gap: 16,
+      gap: 12,
       paddingBottom: 4,
     },
     cartItemRow: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      gap: 12,
+      gap: 8,
     },
     cartItemImage: {
-      width: 56,
-      height: 56,
-      borderRadius: 14,
+      width: 48,
+      height: 48,
+      borderRadius: 12,
     },
     cartItemImageFallback: {
-      width: 56,
-      height: 56,
-      borderRadius: 14,
+      width: 48,
+      height: 48,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surfaceSecondary,
     },
     cartItemInfo: {
       flex: 1,
-      gap: 4,
+      gap: 3,
     },
     cartItemName: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '600',
       color: colors.text,
     },
@@ -671,11 +671,11 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       color: colors.textMuted,
     },
     cartItemRight: {
-      gap: 8,
+      gap: 5,
       alignItems: 'flex-end',
     },
     cartItemLineTotal: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: '600',
       color: colors.text,
     },
@@ -685,31 +685,31 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     cartFooter: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: 8,
     },
     cartClearButton: {
       flex: 1,
-      borderRadius: 14,
-      paddingVertical: 12,
+      borderRadius: 10,
+      paddingVertical: 9,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surfaceSecondary,
     },
     cartClearLabel: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: '600',
       color: colors.textMuted,
     },
     cartCheckoutButton: {
       flex: 1,
-      borderRadius: 14,
-      paddingVertical: 12,
+      borderRadius: 10,
+      paddingVertical: 9,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.accentStrong,
     },
     cartCheckoutLabel: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '600',
       color: colors.background,
     },
