@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+    ActivityIndicator,
+    Alert,
     Image,
     ScrollView,
     StyleSheet,
@@ -9,12 +12,16 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { mockCheckout } from '@/modules/commercial/data/mockCheckout';
+import { orderStorageService } from '@/modules/commercial/services/orderStorageService';
 import {
     CheckoutItem,
     FulfillmentMethod,
+    type CheckoutContext,
+    type OrderDetail,
+    type OrderProgressStatus,
 } from '@/modules/commercial/types';
 import { ThemedText } from '@/shared/components';
 import { useAppTheme } from '@/shared/hooks';
@@ -31,15 +38,92 @@ const BASE_FULFILLMENT_OPTIONS: FulfillmentOption[] = [
   { key: 'dine_in', icon: 'restaurant-outline', comingSoon: true },
 ];
 
+const ORDER_TIMELINE_SEQUENCE: OrderProgressStatus[] = [
+  'init',
+  'order_received',
+  'in_process',
+  'in_delivery',
+  'complete',
+  'cancelled',
+  'fail',
+];
+
+interface CreateOrderParams {
+  checkout: CheckoutContext;
+  fulfillment: FulfillmentMethod;
+  deliveryNote?: string;
+  pickupNote?: string;
+  storeNote?: string;
+}
+
+const buildOrderFromCheckout = ({
+  checkout,
+  fulfillment,
+  deliveryNote,
+  pickupNote,
+  storeNote,
+}: CreateOrderParams): OrderDetail => {
+  const timestamp = new Date();
+  const placedAt = timestamp.toISOString();
+  const numericId = timestamp.getTime();
+  const orderId = `order-${numericId}`;
+  const orderNumber = `HA-${numericId.toString().slice(-6)}`;
+
+  const timeline = ORDER_TIMELINE_SEQUENCE.map((status, index) => ({
+    status,
+    timestamp: index === 0 ? placedAt : null,
+  }));
+
+  const notes: string[] = [];
+  if (storeNote?.trim()) {
+    notes.push(storeNote.trim());
+  }
+  if (fulfillment === 'delivery' && deliveryNote?.trim()) {
+    notes.push(deliveryNote.trim());
+  }
+  if (fulfillment === 'pickup' && pickupNote?.trim()) {
+    notes.push(pickupNote.trim());
+  }
+
+  return {
+    id: orderId,
+    orderNumber,
+    placedAt,
+    fulfillmentMethod: fulfillment,
+    store: {
+      id: checkout.storeId,
+      name: checkout.storeName,
+      logoUrl: checkout.storeLogoUrl,
+    },
+    deliveryAddress: fulfillment === 'delivery' ? checkout.deliveryAddress : undefined,
+    pickupAddress: fulfillment === 'pickup' ? checkout.pickupAddress : undefined,
+    dineInLocation: fulfillment === 'dine_in' ? checkout.pickupAddress : undefined,
+    paymentSummary: {
+      method: 'Card on file',
+      status: 'paid',
+      totalCents: checkout.pricing.totalCents,
+      currency: 'USD',
+    },
+    contact: checkout.user,
+    items: checkout.items,
+    pricing: checkout.pricing,
+    timeline,
+    statusNotes: notes.length ? notes.join('\n') : undefined,
+  };
+};
+
 export const CheckoutScreen: React.FC = () => {
   const { colors } = useAppTheme();
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>('delivery');
   const [deliveryNote, setDeliveryNote] = useState('');
   const [pickupNote, setPickupNote] = useState('');
   const [storeNote, setStoreNote] = useState('');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const checkout = mockCheckout;
 
@@ -77,6 +161,39 @@ export const CheckoutScreen: React.FC = () => {
   const handleSelect = useCallback((key: FulfillmentMethod) => {
     setFulfillment(key);
   }, []);
+
+  const handlePlaceOrder = useCallback(async () => {
+    if (isComingSoon) {
+      Alert.alert(t('commercial.checkout.fulfillment.title'), t('commercial.checkout.alerts.fulfillmentUnavailable'));
+      return;
+    }
+
+    try {
+      setIsPlacingOrder(true);
+      const order = buildOrderFromCheckout({
+        checkout,
+        fulfillment,
+        deliveryNote,
+        pickupNote,
+        storeNote,
+      });
+      await orderStorageService.save(order);
+      router.replace({ pathname: '/order-detail', params: { orderId: order.id } });
+    } catch (error) {
+      console.error('[CheckoutScreen] Failed to place order', error);
+      Alert.alert(t('common.error'), t('commercial.checkout.alerts.placeOrderFailed'));
+      setIsPlacingOrder(false);
+    }
+  }, [
+    checkout,
+    deliveryNote,
+    fulfillment,
+    isComingSoon,
+    pickupNote,
+    router,
+    storeNote,
+    t,
+  ]);
 
   const renderItem = useCallback(
     (item: CheckoutItem) => (
@@ -385,6 +502,32 @@ export const CheckoutScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+      <View style={[styles.checkoutFooter, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <TouchableOpacity
+          style={[
+            styles.checkoutButton,
+            (isComingSoon || isPlacingOrder) ? styles.checkoutButtonDisabled : null,
+          ]}
+          activeOpacity={0.85}
+          onPress={handlePlaceOrder}
+          disabled={isComingSoon || isPlacingOrder}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isComingSoon || isPlacingOrder }}
+        >
+          {isPlacingOrder ? (
+            <View style={styles.checkoutButtonContent}>
+              <ActivityIndicator size="small" color={colors.background} />
+              <ThemedText style={styles.checkoutButtonLabel}>
+                {t('commercial.checkout.actions.placingOrder')}
+              </ThemedText>
+            </View>
+          ) : (
+            <ThemedText style={styles.checkoutButtonLabel}>
+              {t('commercial.checkout.actions.placeOrder')}
+            </ThemedText>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -664,6 +807,32 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       fontSize: 14,
       fontWeight: '700',
       color: colors.text,
+    },
+    checkoutFooter: {
+      paddingHorizontal: 14,
+      paddingTop: 8,
+      backgroundColor: colors.background,
+    },
+    checkoutButton: {
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accentStrong,
+    },
+    checkoutButtonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    checkoutButtonDisabled: {
+      opacity: 0.6,
+    },
+    checkoutButtonLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.background,
     },
   });
 

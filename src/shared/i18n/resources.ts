@@ -163,6 +163,14 @@ export const resources: Resource = {
                 discount: 'Giảm giá',
                 total: 'Tổng cộng',
               },
+              actions: {
+                placeOrder: 'Đặt hàng',
+                placingOrder: 'Đang đặt…',
+              },
+              alerts: {
+                placeOrderFailed: 'Không thể tạo đơn hàng. Vui lòng thử lại.',
+                fulfillmentUnavailable: 'Tùy chọn nhận hàng này sẽ sớm ra mắt.',
+              },
             },
           },
           logoutSuccessTitle: 'Logged out',
@@ -638,6 +646,14 @@ export const resources: Resource = {
             discount: 'Discount',
             total: 'Total',
           },
+          actions: {
+            placeOrder: 'Place order',
+            placingOrder: 'Placing…',
+          },
+          alerts: {
+            placeOrderFailed: 'We could not place your order. Try again.',
+            fulfillmentUnavailable: 'This fulfillment option is coming soon.',
+          },
         },
         cart: {
           title: 'Cart',
@@ -706,6 +722,11 @@ export const resources: Resource = {
           notes: {
             title: 'Notes',
           },
+          notFound: {
+            title: 'Order not found',
+            subtitle: 'We could not load this order. Please try again later.',
+          },
+          loading: 'Loading order…',
         },
       },
       commentsScreen: {
@@ -819,6 +840,11 @@ export const resources: Resource = {
           notes: {
             title: 'Ghi chú',
           },
+          notFound: {
+            title: 'Không tìm thấy đơn hàng',
+            subtitle: 'Không thể tải đơn hàng này. Vui lòng thử lại sau.',
+          },
+          loading: 'Đang tải đơn hàng…',
         },
         commercial: 'Thương mại',
         account: 'Tài khoản',

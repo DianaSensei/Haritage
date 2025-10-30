@@ -42,6 +42,7 @@ export const CONFIG = {
         PIN_HASH: 'haritage.pin_hash',
         PIN_SETUP_REQUIRED: 'haritage.pin_setup_required',
         APP_LOCK_ENABLED: 'haritage.app_lock_enabled',
+        ORDER_HISTORY: 'haritage.orders.history',
     },
 
     // App Lock settings

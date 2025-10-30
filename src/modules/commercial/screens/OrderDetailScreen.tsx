@@ -1,12 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Image,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OrderStatusProgress } from '@/modules/commercial/components/OrderStatusProgress';
 import { mockOrderDetail } from '@/modules/commercial/data/mockOrderDetail';
+import { orderStorageService } from '@/modules/commercial/services/orderStorageService';
 import type { OrderDetail, OrderProgressStatus } from '@/modules/commercial/types';
 import { formatPriceFromCents } from '@/modules/commercial/utils/price';
 import { ThemedText } from '@/shared/components';
@@ -54,13 +62,67 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
   const { colors } = useAppTheme();
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ orderId?: string | string[] }>();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const locale = i18n.language ?? 'en';
 
-  const timeline = useMemo(
-    () => order.timeline.filter((entry) => STATUS_SEQUENCE.includes(entry.status)),
-    [order.timeline],
-  );
+  const [resolvedOrder, setResolvedOrder] = useState<OrderDetail | null>(order ?? null);
+  const [isLoading, setIsLoading] = useState<boolean>(!order);
+
+  useEffect(() => {
+    if (order) {
+      setResolvedOrder(order);
+      setIsLoading(false);
+      return;
+    }
+
+    const rawId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
+
+    if (!rawId) {
+      setResolvedOrder(mockOrderDetail);
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
+
+    orderStorageService
+      .getById(rawId)
+      .then((fetched) => {
+        if (!isMounted) {
+          return;
+        }
+        setResolvedOrder(fetched);
+      })
+      .catch((error) => {
+        console.error('[OrderDetailScreen] Failed to load order', error);
+        if (!isMounted) {
+          return;
+        }
+        setResolvedOrder(null);
+      })
+      .finally(() => {
+        if (!isMounted) {
+          return;
+        }
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [order, params.orderId]);
+
+  const timeline = useMemo(() => {
+    if (!resolvedOrder) {
+      return [] as typeof STATUS_SEQUENCE extends (infer T)[] ? { status: T; timestamp: string | null }[] : never;
+    }
+
+    return resolvedOrder.timeline
+      .filter((entry) => STATUS_SEQUENCE.includes(entry.status))
+      .map((entry) => ({ ...entry }));
+  }, [resolvedOrder]);
 
   const currentStatus = useMemo(() => {
     const lastCompleted = [...timeline].reverse().find((step) => step.timestamp !== null);
@@ -74,7 +136,58 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
   const resolveStatusLabel = (status: OrderProgressStatus) =>
     t(`commercial.orderDetail.statusLabels.${status}`);
 
-  const currency = order.paymentSummary.currency;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+            style={styles.headerIconButton}
+            activeOpacity={0.75}
+          >
+            <Ionicons name="chevron-back" size={18} color={colors.icon} />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.accentStrong} />
+          <ThemedText style={styles.loadingText}>{t('commercial.orderDetail.loading')}</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!resolvedOrder) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.goBack')}
+            style={styles.headerIconButton}
+            activeOpacity={0.75}
+          >
+            <Ionicons name="chevron-back" size={18} color={colors.icon} />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="receipt-outline" size={42} color={colors.iconMuted} />
+          <ThemedText style={styles.emptyTitle}>{t('commercial.orderDetail.notFound.title')}</ThemedText>
+          <ThemedText style={styles.emptySubtitle}>{t('commercial.orderDetail.notFound.subtitle')}</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const activeOrder = resolvedOrder;
+
+  const currency = activeOrder.paymentSummary.currency;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -99,22 +212,22 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
       >
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <ThemedText style={styles.orderNumber}>#{order.orderNumber}</ThemedText>
+            <ThemedText style={styles.orderNumber}>#{activeOrder.orderNumber}</ThemedText>
             <ThemedText style={styles.orderStatus}>{resolveStatusLabel(currentStatus)}</ThemedText>
           </View>
-          <ThemedText style={styles.timestamp}>{formatPlacedAt(order.placedAt, locale)}</ThemedText>
+          <ThemedText style={styles.timestamp}>{formatPlacedAt(activeOrder.placedAt, locale)}</ThemedText>
           <View style={styles.storeRow}>
-            {order.store.logoUrl ? (
-              <Image source={{ uri: order.store.logoUrl }} style={styles.storeLogo} resizeMode="cover" />
+            {activeOrder.store.logoUrl ? (
+              <Image source={{ uri: activeOrder.store.logoUrl }} style={styles.storeLogo} resizeMode="cover" />
             ) : (
               <View style={[styles.storeLogo, styles.storeLogoFallback]}>
                 <Ionicons name="storefront" size={16} color={colors.iconMuted} />
               </View>
             )}
             <View style={styles.storeMeta}>
-              <ThemedText style={styles.storeName}>{order.store.name}</ThemedText>
+              <ThemedText style={styles.storeName}>{activeOrder.store.name}</ThemedText>
               <ThemedText style={styles.fulfillmentText}>
-                {t(`commercial.orderDetail.fulfillment.${order.fulfillmentMethod}`)}
+                {t(`commercial.orderDetail.fulfillment.${activeOrder.fulfillmentMethod}`)}
               </ThemedText>
             </View>
           </View>
@@ -132,7 +245,7 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
         <View style={styles.card}>
           <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.items.title')}</ThemedText>
           <View style={styles.itemsList}>
-            {order.items.map((item) => (
+            {activeOrder.items.map((item) => (
               <View key={item.id} style={styles.itemRow}>
                 <View style={styles.itemInfo}>
                   <ThemedText style={styles.itemName}>{item.name}</ThemedText>
@@ -162,10 +275,10 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
           <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.payment.title')}</ThemedText>
           <View style={styles.paymentMetaRow}>
             <Ionicons name="card-outline" size={16} color={colors.iconMuted} />
-            <ThemedText style={styles.paymentValue}>{order.paymentSummary.method}</ThemedText>
+            <ThemedText style={styles.paymentValue}>{activeOrder.paymentSummary.method}</ThemedText>
             <View style={styles.paymentStatusPill}>
               <ThemedText style={styles.paymentStatusText}>
-                {t(`commercial.orderDetail.payment.status.${order.paymentSummary.status}`)}
+                {t(`commercial.orderDetail.payment.status.${activeOrder.paymentSummary.status}`)}
               </ThemedText>
             </View>
           </View>
@@ -173,26 +286,26 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
             <View style={styles.pricingRow}>
               <ThemedText style={styles.pricingLabel}>{t('commercial.orderDetail.payment.subtotal')}</ThemedText>
               <ThemedText style={styles.pricingValue}>
-                {formatPriceFromCents(order.pricing.subtotalCents, locale, currency)}
+                {formatPriceFromCents(activeOrder.pricing.subtotalCents, locale, currency)}
               </ThemedText>
             </View>
             <View style={styles.pricingRow}>
               <ThemedText style={styles.pricingLabel}>{t('commercial.orderDetail.payment.delivery')}</ThemedText>
               <ThemedText style={styles.pricingValue}>
-                {formatPriceFromCents(order.pricing.shippingCents, locale, currency)}
+                {formatPriceFromCents(activeOrder.pricing.shippingCents, locale, currency)}
               </ThemedText>
             </View>
             <View style={styles.pricingRow}>
               <ThemedText style={styles.pricingLabel}>{t('commercial.orderDetail.payment.tax')}</ThemedText>
               <ThemedText style={styles.pricingValue}>
-                {formatPriceFromCents(order.pricing.taxCents, locale, currency)}
+                {formatPriceFromCents(activeOrder.pricing.taxCents, locale, currency)}
               </ThemedText>
             </View>
-            {order.pricing.discountCents ? (
+            {activeOrder.pricing.discountCents ? (
               <View style={styles.pricingRow}>
                 <ThemedText style={styles.pricingLabel}>{t('commercial.orderDetail.payment.discount')}</ThemedText>
                 <ThemedText style={[styles.pricingValue, styles.pricingDiscount]}>
-                  -{formatPriceFromCents(order.pricing.discountCents, locale, currency)}
+                  -{formatPriceFromCents(activeOrder.pricing.discountCents, locale, currency)}
                 </ThemedText>
               </View>
             ) : null}
@@ -200,7 +313,7 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
           <View style={styles.pricingTotalRow}>
             <ThemedText style={styles.pricingTotalLabel}>{t('commercial.orderDetail.payment.total')}</ThemedText>
             <ThemedText style={styles.pricingTotalValue}>
-              {formatPriceFromCents(order.pricing.totalCents, locale, currency)}
+              {formatPriceFromCents(activeOrder.pricing.totalCents, locale, currency)}
             </ThemedText>
           </View>
         </View>
@@ -210,54 +323,54 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
           <View style={styles.contactRow}>
             <Ionicons name="person-circle" size={20} color={colors.icon} />
             <View style={styles.contactMeta}>
-              <ThemedText style={styles.contactName}>{order.contact.name}</ThemedText>
-              <ThemedText style={styles.contactValue}>{order.contact.email}</ThemedText>
-              <ThemedText style={styles.contactValue}>{order.contact.phone}</ThemedText>
+              <ThemedText style={styles.contactName}>{activeOrder.contact.name}</ThemedText>
+              <ThemedText style={styles.contactValue}>{activeOrder.contact.email}</ThemedText>
+              <ThemedText style={styles.contactValue}>{activeOrder.contact.phone}</ThemedText>
             </View>
           </View>
         </View>
 
-        {order.deliveryAddress ? (
+        {activeOrder.deliveryAddress ? (
           <View style={styles.card}>
             <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.delivery.title')}</ThemedText>
             <View style={styles.addressRow}>
               <Ionicons name="location-outline" size={16} color={colors.iconMuted} />
               <View style={styles.addressMeta}>
-                <ThemedText style={styles.addressLabel}>{order.deliveryAddress.label}</ThemedText>
-                <ThemedText style={styles.addressDetail}>{order.deliveryAddress.detail}</ThemedText>
+                <ThemedText style={styles.addressLabel}>{activeOrder.deliveryAddress.label}</ThemedText>
+                <ThemedText style={styles.addressDetail}>{activeOrder.deliveryAddress.detail}</ThemedText>
               </View>
             </View>
           </View>
         ) : null}
 
-        {order.pickupAddress ? (
+        {activeOrder.pickupAddress ? (
           <View style={styles.card}>
             <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.pickup.title')}</ThemedText>
             <View style={styles.addressRow}>
               <Ionicons name="bag-handle-outline" size={16} color={colors.iconMuted} />
               <View style={styles.addressMeta}>
-                <ThemedText style={styles.addressDetail}>{order.pickupAddress}</ThemedText>
+                <ThemedText style={styles.addressDetail}>{activeOrder.pickupAddress}</ThemedText>
               </View>
             </View>
           </View>
         ) : null}
 
-        {order.dineInLocation ? (
+        {activeOrder.dineInLocation ? (
           <View style={styles.card}>
             <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.dineIn.title')}</ThemedText>
             <View style={styles.addressRow}>
               <Ionicons name="restaurant-outline" size={16} color={colors.iconMuted} />
               <View style={styles.addressMeta}>
-                <ThemedText style={styles.addressDetail}>{order.dineInLocation}</ThemedText>
+                <ThemedText style={styles.addressDetail}>{activeOrder.dineInLocation}</ThemedText>
               </View>
             </View>
           </View>
         ) : null}
 
-        {order.statusNotes ? (
+        {activeOrder.statusNotes ? (
           <View style={styles.card}>
             <ThemedText style={styles.sectionTitle}>{t('commercial.orderDetail.notes.title')}</ThemedText>
-            <ThemedText style={styles.notesText}>{order.statusNotes}</ThemedText>
+            <ThemedText style={styles.notesText}>{activeOrder.statusNotes}</ThemedText>
           </View>
         ) : null}
       </ScrollView>
@@ -299,6 +412,36 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       paddingHorizontal: 14,
       paddingBottom: 24,
       gap: 14,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      paddingHorizontal: 24,
+    },
+    loadingText: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    emptyContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingHorizontal: 24,
+    },
+    emptyTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      fontSize: 12,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 18,
     },
     card: {
       padding: 14,
