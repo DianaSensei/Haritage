@@ -441,6 +441,19 @@ export const resources: Resource = {
           recentTitle: 'Recent searches',
           clearAction: 'Clear',
         },
+        storeInfo: {
+          missingTitle: 'Store unavailable',
+          missingSubtitle: 'We could not load this store right now. Try again later.',
+          aboutTitle: 'About this store',
+          ownerLabel: 'Owner: {{owner}}',
+          locationLabel: 'Located at {{address}}',
+          categoriesTitle: 'Shop by category',
+          stats: {
+            rating: 'Rating',
+            followers: 'Followers',
+            products: 'Products',
+          },
+        },
       },
       commentsScreen: {
         signInPrompt: 'Sign in to add a comment.',
@@ -797,6 +810,19 @@ export const resources: Resource = {
           emptyResultsSubtitle: 'Thử từ khóa khác hoặc kiểm tra chính tả.',
           recentTitle: 'Tìm kiếm gần đây',
           clearAction: 'Xóa',
+        },
+        storeInfo: {
+          missingTitle: 'Không tìm thấy cửa hàng',
+          missingSubtitle: 'Chúng tôi không thể tải cửa hàng này. Vui lòng thử lại sau.',
+          aboutTitle: 'Về cửa hàng',
+          ownerLabel: 'Chủ cửa hàng: {{owner}}',
+          locationLabel: 'Địa chỉ: {{address}}',
+          categoriesTitle: 'Mua theo danh mục',
+          stats: {
+            rating: 'Đánh giá',
+            followers: 'Người theo dõi',
+            products: 'Sản phẩm',
+          },
         },
       },
       commentsScreen: {

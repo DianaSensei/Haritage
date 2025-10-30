@@ -7,6 +7,13 @@ export interface CommercialProduct {
   name: string;
   price: string;
   highlight?: string;
+  description?: string;
+}
+
+export interface StoreProductCategory {
+  id: string;
+  title: string;
+  items: CommercialProduct[];
 }
 
 export interface CommercialSectionItem {
@@ -34,4 +41,10 @@ export interface StoreFront {
   tags: string[];
   products: CommercialProduct[];
   promoMessage?: string;
+  ownerName: string;
+  address: string;
+  description: string;
+  logoUrl: string;
+  bannerUrl: string;
+  categories: StoreProductCategory[];
 }

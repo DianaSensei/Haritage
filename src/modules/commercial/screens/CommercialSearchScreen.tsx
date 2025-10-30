@@ -98,6 +98,13 @@ export const CommercialSearchScreen: React.FC = () => {
     setRecentSearches([]);
   }, []);
 
+  const handleOpenStore = useCallback(
+    (storeId: string) => {
+      router.push({ pathname: '/store-info', params: { storeId } });
+    },
+    [router],
+  );
+
   const resultsLabel = useMemo(() => {
     if (!searchQuery.trim()) {
       return '';
@@ -207,7 +214,16 @@ export const CommercialSearchScreen: React.FC = () => {
                   return null;
                 }
 
-                return <SearchResultCard key={item.id} item={item} store={store} styles={styles} colors={colors} />;
+                return (
+                  <SearchResultCard
+                    key={item.id}
+                    item={item}
+                    store={store}
+                    onPress={() => handleOpenStore(store.id)}
+                    styles={styles}
+                    colors={colors}
+                  />
+                );
               })}
             </View>
           )
@@ -220,12 +236,18 @@ export const CommercialSearchScreen: React.FC = () => {
 interface SearchResultCardProps {
   item: CommercialSectionItem;
   store: StoreFront;
+  onPress: () => void;
   styles: ReturnType<typeof createStyles>;
   colors: ReturnType<typeof useAppTheme>['colors'];
 }
 
-const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, store, styles, colors }) => (
-  <TouchableOpacity style={styles.resultCard} activeOpacity={0.88} accessibilityRole="button">
+const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, store, onPress, styles, colors }) => (
+  <TouchableOpacity
+    style={styles.resultCard}
+    activeOpacity={0.88}
+    accessibilityRole="button"
+    onPress={onPress}
+  >
     <View style={[styles.resultBadge, { backgroundColor: item.accentColor }]}>
       <ThemedText style={styles.resultBadgeText}>{item.storeBadge}</ThemedText>
     </View>

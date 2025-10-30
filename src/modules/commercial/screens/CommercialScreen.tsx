@@ -57,6 +57,13 @@ export const CommercialScreen: React.FC = () => {
     router.push('/commercial-search');
   }, [router]);
 
+  const handleOpenStore = useCallback(
+    (storeId: string) => {
+      router.push({ pathname: '/store-info', params: { storeId } });
+    },
+    [router],
+  );
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -110,6 +117,7 @@ export const CommercialScreen: React.FC = () => {
                       key={item.id}
                       item={item}
                       store={store}
+                      onPress={() => handleOpenStore(store.id)}
                       styles={styles}
                       colors={colors}
                     />
@@ -127,12 +135,18 @@ export const CommercialScreen: React.FC = () => {
 interface ProductCardProps {
   item: CommercialSectionItem;
   store: StoreFront;
+  onPress: () => void;
   styles: ReturnType<typeof createStyles>;
   colors: ReturnType<typeof useAppTheme>['colors'];
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ item, store, styles, colors }) => (
-  <TouchableOpacity style={styles.productCard} activeOpacity={0.88} accessibilityRole="button">
+const ProductCard: React.FC<ProductCardProps> = ({ item, store, onPress, styles, colors }) => (
+  <TouchableOpacity
+    style={styles.productCard}
+    activeOpacity={0.88}
+    accessibilityRole="button"
+    onPress={onPress}
+  >
     <View style={[styles.storeBadge, { backgroundColor: item.accentColor }]}>
       <ThemedText style={styles.storeBadgeText}>{item.storeBadge}</ThemedText>
     </View>
