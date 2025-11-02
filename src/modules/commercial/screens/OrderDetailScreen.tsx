@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrderStatusProgress } from '@/modules/commercial/components/OrderStatusProgress';
 import { mockOrderDetail } from '@/modules/commercial/data/mockOrderDetail';
 import { orderStorageService } from '@/modules/commercial/services/orderStorageService';
-import type { OrderDetail, OrderProgressStatus } from '@/modules/commercial/types';
+import type { OrderDetail, OrderProgressStatus, OrderTimelineEntry } from '@/modules/commercial/types';
 import { formatPriceFromCents } from '@/modules/commercial/utils/price';
 import { ThemedText } from '@/shared/components';
 import { useAppTheme } from '@/shared/hooks';
@@ -58,7 +58,7 @@ interface OrderDetailScreenProps {
   order?: OrderDetail;
 }
 
-export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mockOrderDetail }) => {
+export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order }) => {
   const { colors } = useAppTheme();
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -114,9 +114,9 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order = mo
     };
   }, [order, params.orderId]);
 
-  const timeline = useMemo(() => {
+  const timeline = useMemo<OrderTimelineEntry[]>(() => {
     if (!resolvedOrder) {
-      return [] as typeof STATUS_SEQUENCE extends (infer T)[] ? { status: T; timestamp: string | null }[] : never;
+      return [];
     }
 
     return resolvedOrder.timeline
