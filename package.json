@@ -66,6 +66,5 @@
     "tsx": "^4.20.6",
     "typescript": "~5.9.2"
   },
-  "private": true,
-  "packageManager": "yarn@4.10.3"
+  "private": true
 }
