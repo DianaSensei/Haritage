@@ -37,6 +37,10 @@ type MediaDescriptor = {
 const { width: screenWidth } = Dimensions.get('window');
 const VIDEO_EXTENSION_REGEX = /(\.(mp4|mov|m4v|webm|avi|mkv))$/i;
 
+// Calculate media width based on container padding
+const MEDIA_HORIZONTAL_INSET = (Spacing.md * 2) + (Spacing.lg * 2);
+const MEDIA_WIDTH = screenWidth - MEDIA_HORIZONTAL_INSET;
+
 const isVideoUri = (uri: string) => VIDEO_EXTENSION_REGEX.test(uri);
 
 const isValidUrl = (value?: string | null) => {
@@ -558,7 +562,7 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       fontSize: Typography.size.xs,
       lineHeight: Typography.lineHeight.xs,
       color: colors.textMuted,
-      marginTop: 2,
+      marginTop: Spacing.xs / 2, // 2px - half of xs spacing
     },
     moreButton: {
       padding: Spacing.xs,
@@ -575,13 +579,13 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       color: colors.text,
     },
     primaryImage: {
-      width: screenWidth - (Spacing.md * 2) - (Spacing.lg * 2),
-      height: (screenWidth - (Spacing.md * 2) - (Spacing.lg * 2)) * 0.6,
+      width: MEDIA_WIDTH,
+      height: MEDIA_WIDTH * 0.6,
       borderRadius: Radii.md,
     },
     primaryVideoWrapper: {
-      width: screenWidth - (Spacing.md * 2) - (Spacing.lg * 2),
-      height: (screenWidth - (Spacing.md * 2) - (Spacing.lg * 2)) * 0.6,
+      width: MEDIA_WIDTH,
+      height: MEDIA_WIDTH * 0.6,
       borderRadius: Radii.md,
       overflow: 'hidden',
     },
