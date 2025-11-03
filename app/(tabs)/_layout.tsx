@@ -52,6 +52,9 @@ export default function TabLayout() {
         backgroundColor={colors.surfaceSecondary}
         indicatorColor={colors.accent}
         iconColor={iconColor}
+        blurEffect="none"
+        shadowColor={colors.shadow}
+        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger name="index">
           <Label>{t('tabs.home')}</Label>

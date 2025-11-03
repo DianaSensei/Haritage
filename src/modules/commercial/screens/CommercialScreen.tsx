@@ -1,8 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import {
+    Animated,
+    Image,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Fonts } from '@/core/config';
@@ -33,14 +41,15 @@ const SECTION_ORDER: CommercialSection[] = [
 const sectionTitleKey = (section: CommercialSection) => `commercial.sections.${section}.title`;
 const sectionSubtitleKey = (section: CommercialSection) => `commercial.sections.${section}.subtitle`;
 const FALLBACK_TAB_BAR_HEIGHT = 56;
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export const CommercialScreen: React.FC = () => {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const [isCartExpanded, setCartExpanded] = useState<boolean>(false);
 
@@ -115,24 +124,34 @@ export const CommercialScreen: React.FC = () => {
         contentContainerStyle={[styles.content, { paddingBottom: contentPaddingBottom }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerSection}>
-          <ThemedText style={styles.title}>{t('commercial.title')}</ThemedText>
-          <ThemedText style={styles.subtitle}>{t('commercial.subtitle')}</ThemedText>
-        </View>
+        <View style={styles.heroCard}>
+          <View style={styles.heroHeaderRow}>
+            <View style={styles.headerSection}>
+              <ThemedText style={styles.title}>{t('commercial.title')}</ThemedText>
+              <ThemedText style={styles.subtitle}>{t('commercial.subtitle')}</ThemedText>
+            </View>
+            <View style={styles.heroBadge}>
+              <Ionicons name="sparkles-outline" size={16} color={colors.accentStrong} />
+              <ThemedText style={styles.heroBadgeText}>
+                {t('commercial.sections.forYou.title')}
+              </ThemedText>
+            </View>
+          </View>
 
-        <TouchableOpacity
-          style={styles.searchRow}
-          activeOpacity={0.85}
-          onPress={handleSearchPress}
-          accessibilityRole="search"
-          accessibilityLabel={t('commercial.searchPlaceholder')}
-        >
-          <Ionicons name="search" size={18} color={colors.iconMuted} />
-          <ThemedText style={styles.searchPlaceholder} numberOfLines={1}>
-            {t('commercial.searchPlaceholder')}
-          </ThemedText>
-          <Ionicons name="arrow-forward" size={16} color={colors.iconMuted} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.searchRow, styles.heroSearchRow]}
+            activeOpacity={0.85}
+            onPress={handleSearchPress}
+            accessibilityRole="search"
+            accessibilityLabel={t('commercial.searchPlaceholder')}
+          >
+            <Ionicons name="search" size={18} color={colors.accentStrong} />
+            <ThemedText style={styles.searchPlaceholder} numberOfLines={1}>
+              {t('commercial.searchPlaceholder')}
+            </ThemedText>
+            <Ionicons name="arrow-forward" size={16} color={colors.accentStrong} />
+          </TouchableOpacity>
+        </View>
 
         {sections.map((section) => {
           const items = mockSectionItems[section.key];
@@ -142,12 +161,16 @@ export const CommercialScreen: React.FC = () => {
 
           return (
             <View key={section.key} style={styles.sectionBlock}>
-              <View style={styles.sectionHeader}>
-                <ThemedText style={styles.sectionTitle}>{section.title}</ThemedText>
-                {section.subtitle ? (
-                  <ThemedText style={styles.sectionSubtitle}>{section.subtitle}</ThemedText>
-                ) : null}
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionTitleWrap}>
+                  <View style={styles.sectionAccentDot} />
+                  <ThemedText style={styles.sectionTitle}>{section.title}</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.accentStrong} />
               </View>
+              {section.subtitle ? (
+                <ThemedText style={styles.sectionSubtitle}>{section.subtitle}</ThemedText>
+              ) : null}
 
               <ScrollView
                 horizontal
@@ -316,18 +339,85 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ item, store, onPress, styles, colors }) => {
   const priceCents = useMemo(() => parsePriceToCents(item.price), [item.price]);
+  const accentColor = item.accentColor ?? colors.accentSoft;
+  const scale = useRef(new Animated.Value(1)).current;
+  const halo = useRef(new Animated.Value(0)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: 0.97,
+        useNativeDriver: true,
+        speed: 22,
+        bounciness: 5,
+      }),
+      Animated.timing(halo, {
+        toValue: 1,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [halo, scale]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 22,
+        bounciness: 8,
+      }),
+      Animated.timing(halo, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [halo, scale]);
+
+  const haloOpacity = useMemo(
+    () =>
+      halo.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 0.2],
+      }),
+    [halo],
+  );
 
   return (
-    <TouchableOpacity
-      style={styles.productCard}
+    <AnimatedTouchableOpacity
+      style={[
+        styles.productCard,
+        styles.productCardRaised,
+        { borderColor: accentColor, transform: [{ scale }] },
+      ]}
       activeOpacity={0.88}
       accessibilityRole="button"
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
-      {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} resizeMode="cover" />
-      ) : null}
-      <View style={[styles.storeBadge, { backgroundColor: item.accentColor }]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.productHalo,
+          {
+            backgroundColor: accentColor,
+            opacity: haloOpacity,
+          },
+        ]}
+      />
+      <View style={[styles.productAccentBar, { backgroundColor: accentColor }]} />
+      <View style={styles.productImageFrame}>
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.productImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.productImagePlaceholder}>
+            <Ionicons name="image" size={18} color={colors.iconMuted} />
+          </View>
+        )}
+      </View>
+      <View style={[styles.storeBadge, item.accentColor ? { backgroundColor: item.accentColor } : null]}>
         <ThemedText style={styles.storeBadgeText}>{item.storeBadge}</ThemedText>
       </View>
 
@@ -381,11 +471,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, store, onPress, styles,
           ))}
         </View>
       ) : null}
-    </TouchableOpacity>
+    </AnimatedTouchableOpacity>
   );
 };
 
-const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors'], isDark: boolean) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -393,7 +483,27 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     content: {
       paddingHorizontal: 12,
-      gap: 16,
+      paddingTop: 12,
+      gap: 18,
+    },
+    heroCard: {
+      padding: 18,
+      borderRadius: 22,
+      backgroundColor: isDark ? colors.surface : colors.surface,
+      borderWidth: 1,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
+      gap: 18,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 4 : 10 },
+      shadowOpacity: isDark ? 0.09 : 0.14,
+      shadowRadius: isDark ? 18 : 38,
+      elevation: 6,
+    },
+    heroHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 12,
     },
     headerSection: {
       gap: 4,
@@ -418,17 +528,68 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderRadius: 12,
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.border : colors.borderMuted,
+    },
+    heroSearchRow: {
+      borderColor: colors.accent,
+      backgroundColor: isDark ? colors.accentSoft : colors.card,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 2 : 6 },
+      shadowOpacity: isDark ? 0.08 : 0.13,
+      shadowRadius: isDark ? 6 : 18,
     },
     searchPlaceholder: {
       flex: 1,
       fontSize: 12,
       color: colors.textMuted,
     },
+    heroBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 14,
+      backgroundColor: isDark ? colors.accentSoft : colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: isDark ? colors.accent : colors.borderMuted,
+    },
+    heroBadgeText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.accentStrong,
+    },
     sectionBlock: {
-      gap: 10,
+      gap: 14,
+      padding: 18,
+      borderRadius: 22,
+      backgroundColor: isDark ? colors.surface : colors.surface,
+      borderWidth: 1,
+      borderColor: isDark ? colors.surfaceSecondary : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 4 : 10 },
+      shadowOpacity: isDark ? 0.08 : 0.14,
+      shadowRadius: isDark ? 16 : 40,
+      elevation: 6,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    sectionTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    sectionAccentDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
     },
     sectionHeader: {
       gap: 2,
@@ -445,27 +606,62 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     productRow: {
       flexDirection: 'row',
-      gap: 12,
-      paddingRight: 4,
+      gap: 14,
+      paddingRight: 6,
+      paddingVertical: 4,
     },
     productCard: {
       width: 196,
-      padding: 12,
-      borderRadius: 14,
-      backgroundColor: colors.surface,
+      padding: 16,
+      borderRadius: 20,
+      backgroundColor: isDark ? colors.surface : colors.card,
       borderWidth: 1,
-      borderColor: colors.border,
-      gap: 8,
+      borderColor: isDark ? colors.border : colors.borderMuted,
+      gap: 12,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.05,
-      shadowRadius: 5,
-      elevation: 1,
+      shadowOffset: { width: 0, height: isDark ? 4 : 10 },
+      shadowOpacity: isDark ? 0.08 : 0.14,
+      shadowRadius: isDark ? 14 : 36,
+      elevation: 6,
+      overflow: 'hidden',
+    },
+    productCardRaised: {
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 6 : 12 },
+      shadowOpacity: isDark ? 0.12 : 0.18,
+      shadowRadius: isDark ? 20 : 42,
+      elevation: 7,
+    },
+    productHalo: {
+      ...StyleSheet.absoluteFillObject,
+      opacity: 0,
+    },
+    productAccentBar: {
+      width: '100%',
+      height: 4,
+      borderRadius: 6,
+      backgroundColor: colors.accent,
+    },
+    productImageFrame: {
+      width: '100%',
+      height: 96,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: isDark ? colors.border : colors.borderMuted,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surfaceSecondary,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     productImage: {
       width: '100%',
-      height: 96,
-      borderRadius: 10,
+      height: '100%',
+    },
+    productImagePlaceholder: {
+      width: '100%',
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     storeBadge: {
       width: 32,
@@ -473,6 +669,12 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surfaceSecondary,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 2 : 4 },
+      shadowOpacity: isDark ? 0.1 : 0.18,
+      shadowRadius: isDark ? 6 : 14,
+      elevation: 3,
     },
     storeBadgeText: {
       fontSize: 12,
@@ -487,7 +689,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       paddingHorizontal: 7,
       paddingVertical: 3,
       borderRadius: 7,
-      backgroundColor: colors.accentSoft,
+      backgroundColor: isDark ? colors.accentSoft : colors.cardMuted,
     },
     productBadgeText: {
       fontSize: 9,
@@ -506,6 +708,9 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     productFooter: {
       gap: 8,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? colors.border : colors.borderMuted,
+      paddingTop: 10,
     },
     productPriceRow: {
       flexDirection: 'row',
@@ -541,7 +746,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       paddingHorizontal: 6,
       paddingVertical: 3,
       borderRadius: 7,
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     productTagText: {
       fontSize: 9,
@@ -558,17 +763,17 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       elevation: 10,
     },
     cartSheetContainer: {
-      borderRadius: 20,
+      borderRadius: 22,
       borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
+      backgroundColor: isDark ? colors.surface : colors.surface,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowOffset: { width: 0, height: isDark ? -1 : 6 },
+      shadowOpacity: isDark ? 0.1 : 0.16,
+      shadowRadius: isDark ? 16 : 40,
+      elevation: 6,
       overflow: 'hidden',
-      gap: 8,
+      gap: 10,
     },
     cartSheetCollapsedContainer: {
       paddingVertical: 8,
@@ -586,7 +791,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       width: 24,
       height: 3,
       borderRadius: 999,
-      backgroundColor: colors.border,
+      backgroundColor: colors.borderMuted,
     },
     cartHeaderRow: {
       flexDirection: 'row',
@@ -615,7 +820,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     cartDivider: {
       height: 1,
-      backgroundColor: colors.border,
+      backgroundColor: colors.borderMuted,
     },
     cartItemsScroll: {
       maxHeight: 200,
@@ -640,7 +845,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       borderRadius: 11,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     cartItemInfo: {
       flex: 1,
@@ -678,7 +883,7 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       paddingVertical: 8,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     cartClearLabel: {
       fontSize: 10,

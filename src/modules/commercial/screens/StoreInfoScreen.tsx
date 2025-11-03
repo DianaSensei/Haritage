@@ -34,13 +34,13 @@ export const StoreInfoScreen: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams<{ storeId?: string | string[] }>();
   const storeId = resolveParam(params.storeId);
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const tabBarHeight = useMemo(() => 56 + Math.max(insets.bottom - 8, 0), [insets.bottom]);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const [isCartExpanded, setCartExpanded] = useState(false);
 
   const cartItemsMap = useCartStore((state) => state.items);
@@ -224,13 +224,25 @@ export const StoreInfoScreen: React.FC = () => {
                 <View style={styles.categoryList}>
                   {category.items.map((item) => (
                     <View key={item.id} style={styles.productCard}>
-                      {item.imageUrl ? (
-                        <Image source={{ uri: item.imageUrl }} style={styles.productImage} resizeMode="cover" />
-                      ) : (
-                        <View style={styles.productImageFallback}>
-                          <Ionicons name="image" size={20} color={colors.iconMuted} />
-                        </View>
-                      )}
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          styles.productCardHighlight,
+                          {
+                            backgroundColor: store.accentColor,
+                            opacity: isDark ? 0.12 : 0.08,
+                          },
+                        ]}
+                      />
+                      <View style={styles.productImageFrame}>
+                        {item.imageUrl ? (
+                          <Image source={{ uri: item.imageUrl }} style={styles.productImage} resizeMode="cover" />
+                        ) : (
+                          <View style={styles.productImageFallback}>
+                            <Ionicons name="image" size={20} color={colors.iconMuted} />
+                          </View>
+                        )}
+                      </View>
                       <View style={styles.productContent}>
                         <ThemedText style={styles.productName} numberOfLines={2}>
                           {item.name}
@@ -397,6 +409,7 @@ export const StoreInfoScreen: React.FC = () => {
 
 const createStyles = (
   colors: ReturnType<typeof useAppTheme>['colors'],
+  isDark: boolean,
 ) =>
   StyleSheet.create({
     safeArea: {
@@ -410,6 +423,13 @@ const createStyles = (
       position: 'relative',
       height: 150,
       marginBottom: 16,
+      borderRadius: 20,
+      overflow: 'hidden',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 6 : 8 },
+      shadowOpacity: isDark ? 0.08 : 0.12,
+      shadowRadius: isDark ? 14 : 24,
+      elevation: 6,
     },
     bannerImage: {
       width: '100%',
@@ -424,13 +444,18 @@ const createStyles = (
       borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.accent : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: isDark ? 0.12 : 0.2,
+      shadowRadius: isDark ? 8 : 14,
+      elevation: 4,
     },
     contentWrapper: {
-      paddingHorizontal: 14,
-      gap: 16,
+      paddingHorizontal: 16,
+      gap: 18,
     },
     headerRow: {
       flexDirection: 'row',
@@ -441,6 +466,8 @@ const createStyles = (
       width: 54,
       height: 54,
       borderRadius: 18,
+      borderWidth: 2,
+      borderColor: colors.accent,
     },
     logoFallback: {
       width: 54,
@@ -448,6 +475,7 @@ const createStyles = (
       borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors.accentSoft,
     },
     logoFallbackText: {
       fontSize: 18,
@@ -472,11 +500,16 @@ const createStyles = (
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      padding: 8,
-      borderRadius: 12,
-      backgroundColor: colors.surface,
+      padding: 10,
+      borderRadius: 16,
+      backgroundColor: isDark ? colors.accentSoft : colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.accent : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 2 : 8 },
+      shadowOpacity: isDark ? 0.08 : 0.14,
+      shadowRadius: isDark ? 10 : 26,
+      elevation: 4,
     },
     promoText: {
       flex: 1,
@@ -494,6 +527,8 @@ const createStyles = (
       width: 128,
       height: 92,
       borderRadius: 12,
+      borderWidth: 1,
+      borderColor: isDark ? colors.surfaceSecondary : colors.borderMuted,
     },
     statRow: {
       flexDirection: 'row',
@@ -506,6 +541,14 @@ const createStyles = (
       paddingHorizontal: 10,
       borderRadius: 12,
       gap: 3,
+      backgroundColor: isDark ? colors.surface : colors.surface,
+      borderWidth: 1,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 3 : 9 },
+      shadowOpacity: isDark ? 0.08 : 0.14,
+      shadowRadius: isDark ? 12 : 32,
+      elevation: 5,
     },
     statIconWrapper: {
       width: 20,
@@ -513,7 +556,7 @@ const createStyles = (
       borderRadius: 7,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.accentSoft,
+      backgroundColor: isDark ? colors.accentSoft : colors.highlight,
     },
     statValue: {
       fontSize: 14,
@@ -530,7 +573,17 @@ const createStyles = (
       color: colors.text,
     },
     infoSection: {
-      gap: 8,
+      gap: 10,
+      padding: 14,
+      borderRadius: 18,
+      backgroundColor: isDark ? colors.surface : colors.surface,
+      borderWidth: 1,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 3 : 9 },
+      shadowOpacity: isDark ? 0.08 : 0.14,
+      shadowRadius: isDark ? 14 : 34,
+      elevation: 5,
     },
     description: {
       fontSize: 12,
@@ -550,12 +603,17 @@ const createStyles = (
       gap: 14,
     },
     categoryBlock: {
-      gap: 8,
-      padding: 12,
-      borderRadius: 14,
-      backgroundColor: colors.surface,
+      gap: 10,
+      padding: 14,
+      borderRadius: 18,
+      backgroundColor: isDark ? colors.surface : colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 4 : 10 },
+      shadowOpacity: isDark ? 0.1 : 0.16,
+      shadowRadius: isDark ? 16 : 38,
+      elevation: 6,
     },
     categoryImage: {
       width: '100%',
@@ -576,30 +634,46 @@ const createStyles = (
     productCard: {
       flexBasis: '48%',
       maxWidth: '48%',
-      backgroundColor: colors.surfaceSecondary,
-      borderRadius: 16,
+      backgroundColor: isDark ? colors.surface : colors.card,
+      borderRadius: 18,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.accentSoft : colors.borderMuted,
       overflow: 'hidden',
-      padding: 10,
-      gap: 10,
-      minHeight: 200,
+      padding: 12,
+      gap: 12,
+      minHeight: 210,
       justifyContent: 'space-between',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: isDark ? 5 : 11 },
+      shadowOpacity: isDark ? 0.1 : 0.17,
+      shadowRadius: isDark ? 14 : 34,
+      elevation: 5,
+    },
+    productCardHighlight: {
+      ...StyleSheet.absoluteFillObject,
+      opacity: 0,
+    },
+    productImageFrame: {
+      width: '100%',
+      height: 112,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: isDark ? colors.border : colors.borderMuted,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.surfaceSecondary,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     productImage: {
       width: '100%',
-      height: 112,
-      borderRadius: 10,
+      height: '100%',
     },
     productImageFallback: {
       width: '100%',
-      height: 112,
-      borderRadius: 10,
+      height: '100%',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     productContent: {
       gap: 5,
@@ -620,14 +694,17 @@ const createStyles = (
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 6,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? colors.border : colors.borderMuted,
+      paddingTop: 8,
     },
     productPriceTag: {
       paddingHorizontal: 8,
       paddingVertical: 5,
       borderRadius: 10,
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isDark ? colors.border : colors.borderMuted,
     },
     productPriceText: {
       fontSize: 11,
@@ -665,13 +742,13 @@ const createStyles = (
     cartSheetContainer: {
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
+      borderColor: isDark ? colors.border : colors.borderMuted,
+      backgroundColor: isDark ? colors.surface : colors.surface,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 5,
+      shadowOffset: { width: 0, height: isDark ? -1 : 6 },
+      shadowOpacity: isDark ? 0.12 : 0.18,
+      shadowRadius: isDark ? 16 : 40,
+      elevation: 7,
       overflow: 'hidden',
       gap: 12,
     },
@@ -691,7 +768,7 @@ const createStyles = (
       width: 32,
       height: 4,
       borderRadius: 999,
-      backgroundColor: colors.border,
+      backgroundColor: colors.borderMuted,
     },
     cartHeaderRow: {
       flexDirection: 'row',
@@ -720,7 +797,7 @@ const createStyles = (
     },
     cartDivider: {
       height: 1,
-      backgroundColor: colors.border,
+      backgroundColor: colors.borderMuted,
     },
     cartItemsScroll: {
       maxHeight: 240,
@@ -745,7 +822,7 @@ const createStyles = (
       borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     cartItemInfo: {
       flex: 1,
@@ -783,7 +860,7 @@ const createStyles = (
       paddingVertical: 10,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
     },
     cartClearLabel: {
       fontSize: 12,
@@ -815,9 +892,7 @@ interface StatPillProps {
 const StatPill: React.FC<StatPillProps> = ({ icon, label, value, styles }) => {
   const { colors } = useAppTheme();
   return (
-    <View
-      style={[styles.statPill, { backgroundColor: colors.surfaceSecondary }]}
-    >
+    <View style={styles.statPill}>
       <View style={styles.statIconWrapper}>
         <Ionicons name={icon} size={14} color={colors.accentStrong} />
       </View>
