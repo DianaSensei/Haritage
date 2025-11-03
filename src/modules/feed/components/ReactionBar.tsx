@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { useAppTheme } from '@/shared/hooks';
 
 interface ReactionBarProps {
@@ -115,30 +116,30 @@ const createStyles = (
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderRadius: 12,
-      backgroundColor: isDark ? colors.surfaceSecondary : colors.card,
-      marginTop: 8,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderRadius: Radii.sm,
+      backgroundColor: colors.card,
+      marginTop: Spacing.sm,
     },
     group: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: Spacing.sm,
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      backgroundColor: isDark ? colors.surface : colors.surfaceSecondary,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      gap: Spacing.xs,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: Radii.sm,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
       borderWidth: 1,
-      borderColor: isDark ? colors.border : colors.border,
+      borderColor: colors.border,
     },
     buttonCompact: {
-      paddingHorizontal: 10,
+      paddingHorizontal: Spacing.sm,
     },
     buttonActive: {
       backgroundColor: colors.accent,
@@ -149,8 +150,9 @@ const createStyles = (
       borderColor: colors.danger,
     },
     count: {
-      fontSize: 13,
-      fontWeight: '500',
+      fontSize: Typography.size.sm,
+      lineHeight: Typography.lineHeight.sm,
+      fontWeight: Typography.weight.medium,
     },
   });
 

@@ -1,11 +1,12 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
+import { Typography } from '@/core/config/theme';
 import { useThemeColor } from '@/shared/hooks/use-theme-color';
 
 export type ThemedTextProps = TextProps & {
     lightColor?: string;
     darkColor?: string;
-    type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+    type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'caption' | 'small' | 'heading';
 };
 
 export function ThemedText({
@@ -16,8 +17,15 @@ export function ThemedText({
     ...rest
 }: ThemedTextProps) {
     const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-    const linkColor = useThemeColor({}, 'tint');
-    const resolvedColor = type === 'link' ? linkColor : textColor;
+    const linkColor = useThemeColor({}, 'textLink');
+    const mutedColor = useThemeColor({}, 'textMuted');
+    
+    let resolvedColor = textColor;
+    if (type === 'link') {
+        resolvedColor = linkColor;
+    } else if (type === 'caption' || type === 'small') {
+        resolvedColor = mutedColor;
+    }
 
     return (
         <Text
@@ -25,9 +33,12 @@ export function ThemedText({
                 { color: resolvedColor },
                 type === 'default' ? styles.default : undefined,
                 type === 'title' ? styles.title : undefined,
+                type === 'heading' ? styles.heading : undefined,
                 type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
                 type === 'subtitle' ? styles.subtitle : undefined,
                 type === 'link' ? styles.link : undefined,
+                type === 'caption' ? styles.caption : undefined,
+                type === 'small' ? styles.small : undefined,
                 style,
             ]}
             {...rest}
@@ -37,25 +48,44 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
     default: {
-        fontSize: 16,
-        lineHeight: 24,
+        fontSize: Typography.size.md,
+        lineHeight: Typography.lineHeight.md,
+        fontWeight: Typography.weight.regular,
     },
     defaultSemiBold: {
-        fontSize: 16,
-        lineHeight: 24,
-        fontWeight: '600',
+        fontSize: Typography.size.md,
+        lineHeight: Typography.lineHeight.md,
+        fontWeight: Typography.weight.semibold,
     },
     title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        lineHeight: 32,
+        fontSize: Typography.size.xxxl,
+        lineHeight: Typography.lineHeight.xxxl,
+        fontWeight: Typography.weight.bold,
+        letterSpacing: Typography.letterSpacing.tight,
+    },
+    heading: {
+        fontSize: Typography.size.xxl,
+        lineHeight: Typography.lineHeight.xxl,
+        fontWeight: Typography.weight.bold,
     },
     subtitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: Typography.size.xl,
+        lineHeight: Typography.lineHeight.xl,
+        fontWeight: Typography.weight.semibold,
     },
     link: {
-        lineHeight: 30,
-        fontSize: 16,
+        fontSize: Typography.size.md,
+        lineHeight: Typography.lineHeight.md,
+        fontWeight: Typography.weight.medium,
+    },
+    caption: {
+        fontSize: Typography.size.sm,
+        lineHeight: Typography.lineHeight.sm,
+        fontWeight: Typography.weight.regular,
+    },
+    small: {
+        fontSize: Typography.size.xs,
+        lineHeight: Typography.lineHeight.xs,
+        fontWeight: Typography.weight.regular,
     },
 });
