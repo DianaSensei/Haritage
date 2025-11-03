@@ -136,75 +136,44 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order }) =
   const resolveStatusLabel = (status: OrderProgressStatus) =>
     t(`commercial.orderDetail.statusLabels.${status}`);
 
+  const header = (
+    <View style={styles.header}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.goBack')}
+        style={styles.headerIconButton}
+        activeOpacity={0.75}
+      >
+        <Ionicons name="chevron-back" size={18} color={colors.icon} />
+      </TouchableOpacity>
+      <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
+      <View style={styles.headerSpacer} />
+    </View>
+  );
+
+  let body: React.ReactNode;
+
   if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.goBack')}
-            style={styles.headerIconButton}
-            activeOpacity={0.75}
-          >
-            <Ionicons name="chevron-back" size={18} color={colors.icon} />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
-          <View style={styles.headerSpacer} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.accentStrong} />
-          <ThemedText style={styles.loadingText}>{t('commercial.orderDetail.loading')}</ThemedText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!resolvedOrder) {
-    return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.goBack')}
-            style={styles.headerIconButton}
-            activeOpacity={0.75}
-          >
-            <Ionicons name="chevron-back" size={18} color={colors.icon} />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
-          <View style={styles.headerSpacer} />
-        </View>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="receipt-outline" size={42} color={colors.iconMuted} />
-          <ThemedText style={styles.emptyTitle}>{t('commercial.orderDetail.notFound.title')}</ThemedText>
-          <ThemedText style={styles.emptySubtitle}>{t('commercial.orderDetail.notFound.subtitle')}</ThemedText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const activeOrder = resolvedOrder;
-
-  const currency = activeOrder.paymentSummary.currency;
-
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.goBack')}
-          style={styles.headerIconButton}
-          activeOpacity={0.75}
-        >
-          <Ionicons name="chevron-back" size={18} color={colors.icon} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>{t('commercial.orderDetail.title')}</ThemedText>
-        <View style={styles.headerSpacer} />
+    body = (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="small" color={colors.accentStrong} />
+        <ThemedText style={styles.loadingText}>{t('commercial.orderDetail.loading')}</ThemedText>
       </View>
+    );
+  } else if (!resolvedOrder) {
+    body = (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="receipt-outline" size={42} color={colors.iconMuted} />
+        <ThemedText style={styles.emptyTitle}>{t('commercial.orderDetail.notFound.title')}</ThemedText>
+        <ThemedText style={styles.emptySubtitle}>{t('commercial.orderDetail.notFound.subtitle')}</ThemedText>
+      </View>
+    );
+  } else {
+    const activeOrder = resolvedOrder;
+    const currency = activeOrder.paymentSummary.currency;
 
+    body = (
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -374,6 +343,13 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({ order }) =
           </View>
         ) : null}
       </ScrollView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {header}
+      {body}
     </SafeAreaView>
   );
 };

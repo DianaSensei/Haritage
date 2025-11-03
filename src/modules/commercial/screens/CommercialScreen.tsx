@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,21 +32,7 @@ const SECTION_ORDER: CommercialSection[] = [
 
 const sectionTitleKey = (section: CommercialSection) => `commercial.sections.${section}.title`;
 const sectionSubtitleKey = (section: CommercialSection) => `commercial.sections.${section}.subtitle`;
-
-const useSafeTabBarHeight = (fallback: number) => {
-  const hasWarnedRef = useRef(false);
-
-  try {
-    return useBottomTabBarHeight();
-  } catch (error) {
-    if (__DEV__ && !hasWarnedRef.current) {
-      hasWarnedRef.current = true;
-      console.warn('[CommercialScreen] Falling back to safe-area inset for tab bar height.', error);
-    }
-
-    return fallback;
-  }
-};
+const FALLBACK_TAB_BAR_HEIGHT = 56;
 
 export const CommercialScreen: React.FC = () => {
   const { colors } = useAppTheme();
@@ -55,7 +40,6 @@ export const CommercialScreen: React.FC = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const tabBarHeight = useSafeTabBarHeight(insets.bottom);
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [isCartExpanded, setCartExpanded] = useState<boolean>(false);
@@ -70,19 +54,16 @@ export const CommercialScreen: React.FC = () => {
     [cartItemsMap],
   );
   const locale = i18n.language ?? 'en';
-  const collapsedSheetSpace = 96;
+  const collapsedSheetSpace = 60;
   const expandedSheetSpace = Math.min(height * 0.48, 360);
-  const baseBottomInset = useMemo(
-    () => (tabBarHeight > 0 ? tabBarHeight : insets.bottom),
-    [insets.bottom, tabBarHeight],
-  );
-  const cartSheetBottomOffset = baseBottomInset + 8;
+  const effectiveTabBarHeight = FALLBACK_TAB_BAR_HEIGHT;
+  const cartSheetBottomOffset = effectiveTabBarHeight + Math.max(insets.bottom - 10, 6);
   const contentPaddingBottom = useMemo(
     () =>
       totalQuantity > 0
         ? (isCartExpanded ? expandedSheetSpace : collapsedSheetSpace) + cartSheetBottomOffset
-        : 24 + baseBottomInset,
-    [baseBottomInset, cartSheetBottomOffset, expandedSheetSpace, isCartExpanded, totalQuantity],
+        : 24 + cartSheetBottomOffset,
+    [cartSheetBottomOffset, collapsedSheetSpace, expandedSheetSpace, isCartExpanded, totalQuantity],
   );
 
   useEffect(() => {
@@ -197,7 +178,8 @@ export const CommercialScreen: React.FC = () => {
       </ScrollView>
 
       {totalQuantity > 0 ? (
-  <View style={[styles.cartSheetWrapper, { bottom: cartSheetBottomOffset, paddingBottom: 8 }]}
+        <View
+          style={[styles.cartSheetWrapper, { bottom: cartSheetBottomOffset }]}
           pointerEvents="box-none"
         >
           <View
@@ -410,141 +392,141 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       backgroundColor: colors.background,
     },
     content: {
-      paddingHorizontal: 14,
-      gap: 20,
+      paddingHorizontal: 12,
+      gap: 16,
     },
     headerSection: {
-      gap: 6,
-      paddingTop: 10,
+      gap: 4,
+      paddingTop: 8,
     },
     title: {
-      fontSize: 22,
+      fontSize: 20,
       fontWeight: '700',
       color: colors.text,
       fontFamily: Fonts.sans,
     },
     subtitle: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
-      lineHeight: 20,
+      lineHeight: 18,
     },
     searchRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      borderRadius: 14,
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 12,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
     searchPlaceholder: {
       flex: 1,
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textMuted,
     },
     sectionBlock: {
-      gap: 12,
+      gap: 10,
     },
     sectionHeader: {
-      gap: 3,
+      gap: 2,
     },
     sectionTitle: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       color: colors.text,
     },
     sectionSubtitle: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
-      lineHeight: 16,
+      lineHeight: 15,
     },
     productRow: {
       flexDirection: 'row',
-      gap: 14,
-      paddingRight: 6,
+      gap: 12,
+      paddingRight: 4,
     },
     productCard: {
-      width: 208,
-      padding: 14,
-      borderRadius: 16,
+      width: 196,
+      padding: 12,
+      borderRadius: 14,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      gap: 10,
+      gap: 8,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 6,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.05,
+      shadowRadius: 5,
+      elevation: 1,
     },
     productImage: {
       width: '100%',
-      height: 104,
+      height: 96,
       borderRadius: 10,
     },
     storeBadge: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
+      width: 32,
+      height: 32,
+      borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
     },
     storeBadgeText: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '700',
       color: '#0f1113',
     },
     productContent: {
-      gap: 6,
+      gap: 5,
     },
     productBadge: {
       alignSelf: 'flex-start',
-      paddingHorizontal: 8,
+      paddingHorizontal: 7,
       paddingVertical: 3,
-      borderRadius: 8,
+      borderRadius: 7,
       backgroundColor: colors.accentSoft,
     },
     productBadgeText: {
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: '600',
       color: colors.accentStrong,
     },
     productTitle: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
     },
     productSubtitle: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
-      lineHeight: 16,
+      lineHeight: 15,
     },
     productFooter: {
-      gap: 10,
+      gap: 8,
     },
     productPriceRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: 8,
     },
     productPrice: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '700',
       color: colors.accentStrong,
     },
     productStoreRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
+      gap: 4,
       flex: 1,
-      maxWidth: 120,
+      maxWidth: 112,
     },
     productStoreName: {
-      fontSize: 11,
+      fontSize: 10,
       color: colors.textMuted,
     },
     productCartControls: {
@@ -553,16 +535,16 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     productTagRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 5,
+      gap: 4,
     },
     productTagChip: {
-      paddingHorizontal: 7,
+      paddingHorizontal: 6,
       paddingVertical: 3,
-      borderRadius: 8,
+      borderRadius: 7,
       backgroundColor: colors.surfaceSecondary,
     },
     productTagText: {
-      fontSize: 10,
+      fontSize: 9,
       color: colors.textMuted,
     },
     cartSheetWrapper: {
@@ -571,6 +553,9 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       right: 0,
       bottom: 0,
       paddingHorizontal: 14,
+      paddingBottom: 6,
+      zIndex: 10,
+      elevation: 10,
     },
     cartSheetContainer: {
       borderRadius: 20,
@@ -583,12 +568,12 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       shadowRadius: 8,
       elevation: 4,
       overflow: 'hidden',
-      gap: 10,
+      gap: 8,
     },
     cartSheetCollapsedContainer: {
-      paddingVertical: 10,
+      paddingVertical: 8,
       paddingHorizontal: 12,
-      gap: 8,
+      gap: 6,
     },
     cartSheetExpandedContainer: {
       paddingHorizontal: 12,
@@ -598,8 +583,8 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     },
     cartHandle: {
       alignSelf: 'center',
-      width: 28,
-      height: 4,
+      width: 24,
+      height: 3,
       borderRadius: 999,
       backgroundColor: colors.border,
     },
@@ -607,24 +592,24 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 8,
+      gap: 6,
     },
     cartHeaderText: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
       color: colors.text,
     },
     cartSummaryText: {
-      fontSize: 11,
+      fontSize: 10,
       color: colors.textMuted,
     },
     cartHeaderMeta: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
+      gap: 4,
     },
     cartTotalText: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '700',
       color: colors.text,
     },
@@ -633,49 +618,49 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       backgroundColor: colors.border,
     },
     cartItemsScroll: {
-      maxHeight: 220,
+      maxHeight: 200,
     },
     cartItemsList: {
-      gap: 12,
+      gap: 10,
       paddingBottom: 4,
     },
     cartItemRow: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      gap: 8,
+      gap: 6,
     },
     cartItemImage: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
+      width: 42,
+      height: 42,
+      borderRadius: 11,
     },
     cartItemImageFallback: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
+      width: 42,
+      height: 42,
+      borderRadius: 11,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surfaceSecondary,
     },
     cartItemInfo: {
       flex: 1,
-      gap: 3,
+      gap: 2,
     },
     cartItemName: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: '600',
       color: colors.text,
     },
     cartItemMeta: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
     },
     cartItemRight: {
-      gap: 5,
+      gap: 4,
       alignItems: 'flex-end',
     },
     cartItemLineTotal: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: '600',
       color: colors.text,
     },
@@ -685,18 +670,18 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     cartFooter: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 6,
     },
     cartClearButton: {
       flex: 1,
       borderRadius: 10,
-      paddingVertical: 9,
+      paddingVertical: 8,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surfaceSecondary,
     },
     cartClearLabel: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: '600',
       color: colors.textMuted,
     },

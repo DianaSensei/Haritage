@@ -1,24 +1,14 @@
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useRef } from 'react';
+import { useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const FALLBACK_TAB_BAR_HEIGHT = 56;
+
 /**
- * Safely retrieves the tab bar height when rendered inside a bottom tab navigator.
- * Falls back to the device bottom safe-area inset when no tab bar is present.
+ * Returns a stable tab bar height suitable for screens rendered outside of
+ * React Navigation's bottom tab context (e.g., Expo Native Tabs).
  */
 export const useSafeTabBarHeight = () => {
   const insets = useSafeAreaInsets();
-  const hasWarnedRef = useRef(false);
 
-  try {
-    const height = useBottomTabBarHeight();
-    return height > 0 ? height : insets.bottom;
-  } catch (error) {
-    if (__DEV__ && !hasWarnedRef.current) {
-      hasWarnedRef.current = true;
-      console.warn('[useSafeTabBarHeight] Falling back to safe-area inset for tab bar height.', error);
-    }
-
-    return insets.bottom;
-  }
+  return useMemo(() => FALLBACK_TAB_BAR_HEIGHT + Math.max(insets.bottom - 8, 0), [insets.bottom]);
 };

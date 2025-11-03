@@ -17,7 +17,6 @@ import { CartQuantityControls } from '@/modules/commercial/components/CartQuanti
 import {
     mockStoreFronts,
 } from '@/modules/commercial/data/mockStores';
-import { useSafeTabBarHeight } from '@/modules/commercial/hooks/useSafeTabBarHeight';
 import type { CartItem, StoreFront } from '@/modules/commercial/types';
 import { formatPriceFromCents, parsePriceToCents } from '@/modules/commercial/utils/price';
 import { ThemedText } from '@/shared/components';
@@ -39,7 +38,7 @@ export const StoreInfoScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const tabBarHeight = useSafeTabBarHeight();
+  const tabBarHeight = useMemo(() => 56 + Math.max(insets.bottom - 8, 0), [insets.bottom]);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isCartExpanded, setCartExpanded] = useState(false);
@@ -57,10 +56,7 @@ export const StoreInfoScreen: React.FC = () => {
   const locale = i18n.language ?? 'en';
   const collapsedSheetSpace = 110;
   const expandedSheetSpace = Math.min(height * 0.5, 400);
-  const baseBottomInset = useMemo(
-    () => (tabBarHeight > 0 ? tabBarHeight : insets.bottom),
-    [insets.bottom, tabBarHeight],
-  );
+  const baseBottomInset = tabBarHeight;
   const cartSheetBottomOffset = baseBottomInset + 10;
   const contentPaddingBottom = useMemo(
     () =>
