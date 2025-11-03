@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { ThemedText } from '@/shared/components';
 import { useAppTheme } from '@/shared/hooks';
 
@@ -54,17 +55,17 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.divider,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
     },
     backButton: {
       width: 36,
       height: 36,
-      padding: 8,
-      borderRadius: 12,
+      padding: Spacing.sm,
+      borderRadius: Radii.sm,
       backgroundColor: colors.surfaceSecondary,
       alignItems: 'center',
       justifyContent: 'center',
@@ -72,8 +73,9 @@ const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
     title: {
       flex: 1,
       textAlign: 'center',
-      fontSize: 18,
-      fontWeight: '600',
+      fontSize: Typography.size.lg,
+      lineHeight: Typography.lineHeight.lg,
+      fontWeight: Typography.weight.semibold,
       color: colors.text,
     },
     sideSpacer: {
