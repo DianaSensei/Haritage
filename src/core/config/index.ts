@@ -31,6 +31,14 @@ export const CONFIG = {
         AUTO_MARK_READ_DELAY: 5000, // 5 seconds
     },
 
+    // Booking
+    BOOKING: {
+        MAX_ADVANCE_DAYS: 30, // Can view/book up to 30 days in advance
+        MIN_BOOKING_MINUTES: 30, // Minimum booking duration
+        SLOT_INTERVAL_MINUTES: 30, // Calendar slot size
+        DEFAULT_BUFFER_MINUTES: 15, // Default buffer between bookings
+    },
+
     // Storage keys
     STORAGE_KEYS: {
         USER_TOKEN: 'haritage.user_token',

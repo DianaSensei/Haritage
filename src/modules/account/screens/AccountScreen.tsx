@@ -195,6 +195,9 @@ export const AccountScreen: React.FC = () => {
   const handleDebug = useCallback(() => {
     router.push('/debug-tools');
   }, [router]);
+  const handleMyBookings = useCallback(() => {
+    router.push('/my-bookings');
+  }, [router]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -283,6 +286,12 @@ export const AccountScreen: React.FC = () => {
               icon="shield-checkmark"
               label={t('account.menu.securityPrivacy')}
               onPress={handleSecurity}
+            />
+            <View style={styles.divider} />
+            <MenuItem
+              icon="calendar-outline"
+              label="My Bookings"
+              onPress={handleMyBookings}
             />
             <View style={styles.divider} />
             <MenuItem

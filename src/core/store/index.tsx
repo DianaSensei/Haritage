@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAppLockStore } from './slices/appLockSlice';
 import { useAuthStore } from './slices/authSlice';
+import { useBookingStore } from './slices/bookingSlice';
 import { useCartStore } from './slices/cartSlice';
 import { useCommentStore } from './slices/commentSlice';
 import { useFeedStore } from './slices/feedSlice';
@@ -12,6 +13,7 @@ import { useThemeStore } from './slices/themeSlice';
 
 export { useAppLockStore } from './slices/appLockSlice';
 export { useAuthStore } from './slices/authSlice';
+export { useBookingStore } from './slices/bookingSlice';
 export { useCartStore } from './slices/cartSlice';
 export { useCommentStore } from './slices/commentSlice';
 export { useFeedStore } from './slices/feedSlice';
@@ -29,6 +31,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useThemeStore();
   useLanguageStore();
   useCartStore();
+  useBookingStore();
   
   return <>{children}</>;
 };
