@@ -5,6 +5,7 @@ node_modules/
 .yarn
 .vscode
 .idea
+.yarnrc.yml
 
 # Expo
 .expo/
