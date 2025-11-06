@@ -853,7 +853,7 @@ const createStyles = (
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#2196F3',
+      backgroundColor: colors.accent,
       paddingVertical: 14,
       paddingHorizontal: 20,
       borderRadius: 12,
@@ -863,7 +863,7 @@ const createStyles = (
     bookingButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: '#FFF',
+      color: colors.background,
     },
     cartItemInfo: {
       flex: 1,

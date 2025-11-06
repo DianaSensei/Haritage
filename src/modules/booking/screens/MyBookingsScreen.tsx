@@ -6,8 +6,9 @@ import { useAuthStore, useBookingStore } from '@/core/store';
 import { BookingCard } from '@/modules/booking/components/BookingCard';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
 import { BookingStatus } from '@/modules/booking/types';
+import { useAppTheme } from '@/shared/hooks';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -33,6 +34,8 @@ export default function MyBookingsScreen() {
   const { getUserBookings, isLoading, setLoading } = useBookingStore();
   const [selectedFilter, setSelectedFilter] = useState<BookingStatus | 'all'>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Load booking data
   useBookingData();
@@ -105,7 +108,7 @@ export default function MyBookingsScreen() {
 
       {isLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : bookings.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -134,27 +137,27 @@ export default function MyBookingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#000',
+    color: colors.text,
   },
   filterContainer: {
     maxHeight: 60,
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   filterContent: {
     padding: 16,
@@ -165,17 +168,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFF',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   filterButtonActive: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   filterText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: colors.textMuted,
   },
   filterTextActive: {
     color: '#FFF',
@@ -197,12 +200,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textMuted,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textSubtle,
     textAlign: 'center',
   },
 });
