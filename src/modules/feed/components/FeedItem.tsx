@@ -1,4 +1,4 @@
-import { Colors } from '@/core/config/theme';
+import { Colors, Radii, Spacing, Typography } from '@/core/config/theme';
 import { useFeedStore } from '@/core/store/slices/feedSlice';
 import { useAppTheme } from '@/shared/hooks';
 import { feedStorageService } from '@/shared/services/storage/feedStorageService';
@@ -36,6 +36,10 @@ type MediaDescriptor = {
 
 const { width: screenWidth } = Dimensions.get('window');
 const VIDEO_EXTENSION_REGEX = /(\.(mp4|mov|m4v|webm|avi|mkv))$/i;
+
+// Calculate media width based on container padding
+const MEDIA_HORIZONTAL_INSET = (Spacing.md * 2) + (Spacing.lg * 2);
+const MEDIA_WIDTH = screenWidth - MEDIA_HORIZONTAL_INSET;
 
 const isVideoUri = (uri: string) => VIDEO_EXTENSION_REGEX.test(uri);
 
@@ -500,34 +504,34 @@ const areEqual = (prev: FeedItemProps, next: FeedItemProps) => {
 export const FeedItem = memo(FeedItemComponent, areEqual);
 
 const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
-  const cardBackground = isDark ? colors.surfaceTertiary : colors.card;
-  const sectionBackground = isDark ? colors.surfaceSecondary : colors.surfaceSecondary;
-  const controlBackground = isDark ? colors.surfaceTertiary : colors.surface;
-  const outlineColor = isDark ? colors.borderMuted : colors.border;
-  const dividerColor = isDark ? colors.border : colors.divider;
-  const shadowColor = isDark ? '#000000' : 'rgba(15, 17, 19, 0.12)';
+  const cardBackground = colors.card;
+  const sectionBackground = colors.surfaceSecondary;
+  const controlBackground = colors.surface;
+  const outlineColor = colors.border;
+  const dividerColor = colors.divider;
+  const shadowColor = colors.shadowSubtle;
 
   return StyleSheet.create({
     container: {
       backgroundColor: cardBackground,
-      marginVertical: 12,
-      marginHorizontal: 12,
-      borderRadius: 14,
+      marginVertical: Spacing.sm,
+      marginHorizontal: Spacing.md,
+      borderRadius: Radii.md,
       borderWidth: 1,
       borderColor: outlineColor,
       overflow: 'hidden',
-      shadowColor,
-      shadowOffset: { width: 0, height: isDark ? 10 : 8 },
-      shadowOpacity: isDark ? 0.35 : 0.18,
-      shadowRadius: isDark ? 12 : 14,
-      elevation: isDark ? 8 : 5,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 2,
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: dividerColor,
       backgroundColor: cardBackground,
@@ -536,12 +540,12 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
-      gap: 12,
+      gap: Spacing.md,
     },
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       borderWidth: 2,
       borderColor: colors.accent,
     },
@@ -549,127 +553,134 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       flex: 1,
     },
     authorName: {
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: Typography.size.sm,
+      lineHeight: Typography.lineHeight.sm,
+      fontWeight: Typography.weight.semibold,
       color: colors.text,
     },
     timestamp: {
-      fontSize: 12,
+      fontSize: Typography.size.xs,
+      lineHeight: Typography.lineHeight.xs,
       color: colors.textMuted,
-      marginTop: 2,
+      marginTop: Spacing.xs / 2, // 2px - half of xs spacing
     },
     moreButton: {
-      padding: 6,
+      padding: Spacing.xs,
     },
     body: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      gap: 16,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.lg,
+      gap: Spacing.md,
     },
     title: {
-      fontSize: 18,
-      fontWeight: '700',
+      fontSize: Typography.size.lg,
+      lineHeight: Typography.lineHeight.lg,
+      fontWeight: Typography.weight.bold,
       color: colors.text,
-      lineHeight: 24,
     },
     primaryImage: {
-      width: screenWidth - 48,
-      height: (screenWidth - 48) * 0.6,
-      borderRadius: 12,
+      width: MEDIA_WIDTH,
+      height: MEDIA_WIDTH * 0.6,
+      borderRadius: Radii.md,
     },
     primaryVideoWrapper: {
-      width: screenWidth - 48,
-      height: (screenWidth - 48) * 0.6,
-      borderRadius: 12,
+      width: MEDIA_WIDTH,
+      height: MEDIA_WIDTH * 0.6,
+      borderRadius: Radii.md,
       overflow: 'hidden',
     },
     mediaGallery: {
-      marginTop: 8,
+      marginTop: Spacing.sm,
     },
     mediaItem: {
-      marginRight: 10,
-      borderRadius: 12,
+      marginRight: Spacing.sm,
+      borderRadius: Radii.sm,
       overflow: 'hidden',
       borderWidth: 1,
       borderColor: dividerColor,
       shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0.3 : 0.16,
-      shadowRadius: 4,
-      elevation: isDark ? 4 : 2,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 2,
+      elevation: 1,
     },
     mediaImage: {
-      width: 130,
-      height: 130,
-    },
-    mediaVideo: {
-      width: 160,
+      width: 120,
       height: 120,
     },
+    mediaVideo: {
+      width: 150,
+      height: 110,
+    },
     contentSection: {
-      gap: 6,
+      gap: Spacing.xs,
     },
     contentText: {
-      fontSize: 14,
-      lineHeight: 20,
+      fontSize: Typography.size.md,
+      lineHeight: Typography.lineHeight.md,
       color: colors.text,
     },
     readMoreText: {
-      fontSize: 13,
+      fontSize: Typography.size.sm,
+      lineHeight: Typography.lineHeight.sm,
       color: colors.textLink,
-      fontWeight: '600',
+      fontWeight: Typography.weight.semibold,
     },
     urlPreviewBox: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: Spacing.md,
       backgroundColor: sectionBackground,
-      borderRadius: 12,
+      borderRadius: Radii.sm,
       borderWidth: 1,
       borderColor: outlineColor,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
     },
     urlPreviewContent: {
       flex: 1,
-      gap: 4,
+      gap: Spacing.xs,
     },
     urlPreviewTitle: {
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: Typography.size.sm,
+      lineHeight: Typography.lineHeight.sm,
+      fontWeight: Typography.weight.semibold,
       color: colors.text,
     },
     urlPreviewDescription: {
-      fontSize: 12,
+      fontSize: Typography.size.xs,
+      lineHeight: Typography.lineHeight.xs,
       color: colors.textMuted,
     },
     urlPreviewUrl: {
-      fontSize: 12,
-      color: colors.textMuted,
+      fontSize: Typography.size.xs,
+      lineHeight: Typography.lineHeight.xs,
+      color: colors.textSubtle,
     },
     pollBox: {
       backgroundColor: sectionBackground,
-      borderRadius: 12,
+      borderRadius: Radii.sm,
       borderWidth: 1,
       borderColor: outlineColor,
-      padding: 14,
-      gap: 12,
+      padding: Spacing.md,
+      gap: Spacing.md,
     },
     pollQuestion: {
-      fontSize: 15,
-      fontWeight: '600',
+      fontSize: Typography.size.md,
+      lineHeight: Typography.lineHeight.md,
+      fontWeight: Typography.weight.semibold,
       color: colors.text,
     },
     pollOptions: {
-      gap: 10,
+      gap: Spacing.sm,
     },
     pollOption: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      borderRadius: 10,
+      gap: Spacing.sm,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderRadius: Radii.sm,
       borderWidth: 1,
       borderColor: dividerColor,
       backgroundColor: controlBackground,
@@ -682,7 +693,8 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       opacity: 0.6,
     },
     pollOptionText: {
-      fontSize: 13,
+      fontSize: Typography.size.sm,
+      lineHeight: Typography.lineHeight.sm,
       color: colors.text,
       flex: 1,
     },
@@ -695,16 +707,18 @@ const createStyles = (colors: typeof Colors.light, isDark: boolean) => {
       alignItems: 'center',
     },
     pollMeta: {
-      fontSize: 12,
+      fontSize: Typography.size.xs,
+      lineHeight: Typography.lineHeight.xs,
       color: colors.textMuted,
     },
     pollSelection: {
-      fontSize: 12,
+      fontSize: Typography.size.xs,
+      lineHeight: Typography.lineHeight.xs,
       color: colors.accent,
-      fontWeight: '600',
+      fontWeight: Typography.weight.semibold,
     },
     reactionBar: {
-      marginBottom: 12,
+      marginBottom: Spacing.md,
       borderTopWidth: 1,
       borderTopColor: dividerColor,
       borderRadius: 0,

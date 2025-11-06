@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 
+import { Typography } from '@/core/config/theme';
 import { useAppTheme } from '@/shared/hooks';
 import { MaterialIcons } from '@expo/vector-icons';
 import {
@@ -24,13 +25,13 @@ export default function TabLayout() {
     () => ({
       default: {
         color: colors.tabIconDefault,
-        fontSize: 12,
-        fontWeight: '600' as const,
+        fontSize: Typography.size.xs,
+        fontWeight: Typography.weight.semibold,
       },
       selected: {
         color: colors.tabIconSelected,
-        fontSize: 12,
-        fontWeight: '700' as const,
+        fontSize: Typography.size.xs,
+        fontWeight: Typography.weight.bold,
       },
     }),
     [colors.tabIconDefault, colors.tabIconSelected],
@@ -49,7 +50,7 @@ export default function TabLayout() {
       <NativeTabs
         labelStyle={labelStyle}
         tintColor={colors.tabIconSelected}
-        backgroundColor={colors.surfaceSecondary}
+        backgroundColor={colors.card}
         indicatorColor={colors.accent}
         iconColor={iconColor}
         blurEffect="none"

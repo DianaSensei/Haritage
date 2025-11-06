@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { useAppTheme } from "@/shared/hooks";
 import { OTPVerificationForm } from "../components/OTPVerificationForm";
 import { PhoneLoginForm } from "../components/PhoneLoginForm";
 
@@ -9,6 +10,8 @@ export const AuthScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<AuthStep>("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sessionId, setSessionId] = useState("");
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleOTPSent = (phone: string, sessionId: string) => {
     setPhoneNumber(phone);
@@ -42,9 +45,10 @@ export const AuthScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  }
-});
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    }
+  });
