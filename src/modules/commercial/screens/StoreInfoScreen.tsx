@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCartStore } from '@/core/store';
+import { isBookingEnabledForStore } from '@/modules/booking/data/mockServices';
 import { CartQuantityControls } from '@/modules/commercial/components/CartQuantityControls';
 import {
     mockStoreFronts,
@@ -97,6 +98,18 @@ export const StoreInfoScreen: React.FC = () => {
   const handleCheckoutPress = useCallback(() => {
     router.push('/checkout');
   }, [router]);
+
+  const handleBookingPress = useCallback(() => {
+    if (!storeId || !store) return;
+    router.push({
+      pathname: '/store-booking-calendar',
+      params: { storeId, storeName: store.name },
+    });
+  }, [router, storeId, store]);
+
+  const bookingEnabled = useMemo(() => {
+    return storeId ? isBookingEnabledForStore(storeId) : false;
+  }, [storeId]);
 
   if (!store) {
     return (
@@ -195,6 +208,18 @@ export const StoreInfoScreen: React.FC = () => {
               styles={styles}
             />
           </View>
+
+          {bookingEnabled && (
+            <TouchableOpacity
+              style={styles.bookingButton}
+              onPress={handleBookingPress}
+              accessibilityRole="button"
+              accessibilityLabel="Book an appointment"
+            >
+              <Ionicons name="calendar-outline" size={20} color="#FFF" />
+              <ThemedText style={styles.bookingButtonText}>Book an Appointment</ThemedText>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.infoSection}>
             <SectionHeader title={t('commercial.storeInfo.aboutTitle')} styles={styles} />
@@ -823,6 +848,22 @@ const createStyles = (
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: isDark ? colors.surfaceSecondary : colors.cardMuted,
+    },
+    bookingButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#2196F3',
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      marginTop: 16,
+      gap: 8,
+    },
+    bookingButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#FFF',
     },
     cartItemInfo: {
       flex: 1,
