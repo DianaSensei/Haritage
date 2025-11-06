@@ -39,6 +39,7 @@ export default function MyBookingsScreen() {
 
   useEffect(() => {
     loadBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBookings = async () => {

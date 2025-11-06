@@ -4,7 +4,7 @@
  */
 import { useAuthStore, useBookingStore } from '@/core/store';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
-import { cancelBooking, updateBooking } from '@/modules/booking/services/bookingService';
+import { cancelBooking } from '@/modules/booking/services/bookingService';
 import { Booking } from '@/modules/booking/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,6 +34,7 @@ export default function BookingDetailScreen() {
     if (id) {
       loadBooking();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadBooking = () => {

@@ -3,7 +3,6 @@
  * Handles booking operations and business logic
  */
 import { CONFIG } from '@/core/config';
-import { useAuthStore } from '@/core/store';
 import {
   Booking,
   BookingStatus,

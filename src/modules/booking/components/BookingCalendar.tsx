@@ -2,7 +2,6 @@
  * Booking Calendar Component
  * Shows availability for a service in a monthly calendar view
  */
-import { CONFIG } from '@/core/config';
 import { CalendarSlot } from '@/modules/booking/types';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

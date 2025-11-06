@@ -17,6 +17,7 @@ export function useBookingData() {
     if (services.length === 0) {
       setServices(mockServices);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

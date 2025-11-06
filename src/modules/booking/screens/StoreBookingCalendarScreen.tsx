@@ -50,12 +50,14 @@ export default function StoreBookingCalendarScreen() {
 
   useEffect(() => {
     loadServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
   useEffect(() => {
     if (selectedService) {
       loadCalendar();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedService]);
 
   const loadServices = async () => {
