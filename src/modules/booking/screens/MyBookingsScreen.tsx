@@ -5,7 +5,7 @@
 import { useAuthStore, useBookingStore } from '@/core/store';
 import { BookingCard } from '@/modules/booking/components/BookingCard';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
-import { BookingStatus } from '@/modules/booking/types';
+import { BookingFilter, BookingStatus } from '@/modules/booking/types';
 import { useAppTheme } from '@/shared/hooks';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -21,9 +21,13 @@ import {
   View,
 } from 'react-native';
 
-const STATUS_FILTERS: { label: string; value: BookingStatus | 'all' }[] = [
+const UPCOMING_STATUSES: BookingStatus[] = ['confirmed', 'requested', 'in_progress'];
+
+type FilterValue = 'all' | 'upcoming' | BookingStatus;
+
+const STATUS_FILTERS: { label: string; value: FilterValue }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Upcoming', value: 'confirmed' },
+  { label: 'Upcoming', value: 'upcoming' },
   { label: 'Pending', value: 'requested' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
@@ -31,8 +35,11 @@ const STATUS_FILTERS: { label: string; value: BookingStatus | 'all' }[] = [
 
 export default function MyBookingsScreen() {
   const { user } = useAuthStore();
-  const { getUserBookings, isLoading, setLoading } = useBookingStore();
-  const [selectedFilter, setSelectedFilter] = useState<BookingStatus | 'all'>('all');
+  const bookings = useBookingStore((state) => state.bookings);
+  const getUserBookings = useBookingStore((state) => state.getUserBookings);
+  const isLoading = useBookingStore((state) => state.isLoading);
+  const setLoading = useBookingStore((state) => state.setLoading);
+  const [selectedFilter, setSelectedFilter] = useState<FilterValue>('all');
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -62,12 +69,41 @@ export default function MyBookingsScreen() {
     setRefreshing(false);
   };
 
-  const bookings = user
-    ? getUserBookings(
-        user.id,
-        selectedFilter === 'all' ? undefined : { status: [selectedFilter] }
-      )
-    : [];
+  const filterCriteria = useMemo<BookingFilter | undefined>(() => {
+    if (selectedFilter === 'all') {
+      return undefined;
+    }
+
+    if (selectedFilter === 'upcoming') {
+      return { status: UPCOMING_STATUSES };
+    }
+
+    return { status: [selectedFilter] };
+  }, [selectedFilter]);
+
+  const userId = user?.id;
+
+  const visibleBookings = useMemo(() => {
+    if (!userId || bookings.length === 0) {
+      return [];
+    }
+
+    const baseBookings = getUserBookings(userId, filterCriteria);
+
+    if (selectedFilter !== 'upcoming') {
+      return baseBookings;
+    }
+
+    const now = Date.now();
+
+    return baseBookings.filter((booking) => {
+      if (booking.status === 'in_progress') {
+        return true;
+      }
+
+      return booking.startAt.getTime() >= now;
+    });
+  }, [bookings, filterCriteria, getUserBookings, selectedFilter, userId]);
 
   const handleBookingPress = (bookingId: string) => {
     router.push(`/booking-detail?id=${bookingId}`);
@@ -76,7 +112,11 @@ export default function MyBookingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={router.back} style={styles.backButton}>
+          <Text style={styles.backButtonText}>{'<'} Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>My Bookings</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
@@ -110,7 +150,7 @@ export default function MyBookingsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
-      ) : bookings.length === 0 ? (
+      ) : visibleBookings.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No bookings found</Text>
           <Text style={styles.emptySubtext}>
@@ -119,7 +159,7 @@ export default function MyBookingsScreen() {
         </View>
       ) : (
         <FlatList
-          data={bookings}
+          data={visibleBookings}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <BookingCard
@@ -143,15 +183,33 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
+    flex: 1,
+    textAlign: 'center',
+  },
+  backButton: {
+    minWidth: 60,
+    paddingVertical: 6,
+    paddingRight: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  headerSpacer: {
+    width: 60,
   },
   filterContainer: {
     maxHeight: 60,

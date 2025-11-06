@@ -7,6 +7,48 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+// Ensure persisted date-like values are rehydrated as Date instances
+const ensureDate = (value: unknown): Date | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const parsed = new Date(value as string | number);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const hydrateBookingDates = (booking: Booking): Booking => {
+  const startAt = ensureDate(booking.startAt) ?? new Date(booking.startAt);
+  const endAt = ensureDate(booking.endAt) ?? new Date(booking.endAt);
+  const createdAt = ensureDate(booking.createdAt) ?? new Date(booking.createdAt);
+  const updatedAt = ensureDate(booking.updatedAt) ?? new Date(booking.updatedAt);
+
+  return {
+    ...booking,
+    startAt,
+    endAt,
+    createdAt,
+    updatedAt,
+    confirmedAt: ensureDate(booking.confirmedAt),
+    completedAt: ensureDate(booking.completedAt),
+  };
+};
+
+const hydrateServiceDates = (service: Service): Service => {
+  const createdAt = ensureDate(service.createdAt) ?? new Date(service.createdAt);
+  const updatedAt = ensureDate(service.updatedAt) ?? new Date(service.updatedAt);
+
+  return {
+    ...service,
+    createdAt,
+    updatedAt,
+  };
+};
+
 interface BookingState {
   bookings: Booking[];
   services: Service[];
@@ -60,18 +102,28 @@ export const useBookingStore = create<BookingStore>()(
       ...initialState,
 
       // Bookings
-      setBookings: (bookings) => set({ bookings }),
+      setBookings: (bookings) => set({ bookings: bookings.map(hydrateBookingDates) }),
       
       addBooking: (booking) =>
         set((state) => ({
-          bookings: [...state.bookings, booking],
+          bookings: [...state.bookings, hydrateBookingDates(booking)],
         })),
       
       updateBooking: (bookingId, updates) =>
         set((state) => ({
-          bookings: state.bookings.map((b) =>
-            b.id === bookingId ? { ...b, ...updates, updatedAt: new Date() } : b
-          ),
+          bookings: state.bookings.map((b) => {
+            if (b.id !== bookingId) {
+              return b;
+            }
+
+            const nextBooking = {
+              ...b,
+              ...updates,
+              updatedAt: new Date(),
+            } as Booking;
+
+            return hydrateBookingDates(nextBooking);
+          }),
         })),
       
       removeBooking: (bookingId) =>
@@ -115,7 +167,7 @@ export const useBookingStore = create<BookingStore>()(
       },
 
       // Services
-      setServices: (services) => set({ services }),
+      setServices: (services) => set({ services: services.map(hydrateServiceDates) }),
       
       getServicesByStoreId: (storeId) => {
         const state = get();
@@ -149,6 +201,19 @@ export const useBookingStore = create<BookingStore>()(
         bookings: state.bookings,
         services: state.services,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<BookingState>;
+
+        return {
+          ...currentState,
+          bookings: persisted.bookings
+            ? persisted.bookings.map(hydrateBookingDates)
+            : currentState.bookings,
+          services: persisted.services
+            ? persisted.services.map(hydrateServiceDates)
+            : currentState.services,
+        };
+      },
     }
   )
 );
