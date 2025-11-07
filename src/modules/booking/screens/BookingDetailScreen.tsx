@@ -215,7 +215,7 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({ label, value })
   );
 };
 
-const TimelineItem: React.FC<{ label: string; date: Date; colors: any }> = ({ label, date, colors }) => {
+const TimelineItem: React.FC<{ label: string; date: Date; colors: ReturnType<typeof useAppTheme>['colors'] }> = ({ label, date, colors }) => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   
   return (
@@ -257,7 +257,7 @@ function getStatusColor(status: string): string {
   }
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

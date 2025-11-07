@@ -118,7 +118,7 @@ function getStatusLabel(status: BookingStatus): string {
   }
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: Radii.md,
