@@ -1,7 +1,8 @@
 /**
  * My Bookings Screen
- * Shows all user's bookings across stores
+ * Shows all user's bookings across stores with minimal, clean design
  */
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { useAuthStore, useBookingStore } from '@/core/store';
 import { BookingCard } from '@/modules/booking/components/BookingCard';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
@@ -112,7 +113,7 @@ export default function MyBookingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={router.back} style={styles.backButton}>
+        <TouchableOpacity onPress={router.back} style={styles.backButton} activeOpacity={0.7}>
           <Text style={styles.backButtonText}>{'<'} Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>My Bookings</Text>
@@ -133,6 +134,7 @@ export default function MyBookingsScreen() {
               selectedFilter === filter.value && styles.filterButtonActive,
             ]}
             onPress={() => setSelectedFilter(filter.value)}
+            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -169,7 +171,12 @@ export default function MyBookingsScreen() {
           )}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
           }
         />
       )}
@@ -183,66 +190,69 @@ const createStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: Typography.size.xxl,
+    lineHeight: Typography.lineHeight.xxl,
+    fontWeight: Typography.weight.bold,
     color: colors.text,
     flex: 1,
     textAlign: 'center',
   },
   backButton: {
     minWidth: 60,
-    paddingVertical: 6,
-    paddingRight: 12,
+    paddingVertical: Spacing.xs + 2,
+    paddingRight: Spacing.md,
   },
   backButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.medium,
     color: colors.text,
   },
   headerSpacer: {
     width: 60,
   },
   filterContainer: {
-    maxHeight: 60,
-    backgroundColor: colors.surface,
+    maxHeight: 56,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   filterContent: {
-    padding: 16,
-    gap: 8,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
   },
   filterButtonActive: {
     backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
   filterText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.medium,
     color: colors.textMuted,
   },
   filterTextActive: {
     color: '#FFF',
   },
   listContent: {
-    padding: 16,
+    padding: Spacing.lg,
   },
   loadingContainer: {
     flex: 1,
@@ -253,16 +263,18 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: Spacing.xxxl,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: Typography.size.lg,
+    lineHeight: Typography.lineHeight.lg,
+    fontWeight: Typography.weight.semibold,
     color: colors.textMuted,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
     color: colors.textSubtle,
     textAlign: 'center',
   },

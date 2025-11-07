@@ -1,8 +1,9 @@
 /**
  * Store Booking Calendar Screen
- * View service calendar and create bookings
+ * View service calendar and create bookings with minimal, clean design
  */
 import { CONFIG } from '@/core/config';
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { useAuthStore, useBookingStore } from '@/core/store';
 import { BookingCalendar } from '@/modules/booking/components/BookingCalendar';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
@@ -12,8 +13,9 @@ import {
   getStoreServices,
 } from '@/modules/booking/services/bookingService';
 import { CalendarSlot, Service } from '@/modules/booking/types';
+import { useAppTheme } from '@/shared/hooks';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -31,6 +33,8 @@ export default function StoreBookingCalendarScreen() {
   const { storeId, storeName } = useLocalSearchParams<{ storeId: string; storeName: string }>();
   const { user } = useAuthStore();
   const { addBooking } = useBookingStore();
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Load booking data
   useBookingData();
@@ -171,7 +175,7 @@ export default function StoreBookingCalendarScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -180,7 +184,7 @@ export default function StoreBookingCalendarScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{storeName || 'Store'} Booking</Text>
+        <Text style={styles.title}>{storeName || 'Store'}</Text>
       </View>
 
       {/* Service selector */}
@@ -198,12 +202,14 @@ export default function StoreBookingCalendarScreen() {
               selectedService?.id === service.id && styles.serviceButtonActive,
             ]}
             onPress={() => setSelectedService(service)}
+            activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.serviceButtonText,
                 selectedService?.id === service.id && styles.serviceButtonTextActive,
               ]}
+              numberOfLines={1}
             >
               {service.name}
             </Text>
@@ -224,10 +230,12 @@ export default function StoreBookingCalendarScreen() {
       {/* Service info */}
       {selectedService && (
         <View style={styles.serviceInfo}>
-          <Text style={styles.serviceDescription}>{selectedService.description}</Text>
+          <Text style={styles.serviceDescription} numberOfLines={2}>
+            {selectedService.description}
+          </Text>
           {selectedService.durationMinutes && (
             <Text style={styles.serviceDuration}>
-              Duration: {selectedService.durationMinutes} minutes
+              {selectedService.durationMinutes} min
             </Text>
           )}
         </View>
@@ -236,7 +244,7 @@ export default function StoreBookingCalendarScreen() {
       {/* Calendar */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <ScrollView style={styles.calendarContainer}>
@@ -287,18 +295,18 @@ export default function StoreBookingCalendarScreen() {
                 value={userName}
                 onChangeText={setUserName}
                 placeholder="Enter your name"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textSubtle}
               />
             </View>
 
             <View style={styles.modalSection}>
-              <Text style={styles.modalLabel}>Contact (Phone/Email) *</Text>
+              <Text style={styles.modalLabel}>Contact *</Text>
               <TextInput
                 style={styles.input}
                 value={userContact}
                 onChangeText={setUserContact}
-                placeholder="Enter phone or email"
-                placeholderTextColor="#999"
+                placeholder="Phone or email"
+                placeholderTextColor={colors.textSubtle}
               />
             </View>
 
@@ -308,8 +316,8 @@ export default function StoreBookingCalendarScreen() {
                 style={[styles.input, styles.textArea]}
                 value={note}
                 onChangeText={setNote}
-                placeholder="Any special requests or notes"
-                placeholderTextColor="#999"
+                placeholder="Special requests or notes"
+                placeholderTextColor={colors.textSubtle}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -320,6 +328,7 @@ export default function StoreBookingCalendarScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setBookingModalVisible(false)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -327,11 +336,12 @@ export default function StoreBookingCalendarScreen() {
                 style={[styles.modalButton, styles.confirmButton, submitting && styles.buttonDisabled]}
                 onPress={handleCreateBooking}
                 disabled={submitting}
+                activeOpacity={0.7}
               >
                 {submitting ? (
                   <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Submit Request</Text>
+                  <Text style={styles.confirmButtonText}>Submit</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -342,21 +352,22 @@ export default function StoreBookingCalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
-    backgroundColor: '#FFF',
+    padding: Spacing.lg,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000',
+    fontSize: Typography.size.xxl,
+    lineHeight: Typography.lineHeight.xxl,
+    fontWeight: Typography.weight.bold,
+    color: colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -364,135 +375,145 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   serviceSelector: {
-    maxHeight: 120,
-    backgroundColor: '#FFF',
+    maxHeight: 110,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   serviceSelectorContent: {
-    padding: 16,
-    gap: 12,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   serviceButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFF',
-    minWidth: 150,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    minWidth: 140,
   },
   serviceButtonActive: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   serviceButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.semibold,
+    color: colors.text,
+    marginBottom: Spacing.xs / 2,
   },
   serviceButtonTextActive: {
-    color: '#FFF',
+    color: '#FFFFFF',
   },
   servicePrice: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: Typography.size.xs,
+    lineHeight: Typography.lineHeight.xs,
+    color: colors.textMuted,
   },
   servicePriceActive: {
-    color: '#FFF',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   serviceInfo: {
-    padding: 16,
-    backgroundColor: '#FFF',
+    padding: Spacing.lg,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   serviceDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    color: colors.textMuted,
+    marginBottom: Spacing.xs,
   },
   serviceDuration: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: Typography.size.xs,
+    lineHeight: Typography.lineHeight.xs,
+    color: colors.textSubtle,
   },
   calendarContainer: {
     flex: 1,
-    padding: 16,
+    padding: Spacing.lg,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: Radii.xl,
+    borderTopRightRadius: Radii.xl,
+    padding: Spacing.xxl,
     maxHeight: '80%',
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 24,
+    fontSize: Typography.size.xxl,
+    lineHeight: Typography.lineHeight.xxl,
+    fontWeight: Typography.weight.bold,
+    color: colors.text,
+    marginBottom: Spacing.xl,
   },
   modalSection: {
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
   },
   modalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.semibold,
+    color: colors.text,
+    marginBottom: Spacing.sm,
   },
   modalValue: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    color: colors.textMuted,
+    marginBottom: Spacing.xs / 2,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#FFF',
+    borderColor: colors.border,
+    borderRadius: Radii.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    color: colors.text,
+    backgroundColor: colors.card,
   },
   textArea: {
     minHeight: 80,
-    paddingTop: 10,
+    paddingTop: Spacing.sm + 2,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radii.md,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surfaceTertiary,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    color: colors.textMuted,
   },
   confirmButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: colors.accent,
   },
   confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    color: '#FFFFFF',
   },
   buttonDisabled: {
     opacity: 0.5,

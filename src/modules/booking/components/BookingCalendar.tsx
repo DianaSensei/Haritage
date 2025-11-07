@@ -1,8 +1,10 @@
 /**
  * Booking Calendar Component
- * Shows availability for a service in a monthly calendar view
+ * Shows availability for a service in a clean, minimal calendar view
  */
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { CalendarSlot } from '@/modules/booking/types';
+import { useAppTheme } from '@/shared/hooks';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -19,6 +21,9 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
   onSlotSelect,
   currentUserId,
 }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  
   // Group slots by day
   const slotsByDay = useMemo(() => {
     const grouped = new Map<string, CalendarSlot[]>();
@@ -70,6 +75,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
                     ]}
                     onPress={() => canSelect && onSlotSelect?.(slot)}
                     disabled={!canSelect}
+                    activeOpacity={0.7}
                   >
                     <Text
                       style={[
@@ -91,7 +97,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
                           isUserBooking && styles.slotStatusUser,
                         ]}
                       >
-                        {isUserBooking ? 'Your booking' : 'Busy'}
+                        {isUserBooking ? 'Yours' : 'Busy'}
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -105,62 +111,65 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
   dayContainer: {
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   dayHeader: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#000',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    marginBottom: Spacing.md,
+    color: colors.text,
   },
   slotsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
   slot: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFF',
-    minWidth: 100,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    minWidth: 90,
   },
   busySlot: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#D0D0D0',
+    backgroundColor: colors.surfaceTertiary,
+    borderColor: colors.borderMuted,
   },
   userBookingSlot: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: colors.accentSofter,
+    borderColor: colors.accent,
   },
   selectedSlot: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   disabledSlot: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   slotTime: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.medium,
+    color: colors.text,
   },
   slotTimeBusy: {
-    color: '#FFF',
+    color: '#FFFFFF',
   },
   slotStatus: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    fontSize: Typography.size.xs,
+    lineHeight: Typography.lineHeight.xs,
+    color: colors.textMuted,
+    marginTop: Spacing.xs / 2,
   },
   slotStatusUser: {
-    color: '#1976D2',
+    color: colors.accent,
   },
 });
