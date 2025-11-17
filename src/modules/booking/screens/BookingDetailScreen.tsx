@@ -1,13 +1,15 @@
 /**
  * Booking Detail Screen
- * Shows full details of a booking
+ * Shows full details of a booking with minimal, clean design
  */
+import { Radii, Spacing, Typography } from '@/core/config/theme';
 import { useAuthStore, useBookingStore } from '@/core/store';
 import { useBookingData } from '@/modules/booking/hooks/useBookingData';
 import { cancelBooking } from '@/modules/booking/services/bookingService';
 import { Booking } from '@/modules/booking/types';
+import { useAppTheme } from '@/shared/hooks';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +25,9 @@ export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
   const { getBookingById, updateBooking: updateStoreBooking } = useBookingStore();
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -83,7 +88,7 @@ export default function BookingDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -97,6 +102,7 @@ export default function BookingDetailScreen() {
           <TouchableOpacity
             style={styles.button}
             onPress={() => router.back()}
+            activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
@@ -111,10 +117,10 @@ export default function BookingDetailScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>{booking.serviceName}</Text>
+          <Text style={styles.title} numberOfLines={2}>{booking.serviceName}</Text>
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
             <Text style={styles.statusText}>
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
             </Text>
           </View>
         </View>
@@ -169,12 +175,12 @@ export default function BookingDetailScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Timeline</Text>
-          <TimelineItem label="Created" date={booking.createdAt} />
+          <TimelineItem label="Created" date={booking.createdAt} colors={colors} />
           {booking.confirmedAt && (
-            <TimelineItem label="Confirmed" date={booking.confirmedAt} />
+            <TimelineItem label="Confirmed" date={booking.confirmedAt} colors={colors} />
           )}
           {booking.completedAt && (
-            <TimelineItem label="Completed" date={booking.completedAt} />
+            <TimelineItem label="Completed" date={booking.completedAt} colors={colors} />
           )}
         </View>
 
@@ -183,6 +189,7 @@ export default function BookingDetailScreen() {
             style={[styles.cancelButton, actionLoading && styles.buttonDisabled]}
             onPress={handleCancel}
             disabled={actionLoading}
+            activeOpacity={0.7}
           >
             {actionLoading ? (
               <ActivityIndicator color="#FFF" />
@@ -196,31 +203,40 @@ export default function BookingDetailScreen() {
   );
 }
 
-const DetailRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <View style={styles.detailRow}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={styles.detailValue}>{value}</Text>
-  </View>
-);
-
-const TimelineItem: React.FC<{ label: string; date: Date }> = ({ label, date }) => (
-  <View style={styles.timelineItem}>
-    <View style={styles.timelineDot} />
-    <View style={styles.timelineContent}>
-      <Text style={styles.timelineLabel}>{label}</Text>
-      <Text style={styles.timelineDate}>
-        {date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        })}
-      </Text>
+const DetailRow: React.FC<{ label: string; value: string }> = ({ label, value }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
     </View>
-  </View>
-);
+  );
+};
+
+const TimelineItem: React.FC<{ label: string; date: Date; colors: ReturnType<typeof useAppTheme>['colors'] }> = ({ label, date, colors }) => {
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  
+  return (
+    <View style={styles.timelineItem}>
+      <View style={styles.timelineDot} />
+      <View style={styles.timelineContent}>
+        <Text style={styles.timelineLabel}>{label}</Text>
+        <Text style={styles.timelineDate}>
+          {date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          })}
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -241,13 +257,13 @@ function getStatusColor(status: string): string {
   }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useAppTheme>['colors']) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
   content: {
-    padding: 16,
+    padding: Spacing.lg,
   },
   loadingContainer: {
     flex: 1,
@@ -258,121 +274,133 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: Spacing.xxxl,
   },
   errorText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 24,
+    fontSize: Typography.size.lg,
+    lineHeight: Typography.lineHeight.lg,
+    fontWeight: Typography.weight.semibold,
+    color: colors.textMuted,
+    marginBottom: Spacing.xxl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000',
+    fontSize: Typography.size.xxl,
+    lineHeight: Typography.lineHeight.xxl,
+    fontWeight: Typography.weight.bold,
+    color: colors.text,
     flex: 1,
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radii.pill,
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.semibold,
+    color: '#FFFFFF',
   },
   section: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.card,
+    borderRadius: Radii.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 12,
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    color: colors.text,
+    marginBottom: Spacing.md,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: colors.borderMuted,
   },
   detailLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    color: colors.textMuted,
   },
   detailValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.medium,
+    color: colors.text,
     flex: 1,
     textAlign: 'right',
   },
   noteText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    color: colors.text,
   },
   timelineItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
   },
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#2196F3',
-    marginTop: 4,
-    marginRight: 12,
+    width: 10,
+    height: 10,
+    borderRadius: Radii.pill,
+    backgroundColor: colors.accent,
+    marginTop: Spacing.xs,
+    marginRight: Spacing.md,
   },
   timelineContent: {
     flex: 1,
   },
   timelineLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 2,
+    fontSize: Typography.size.sm,
+    lineHeight: Typography.lineHeight.sm,
+    fontWeight: Typography.weight.medium,
+    color: colors.text,
+    marginBottom: Spacing.xs / 2,
   },
   timelineDate: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: Typography.size.xs,
+    lineHeight: Typography.lineHeight.xs,
+    color: colors.textMuted,
   },
   button: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radii.sm,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    color: '#FFFFFF',
   },
   cancelButton: {
-    backgroundColor: '#F44336',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: colors.danger,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radii.md,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: Spacing.lg,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: Typography.size.md,
+    lineHeight: Typography.lineHeight.md,
+    fontWeight: Typography.weight.semibold,
+    color: '#FFFFFF',
   },
   buttonDisabled: {
     opacity: 0.5,
